@@ -1,24 +1,73 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCostsCalculator } from '@/hooks/useCostsCalculator';
+import { FixedCostsSection } from '@/components/costs/FixedCostsSection';
+import { VariableCostsSection } from '@/components/costs/VariableCostsSection';
+import { ParametersSection } from '@/components/costs/ParametersSection';
+import { ResultsCards } from '@/components/costs/ResultsCards';
+import { PriceComparisonTable } from '@/components/costs/PriceComparisonTable';
+import { ExportButtons } from '@/components/costs/ExportButtons';
 
 export default function Costs() {
+  const {
+    custosFixos,
+    custosVariaveis,
+    parametros,
+    resultados,
+    adicionarCustoFixo,
+    atualizarCustoFixo,
+    removerCustoFixo,
+    adicionarCustoVariavel,
+    atualizarCustoVariavel,
+    removerCustoVariavel,
+    atualizarParametros,
+  } = useCostsCalculator();
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Custos & Precificação</h1>
-        <p className="text-muted-foreground">Gerencie custos e calcule preços de venda</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Custos & Precificação</h1>
+          <p className="text-muted-foreground">Sistema inteligente de precificação LAMAR</p>
+        </div>
+        <ExportButtons
+          custosFixos={custosFixos}
+          custosVariaveis={custosVariaveis}
+          parametros={parametros}
+          resultados={resultados}
+        />
       </div>
 
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle>Em Desenvolvimento</CardTitle>
-          <CardDescription>Esta funcionalidade estará disponível em breve</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Aqui você poderá gerenciar custos fixos e variáveis, além de calcular preços de venda otimizados.
-          </p>
-        </CardContent>
-      </Card>
+      {/* Cards de Resultados */}
+      <ResultsCards resultados={resultados} />
+
+      {/* Grid Principal */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Coluna Esquerda - Inputs */}
+        <div className="space-y-6">
+          <FixedCostsSection
+            custosFixos={custosFixos}
+            onAdd={adicionarCustoFixo}
+            onUpdate={atualizarCustoFixo}
+            onDelete={removerCustoFixo}
+          />
+          
+          <VariableCostsSection
+            custosVariaveis={custosVariaveis}
+            onAdd={adicionarCustoVariavel}
+            onUpdate={atualizarCustoVariavel}
+            onDelete={removerCustoVariavel}
+          />
+        </div>
+
+        {/* Coluna Direita - Parâmetros e Comparação */}
+        <div className="space-y-6">
+          <ParametersSection
+            parametros={parametros}
+            onUpdate={atualizarParametros}
+          />
+          
+          <PriceComparisonTable resultados={resultados} />
+        </div>
+      </div>
     </div>
   );
 }
