@@ -31,7 +31,7 @@ export function AppSidebar() {
           <img 
             src={fedcomLogo} 
             alt="FEDCOM" 
-            className={`h-10 w-auto transition-opacity ${!open && "opacity-0"}`}
+            className={`w-32 h-32 transition-opacity ${!open && "opacity-0"}`}
           />
         </div>
 
