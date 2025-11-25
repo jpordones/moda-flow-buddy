@@ -1,5 +1,6 @@
 import { LayoutDashboard, TrendingUp, Package, Calculator, Settings } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import fedcomLogo from "@/assets/FEDCOM.svg";
 import {
   Sidebar,
   SidebarContent,
@@ -27,9 +28,11 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarContent>
         <div className="px-4 py-6">
-          <h2 className={`font-bold text-xl text-sidebar-foreground transition-opacity ${!open && "opacity-0"}`}>
-            Fashion Manager
-          </h2>
+          <img 
+            src={fedcomLogo} 
+            alt="FEDCOM" 
+            className={`h-10 w-auto transition-opacity ${!open && "opacity-0"}`}
+          />
         </div>
 
         <SidebarGroup>
