@@ -67,17 +67,17 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Visão geral do seu negócio</p>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
+        <p className="text-gray-600">Visão geral do seu negócio</p>
       </div>
 
       {/* Métricas principais */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Saldo em Caixa"
           value={`R$ ${balance.toFixed(2)}`}
           icon={DollarSign}
-          variant={balance >= 0 ? "success" : "danger"}
+          variant="success"
           trend={{ value: "12% vs mês anterior", positive: balance >= 0 }}
         />
         <MetricCard
@@ -98,36 +98,38 @@ export default function Dashboard() {
           title="Produtos em Estoque"
           value={totalStock.toString()}
           icon={Package}
+          variant="info"
           trend={{ value: `${lowStockItems} com estoque baixo`, positive: false }}
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <MetricCard
           title="Valor Total do Estoque"
           value={`R$ ${stockValue.toFixed(2)}`}
           icon={ShoppingBag}
+          variant="indigo"
         />
         <MetricCard
           title="Lucro/Prejuízo Mensal"
           value={`R$ ${balance.toFixed(2)}`}
           icon={balance >= 0 ? TrendingUp : TrendingDown}
-          variant={balance >= 0 ? "success" : "danger"}
+          variant="success"
         />
         <MetricCard
           title="Alertas de Estoque"
           value={lowStockItems.toString()}
           icon={AlertCircle}
-          variant={lowStockItems > 0 ? "warning" : "default"}
+          variant="warning"
         />
       </div>
 
       {/* Gráficos */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="shadow-md">
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="shadow-sm border rounded-xl">
           <CardHeader>
-            <CardTitle>Fluxo de Caixa</CardTitle>
-            <CardDescription>Evolução de entradas e saídas nos últimos 6 meses</CardDescription>
+            <CardTitle className="text-gray-900">Fluxo de Caixa</CardTitle>
+            <CardDescription className="text-gray-600">Evolução de entradas e saídas nos últimos 6 meses</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -150,10 +152,10 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-md">
+        <Card className="shadow-sm border rounded-xl">
           <CardHeader>
-            <CardTitle>Entradas vs Saídas</CardTitle>
-            <CardDescription>Comparativo do mês atual</CardDescription>
+            <CardTitle className="text-gray-900">Entradas vs Saídas</CardTitle>
+            <CardDescription className="text-gray-600">Comparativo do mês atual</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -176,10 +178,10 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-md md:col-span-2">
+        <Card className="shadow-sm border rounded-xl md:col-span-2">
           <CardHeader>
-            <CardTitle>Despesas por Categoria</CardTitle>
-            <CardDescription>Distribuição dos gastos do mês</CardDescription>
+            <CardTitle className="text-gray-900">Despesas por Categoria</CardTitle>
+            <CardDescription className="text-gray-600">Distribuição dos gastos do mês</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
             <ResponsiveContainer width="100%" height={300}>
