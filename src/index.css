@@ -68,6 +68,15 @@ All colors MUST be HSL.
     --sidebar-border: 45 100% 58%;
     --sidebar-ring: 0 0% 0%;
 
+    --brand: 45 100% 58%;
+    --brand-hover: 43 100% 48%;
+    --brand-foreground: 0 0% 10%;
+
+    --table-header: 45 100% 58%;
+    --table-header-foreground: 0 0% 10%;
+    --table-row-alt: 210 20% 98%;
+    --table-row-hover: 48 96% 89%;
+
     --chart-1: 217 91% 60%;
     --chart-2: 142 76% 36%;
     --chart-3: 0 84% 60%;
@@ -137,6 +146,15 @@ All colors MUST be HSL.
     --sidebar-accent-hover: 0 0% 0% / 0.15;
     --sidebar-border: 45 100% 58%;
     --sidebar-ring: 0 0% 0%;
+
+    --brand: 45 100% 58%;
+    --brand-hover: 43 100% 48%;
+    --brand-foreground: 0 0% 10%;
+
+    --table-header: 45 100% 58%;
+    --table-header-foreground: 0 0% 10%;
+    --table-row-alt: 210 20% 98%;
+    --table-row-hover: 48 96% 89%;
   }
 }
 

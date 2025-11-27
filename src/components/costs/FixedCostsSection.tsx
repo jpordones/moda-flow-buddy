@@ -42,12 +42,12 @@ export function FixedCostsSection({ custosFixos, onAdd, onUpdate, onDelete }: Fi
   };
 
   return (
-    <Card className="shadow-md">
-      <CardHeader>
+    <Card>
+      <CardHeader className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Custos Fixos Mensais</CardTitle>
-            <CardDescription>Despesas recorrentes do e-commerce</CardDescription>
+            <CardTitle className="text-gray-900">Custos Fixos Mensais</CardTitle>
+            <CardDescription className="text-gray-600">Despesas recorrentes do e-commerce</CardDescription>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -58,14 +58,14 @@ export function FixedCostsSection({ custosFixos, onAdd, onUpdate, onDelete }: Fi
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Novo Custo Fixo</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-gray-900">Novo Custo Fixo</DialogTitle>
+                <DialogDescription className="text-gray-600">
                   Adicione um novo custo fixo mensal ao sistema
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="nome">Nome do Custo</Label>
+                  <Label htmlFor="nome" className="text-gray-700 font-medium">Nome do Custo</Label>
                   <Input
                     id="nome"
                     value={novoNome}
@@ -74,7 +74,7 @@ export function FixedCostsSection({ custosFixos, onAdd, onUpdate, onDelete }: Fi
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="valor">Valor Mensal (R$)</Label>
+                  <Label htmlFor="valor" className="text-gray-700 font-medium">Valor Mensal (R$)</Label>
                   <Input
                     id="valor"
                     type="number"
@@ -86,12 +86,12 @@ export function FixedCostsSection({ custosFixos, onAdd, onUpdate, onDelete }: Fi
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="categoria">Categoria</Label>
+                  <Label htmlFor="categoria" className="text-gray-700 font-medium">Categoria</Label>
                   <select
                     id="categoria"
                     value={novaCategoria}
                     onChange={(e) => setNovaCategoria(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex h-10 w-full rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:border-brand transition-colors"
                   >
                     <option value="infraestrutura">Infraestrutura</option>
                     <option value="administrativo">Administrativo</option>
@@ -105,13 +105,13 @@ export function FixedCostsSection({ custosFixos, onAdd, onUpdate, onDelete }: Fi
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={handleAdd}>Adicionar</Button>
+                <Button variant="action" onClick={handleAdd}>Adicionar</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 p-6 pt-0">
         {custosFixos.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
             Nenhum custo fixo cadastrado
@@ -129,8 +129,8 @@ export function FixedCostsSection({ custosFixos, onAdd, onUpdate, onDelete }: Fi
               />
             ))}
             <div className="flex items-center justify-between pt-3 mt-3 border-t border-border">
-              <span className="text-lg font-semibold text-foreground">Total Mensal</span>
-              <span className="text-2xl font-bold text-primary">
+              <span className="text-lg font-semibold text-gray-900">Total Mensal</span>
+              <span className="text-2xl font-bold text-brand-foreground">
                 R$ {totalCustosFixos.toFixed(2)}
               </span>
             </div>

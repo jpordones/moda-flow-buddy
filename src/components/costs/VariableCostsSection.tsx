@@ -47,12 +47,12 @@ export function VariableCostsSection({ custosVariaveis, onAdd, onUpdate, onDelet
   };
 
   return (
-    <Card className="shadow-md">
-      <CardHeader>
+    <Card>
+      <CardHeader className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Custos Variáveis por Produto</CardTitle>
-            <CardDescription>Custos que variam com cada unidade vendida</CardDescription>
+            <CardTitle className="text-gray-900">Custos Variáveis por Produto</CardTitle>
+            <CardDescription className="text-gray-600">Custos que variam com cada unidade vendida</CardDescription>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -63,14 +63,14 @@ export function VariableCostsSection({ custosVariaveis, onAdd, onUpdate, onDelet
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Novo Custo Variável</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-gray-900">Novo Custo Variável</DialogTitle>
+                <DialogDescription className="text-gray-600">
                   Adicione um novo custo variável por produto
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="nome-var">Nome do Custo</Label>
+                  <Label htmlFor="nome-var" className="text-gray-700 font-medium">Nome do Custo</Label>
                   <Input
                     id="nome-var"
                     value={novoNome}
@@ -79,19 +79,19 @@ export function VariableCostsSection({ custosVariaveis, onAdd, onUpdate, onDelet
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="tipo">Tipo de Valor</Label>
+                  <Label htmlFor="tipo" className="text-gray-700 font-medium">Tipo de Valor</Label>
                   <select
                     id="tipo"
                     value={novoTipo}
                     onChange={(e) => setNovoTipo(e.target.value as 'monetario' | 'percentual')}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex h-10 w-full rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:border-brand transition-colors"
                   >
                     <option value="monetario">Valor Fixo (R$)</option>
                     <option value="percentual">Percentual (%)</option>
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="valor-var">
+                  <Label htmlFor="valor-var" className="text-gray-700 font-medium">
                     {novoTipo === 'monetario' ? 'Valor (R$)' : 'Percentual (%)'}
                   </Label>
                   <Input
@@ -105,12 +105,12 @@ export function VariableCostsSection({ custosVariaveis, onAdd, onUpdate, onDelet
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="categoria-var">Categoria</Label>
+                  <Label htmlFor="categoria-var" className="text-gray-700 font-medium">Categoria</Label>
                   <select
                     id="categoria-var"
                     value={novaCategoria}
                     onChange={(e) => setNovaCategoria(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex h-10 w-full rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:border-brand transition-colors"
                   >
                     <option value="producao">Produção</option>
                     <option value="financeiro">Financeiro</option>
@@ -126,13 +126,13 @@ export function VariableCostsSection({ custosVariaveis, onAdd, onUpdate, onDelet
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={handleAdd}>Adicionar</Button>
+                <Button variant="action" onClick={handleAdd}>Adicionar</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 p-6 pt-0">
         {custosVariaveis.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
             Nenhum custo variável cadastrado
@@ -152,10 +152,10 @@ export function VariableCostsSection({ custosVariaveis, onAdd, onUpdate, onDelet
               />
             ))}
             <div className="flex items-center justify-between pt-3 mt-3 border-t border-border">
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-gray-600">
                 Custos Monetários Base
               </span>
-              <span className="text-lg font-semibold text-foreground">
+              <span className="text-lg font-semibold text-gray-900">
                 R$ {custosMonetarios.toFixed(2)}
               </span>
             </div>
