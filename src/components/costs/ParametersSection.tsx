@@ -11,14 +11,14 @@ interface ParametersSectionProps {
 
 export function ParametersSection({ parametros, onUpdate }: ParametersSectionProps) {
   return (
-    <Card className="shadow-md">
-      <CardHeader>
-        <CardTitle>Parâmetros de Cálculo</CardTitle>
-        <CardDescription>Configure os parâmetros para calcular o preço ideal</CardDescription>
+    <Card>
+      <CardHeader className="p-6">
+        <CardTitle className="text-gray-900">Parâmetros de Cálculo</CardTitle>
+        <CardDescription className="text-gray-600">Configure os parâmetros para calcular o preço ideal</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 p-6 pt-0">
         <div className="space-y-2">
-          <Label htmlFor="media-vendas">Média de Peças Vendidas por Mês</Label>
+          <Label htmlFor="media-vendas" className="text-gray-700 font-medium">Média de Peças Vendidas por Mês</Label>
           <Input
             id="media-vendas"
             type="number"
@@ -27,15 +27,15 @@ export function ParametersSection({ parametros, onUpdate }: ParametersSectionPro
             min="1"
             className="text-lg"
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-gray-600">
             Usado para calcular o custo fixo por peça
           </p>
         </div>
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label htmlFor="margem-lucro">Margem de Lucro Desejada</Label>
-            <span className="text-lg font-semibold text-primary">{parametros.margemLucro}%</span>
+            <Label htmlFor="margem-lucro" className="text-gray-700 font-medium">Margem de Lucro Desejada</Label>
+            <span className="text-lg font-semibold text-brand-foreground">{parametros.margemLucro}%</span>
           </div>
           <Slider
             id="margem-lucro"
@@ -46,15 +46,15 @@ export function ParametersSection({ parametros, onUpdate }: ParametersSectionPro
             step={1}
             className="w-full"
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-gray-600">
             Percentual de lucro sobre o preço de venda
           </p>
         </div>
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label htmlFor="margem-premium">Margem Premium</Label>
-            <span className="text-lg font-semibold text-primary">{parametros.margemPremium}%</span>
+            <Label htmlFor="margem-premium" className="text-gray-700 font-medium">Margem Premium</Label>
+            <span className="text-lg font-semibold text-brand-foreground">{parametros.margemPremium}%</span>
           </div>
           <Slider
             id="margem-premium"
@@ -65,7 +65,7 @@ export function ParametersSection({ parametros, onUpdate }: ParametersSectionPro
             step={1}
             className="w-full"
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-gray-600">
             Margem para posicionamento premium da marca
           </p>
         </div>

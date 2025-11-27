@@ -115,8 +115,8 @@ export default function CashFlow() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Fluxo de Caixa</h1>
-          <p className="text-muted-foreground">Gerencie suas entradas e saídas financeiras</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Fluxo de Caixa</h1>
+          <p className="text-gray-600">Gerencie suas entradas e saídas financeiras</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -128,14 +128,14 @@ export default function CashFlow() {
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Registrar Transação</DialogTitle>
-              <DialogDescription>Adicione uma nova entrada ou saída financeira</DialogDescription>
+              <DialogTitle className="text-gray-900">Registrar Transação</DialogTitle>
+              <DialogDescription className="text-gray-600">Adicione uma nova entrada ou saída financeira</DialogDescription>
             </DialogHeader>
             
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="date">Data</Label>
+                  <Label htmlFor="date" className="text-gray-700 font-medium">Data</Label>
                   <Input
                     id="date"
                     type="date"
@@ -146,7 +146,7 @@ export default function CashFlow() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="type">Tipo</Label>
+                  <Label htmlFor="type" className="text-gray-700 font-medium">Tipo</Label>
                   <Select value={formData.type} onValueChange={(value: "entrada" | "saida") => setFormData({ ...formData, type: value, category: "" })}>
                     <SelectTrigger>
                       <SelectValue />
@@ -160,7 +160,7 @@ export default function CashFlow() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="value">Valor</Label>
+                <Label htmlFor="value" className="text-gray-700 font-medium">Valor</Label>
                 <Input
                   id="value"
                   type="number"
@@ -173,7 +173,7 @@ export default function CashFlow() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="category">Categoria</Label>
+                <Label htmlFor="category" className="text-gray-700 font-medium">Categoria</Label>
                 <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione uma categoria" />
@@ -187,7 +187,7 @@ export default function CashFlow() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="paymentMethod">Forma de Pagamento</Label>
+                <Label htmlFor="paymentMethod" className="text-gray-700 font-medium">Forma de Pagamento</Label>
                 <Select value={formData.paymentMethod} onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
@@ -201,7 +201,7 @@ export default function CashFlow() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
+                <Label htmlFor="description" className="text-gray-700 font-medium">Descrição</Label>
                 <Input
                   id="description"
                   placeholder="Descrição da transação"
@@ -211,40 +211,51 @@ export default function CashFlow() {
                 />
               </div>
 
-              <Button type="submit" className="w-full">Registrar Transação</Button>
+              <Button type="submit" variant="action" className="w-full">Registrar Transação</Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
       {/* Resumo */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="shadow-md bg-gradient-to-br from-success/10 to-success/5 border-success/20">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total de Entradas</CardTitle>
-            <TrendingUp className="h-4 w-4 text-success" />
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+            <CardTitle className="text-sm font-medium text-gray-600">Total de Entradas</CardTitle>
+            <div className="p-2 rounded-lg bg-success-light">
+              <TrendingUp className="h-5 w-5 text-success" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">R$ {totalIncome.toFixed(2)}</div>
+          <CardContent className="p-6 pt-0">
+            <div className="text-3xl font-bold text-success">R$ {totalIncome.toFixed(2)}</div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-md bg-gradient-to-br from-danger/10 to-danger/5 border-danger/20">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total de Saídas</CardTitle>
-            <TrendingDown className="h-4 w-4 text-danger" />
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+            <CardTitle className="text-sm font-medium text-gray-600">Total de Saídas</CardTitle>
+            <div className="p-2 rounded-lg bg-danger-light">
+              <TrendingDown className="h-5 w-5 text-danger" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-danger">R$ {totalExpense.toFixed(2)}</div>
+          <CardContent className="p-6 pt-0">
+            <div className="text-3xl font-bold text-danger">R$ {totalExpense.toFixed(2)}</div>
           </CardContent>
         </Card>
 
-        <Card className={`shadow-md ${balance >= 0 ? 'bg-gradient-to-br from-success/10 to-success/5 border-success/20' : 'bg-gradient-to-br from-danger/10 to-danger/5 border-danger/20'}`}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Saldo</CardTitle>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+            <CardTitle className="text-sm font-medium text-gray-600">Saldo</CardTitle>
+            <div className={`p-2 rounded-lg ${balance >= 0 ? 'bg-success-light' : 'bg-danger-light'}`}>
+              {balance >= 0 ? (
+                <TrendingUp className="h-5 w-5 text-success" />
+              ) : (
+                <TrendingDown className="h-5 w-5 text-danger" />
+              )}
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${balance >= 0 ? 'text-success' : 'text-danger'}`}>
+          <CardContent className="p-6 pt-0">
+            <div className={`text-3xl font-bold ${balance >= 0 ? 'text-success' : 'text-danger'}`}>
               R$ {balance.toFixed(2)}
             </div>
           </CardContent>
@@ -252,12 +263,12 @@ export default function CashFlow() {
       </div>
 
       {/* Filtros e busca */}
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle>Histórico de Transações</CardTitle>
-          <CardDescription>Visualize e gerencie todas as suas transações</CardDescription>
+      <Card>
+        <CardHeader className="p-6">
+          <CardTitle className="text-gray-900">Histórico de Transações</CardTitle>
+          <CardDescription className="text-gray-600">Visualize e gerencie todas as suas transações</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 p-6 pt-0">
           <div className="flex gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -280,7 +291,7 @@ export default function CashFlow() {
             </Select>
           </div>
 
-          <div className="rounded-md border">
+          <div className="rounded-xl border overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -305,7 +316,7 @@ export default function CashFlow() {
                     <TableRow key={transaction.id}>
                       <TableCell>{new Date(transaction.date).toLocaleDateString('pt-BR')}</TableCell>
                       <TableCell>
-                        <Badge variant={transaction.type === "entrada" ? "default" : "destructive"}>
+                        <Badge variant={transaction.type === "entrada" ? "success" : "danger"}>
                           {transaction.type === "entrada" ? "Entrada" : "Saída"}
                         </Badge>
                       </TableCell>
@@ -320,7 +331,7 @@ export default function CashFlow() {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleDelete(transaction.id)}
-                          className="h-8 w-8"
+                          className="h-8 w-8 hover:bg-danger-light hover:text-danger"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

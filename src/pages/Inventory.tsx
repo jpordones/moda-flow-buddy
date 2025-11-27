@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Search, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Search, Trash2, AlertTriangle, Package, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
 interface Product {
@@ -108,12 +108,18 @@ export default function Inventory() {
   const totalValue = products.reduce((sum, p) => sum + (p.quantity * p.salePrice), 0);
   const lowStockItems = products.filter(p => p.quantity < 10).length;
 
+  const getStockStatus = (quantity: number) => {
+    if (quantity === 0) return { variant: "danger" as const, label: "Sem estoque" };
+    if (quantity < 10) return { variant: "warning" as const, label: "Estoque baixo" };
+    return { variant: "success" as const, label: "Em estoque" };
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Estoque</h1>
-          <p className="text-muted-foreground">Gerencie seus produtos e inventário</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Estoque</h1>
+          <p className="text-gray-600">Gerencie seus produtos e inventário</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -125,14 +131,14 @@ export default function Inventory() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Cadastrar Produto</DialogTitle>
-              <DialogDescription>Adicione um novo produto ao estoque</DialogDescription>
+              <DialogTitle className="text-gray-900">Cadastrar Produto</DialogTitle>
+              <DialogDescription className="text-gray-600">Adicione um novo produto ao estoque</DialogDescription>
             </DialogHeader>
             
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nome do Produto</Label>
+                  <Label htmlFor="name" className="text-gray-700 font-medium">Nome do Produto</Label>
                   <Input
                     id="name"
                     placeholder="Ex: Camiseta Básica"
@@ -143,7 +149,7 @@ export default function Inventory() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="sku">Código/SKU</Label>
+                  <Label htmlFor="sku" className="text-gray-700 font-medium">Código/SKU</Label>
                   <Input
                     id="sku"
                     placeholder="Ex: CAM-001"
@@ -156,7 +162,7 @@ export default function Inventory() {
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="category">Categoria</Label>
+                  <Label htmlFor="category" className="text-gray-700 font-medium">Categoria</Label>
                   <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
@@ -170,7 +176,7 @@ export default function Inventory() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="size">Tamanho</Label>
+                  <Label htmlFor="size" className="text-gray-700 font-medium">Tamanho</Label>
                   <Select value={formData.size} onValueChange={(value) => setFormData({ ...formData, size: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
@@ -184,7 +190,7 @@ export default function Inventory() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="color">Cor</Label>
+                  <Label htmlFor="color" className="text-gray-700 font-medium">Cor</Label>
                   <Select value={formData.color} onValueChange={(value) => setFormData({ ...formData, color: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
@@ -200,7 +206,7 @@ export default function Inventory() {
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="quantity">Quantidade</Label>
+                  <Label htmlFor="quantity" className="text-gray-700 font-medium">Quantidade</Label>
                   <Input
                     id="quantity"
                     type="number"
@@ -213,7 +219,7 @@ export default function Inventory() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="costPrice">Preço de Custo</Label>
+                  <Label htmlFor="costPrice" className="text-gray-700 font-medium">Preço de Custo</Label>
                   <Input
                     id="costPrice"
                     type="number"
@@ -226,7 +232,7 @@ export default function Inventory() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="salePrice">Preço de Venda</Label>
+                  <Label htmlFor="salePrice" className="text-gray-700 font-medium">Preço de Venda</Label>
                   <Input
                     id="salePrice"
                     type="number"
@@ -239,49 +245,58 @@ export default function Inventory() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full">Cadastrar Produto</Button>
+              <Button type="submit" variant="action" className="w-full">Cadastrar Produto</Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
       {/* Resumo */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="shadow-md">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total de Produtos</CardTitle>
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+            <CardTitle className="text-sm font-medium text-gray-600">Total de Produtos</CardTitle>
+            <div className="p-2 rounded-lg bg-info-light">
+              <Package className="h-5 w-5 text-info" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalStock}</div>
+          <CardContent className="p-6 pt-0">
+            <div className="text-3xl font-bold text-gray-900">{totalStock}</div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-md">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Valor Total do Estoque</CardTitle>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+            <CardTitle className="text-sm font-medium text-gray-600">Valor Total do Estoque</CardTitle>
+            <div className="p-2 rounded-lg bg-indigo-light">
+              <DollarSign className="h-5 w-5 text-indigo" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">R$ {totalValue.toFixed(2)}</div>
+          <CardContent className="p-6 pt-0">
+            <div className="text-3xl font-bold text-gray-900">R$ {totalValue.toFixed(2)}</div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-md bg-gradient-to-br from-warning/10 to-warning/5 border-warning/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Estoque Baixo</CardTitle>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+            <CardTitle className="text-sm font-medium text-gray-600">Estoque Baixo</CardTitle>
+            <div className="p-2 rounded-lg bg-warning-light">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-warning">{lowStockItems} itens</div>
+          <CardContent className="p-6 pt-0">
+            <div className="text-3xl font-bold text-warning">{lowStockItems} itens</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Lista de produtos */}
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle>Produtos</CardTitle>
-          <CardDescription>Lista completa de produtos em estoque</CardDescription>
+      <Card>
+        <CardHeader className="p-6">
+          <CardTitle className="text-gray-900">Produtos</CardTitle>
+          <CardDescription className="text-gray-600">Lista completa de produtos em estoque</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 p-6 pt-0">
           <div className="flex gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -305,7 +320,7 @@ export default function Inventory() {
             </Select>
           </div>
 
-          <div className="rounded-md border">
+          <div className="rounded-xl border overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -314,6 +329,7 @@ export default function Inventory() {
                   <TableHead>Categoria</TableHead>
                   <TableHead>Tamanho</TableHead>
                   <TableHead>Cor</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Quantidade</TableHead>
                   <TableHead>Preço de Custo</TableHead>
                   <TableHead>Preço de Venda</TableHead>
@@ -323,40 +339,50 @@ export default function Inventory() {
               <TableBody>
                 {filteredProducts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                       Nenhum produto encontrado
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredProducts.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell className="font-mono text-sm">{product.sku}</TableCell>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell>{product.category}</TableCell>
-                      <TableCell>{product.size}</TableCell>
-                      <TableCell>{product.color}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className={product.quantity < 10 ? "text-warning font-medium" : ""}>
-                            {product.quantity}
-                          </span>
-                          {product.quantity < 10 && <AlertTriangle className="h-4 w-4 text-warning" />}
-                        </div>
-                      </TableCell>
-                      <TableCell>R$ {product.costPrice.toFixed(2)}</TableCell>
-                      <TableCell className="font-medium">R$ {product.salePrice.toFixed(2)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(product.id)}
-                          className="h-8 w-8"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  filteredProducts.map((product) => {
+                    const stockStatus = getStockStatus(product.quantity);
+                    return (
+                      <TableRow key={product.id}>
+                        <TableCell className="font-mono text-sm">{product.sku}</TableCell>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell>{product.category}</TableCell>
+                        <TableCell>{product.size}</TableCell>
+                        <TableCell>{product.color}</TableCell>
+                        <TableCell>
+                          <Badge variant={stockStatus.variant}>
+                            {stockStatus.label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span className={product.quantity < 10 ? "text-warning font-medium" : ""}>
+                              {product.quantity}
+                            </span>
+                            {product.quantity < 10 && product.quantity > 0 && (
+                              <AlertTriangle className="h-4 w-4 text-warning" />
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>R$ {product.costPrice.toFixed(2)}</TableCell>
+                        <TableCell className="font-medium">R$ {product.salePrice.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(product.id)}
+                            className="h-8 w-8 hover:bg-danger-light hover:text-danger"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

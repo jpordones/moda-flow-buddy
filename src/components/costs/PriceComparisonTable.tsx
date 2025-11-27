@@ -35,22 +35,22 @@ export function PriceComparisonTable({ resultados }: PriceComparisonTableProps) 
   ];
 
   return (
-    <Card className="shadow-md">
-      <CardHeader>
-        <CardTitle>Comparação de Cenários de Preço</CardTitle>
-        <CardDescription>
+    <Card>
+      <CardHeader className="p-6">
+        <CardTitle className="text-gray-900">Comparação de Cenários de Preço</CardTitle>
+        <CardDescription className="text-gray-600">
           Análise comparativa entre diferentes estratégias de precificação
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="rounded-lg border border-border overflow-hidden">
+      <CardContent className="p-6 pt-0">
+        <div className="rounded-xl border overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="font-semibold">Cenário</TableHead>
-                <TableHead className="font-semibold text-right">Preço de Venda</TableHead>
-                <TableHead className="font-semibold text-right">Lucro/Peça</TableHead>
-                <TableHead className="font-semibold text-right">Margem %</TableHead>
+              <TableRow>
+                <TableHead>Cenário</TableHead>
+                <TableHead className="text-right">Preço de Venda</TableHead>
+                <TableHead className="text-right">Lucro/Peça</TableHead>
+                <TableHead className="text-right">Margem %</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -59,27 +59,27 @@ export function PriceComparisonTable({ resultados }: PriceComparisonTableProps) 
                   key={index}
                   className={
                     cenario.variant === 'success' 
-                      ? 'bg-success/5 hover:bg-success/10' 
+                      ? 'bg-success-light/50 hover:bg-success-light' 
                       : cenario.variant === 'danger'
-                      ? 'bg-danger/5 hover:bg-danger/10'
-                      : 'hover:bg-muted/50'
+                      ? 'bg-danger-light/50 hover:bg-danger-light'
+                      : ''
                   }
                 >
                   <TableCell>
                     <div>
-                      <p className="font-semibold text-foreground">{cenario.nome}</p>
-                      <p className="text-xs text-muted-foreground">{cenario.description}</p>
+                      <p className="font-semibold text-gray-900">{cenario.nome}</p>
+                      <p className="text-xs text-gray-600">{cenario.description}</p>
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <span className="text-lg font-bold text-foreground">
+                    <span className="text-lg font-bold text-gray-900">
                       R$ {cenario.preco.toFixed(2)}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
                     <span 
                       className={`text-lg font-semibold ${
-                        cenario.lucro > 0 ? 'text-success' : 'text-muted-foreground'
+                        cenario.lucro > 0 ? 'text-success' : 'text-gray-600'
                       }`}
                     >
                       R$ {cenario.lucro.toFixed(2)}
@@ -88,7 +88,7 @@ export function PriceComparisonTable({ resultados }: PriceComparisonTableProps) 
                   <TableCell className="text-right">
                     <span 
                       className={`text-lg font-semibold ${
-                        cenario.margem > 0 ? 'text-success' : 'text-muted-foreground'
+                        cenario.margem > 0 ? 'text-success' : 'text-gray-600'
                       }`}
                     >
                       {cenario.margem.toFixed(1)}%
@@ -100,9 +100,9 @@ export function PriceComparisonTable({ resultados }: PriceComparisonTableProps) 
           </Table>
         </div>
 
-        <div className="mt-4 p-4 bg-muted/30 rounded-lg border border-border">
-          <p className="text-sm text-muted-foreground">
-            <strong className="text-foreground">Nota:</strong> O cenário "Ideal" é calculado com base nos custos reais 
+        <div className="mt-4 p-4 bg-warning-light/30 rounded-xl border border-warning/20">
+          <p className="text-sm text-gray-700">
+            <strong className="text-gray-900">Nota:</strong> O cenário "Ideal" é calculado com base nos custos reais 
             e na margem de lucro desejada. Custos percentuais (taxas, impostos) são aplicados sobre o preço de venda.
           </p>
         </div>
