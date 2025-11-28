@@ -83,6 +83,11 @@ All colors MUST be HSL.
     --chart-4: 38 92% 50%;
     --chart-5: 280 65% 60%;
 
+    --footer: 0 0% 10%;
+    --footer-foreground: 0 0% 100%;
+    --footer-muted: 0 0% 70%;
+    --footer-border: 0 0% 20%;
+
     --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 91% 70%));
     --shadow-elevation: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
     --shadow-elevation-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -155,6 +160,11 @@ All colors MUST be HSL.
     --table-header-foreground: 0 0% 10%;
     --table-row-alt: 210 20% 98%;
     --table-row-hover: 48 96% 89%;
+
+    --footer: 0 0% 10%;
+    --footer-foreground: 0 0% 100%;
+    --footer-muted: 0 0% 70%;
+    --footer-border: 0 0% 20%;
   }
 }
 
