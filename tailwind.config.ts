@@ -94,6 +94,12 @@ export default {
           "row-alt": "hsl(var(--table-row-alt))",
           "row-hover": "hsl(var(--table-row-hover))",
         },
+        footer: {
+          DEFAULT: "hsl(var(--footer))",
+          foreground: "hsl(var(--footer-foreground))",
+          muted: "hsl(var(--footer-muted))",
+          border: "hsl(var(--footer-border))",
+        },
         chart: {
           1: "hsl(var(--chart-1))",
           2: "hsl(var(--chart-2))",
