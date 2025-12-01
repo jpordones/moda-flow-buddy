@@ -4,6 +4,7 @@ import { VariableCostsSection } from '@/components/costs/VariableCostsSection';
 import { ParametersSection } from '@/components/costs/ParametersSection';
 import { ResultsCards } from '@/components/costs/ResultsCards';
 import { PriceComparisonTable } from '@/components/costs/PriceComparisonTable';
+import { CostBreakdownChart } from '@/components/costs/CostBreakdownChart';
 import { ExportButtons } from '@/components/costs/ExportButtons';
 
 export default function Costs() {
@@ -23,10 +24,15 @@ export default function Costs() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Custos & Precificação</h1>
-          <p className="text-gray-600">Sistema inteligente de precificação LAMAR</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            Custos & Precificação
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Sistema inteligente de precificação LAMAR
+          </p>
         </div>
         <ExportButtons
           custosFixos={custosFixos}
@@ -40,7 +46,7 @@ export default function Costs() {
       <ResultsCards resultados={resultados} />
 
       {/* Grid Principal */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Coluna Esquerda - Inputs */}
         <div className="space-y-6">
           <FixedCostsSection
@@ -58,12 +64,14 @@ export default function Costs() {
           />
         </div>
 
-        {/* Coluna Direita - Parâmetros e Comparação */}
+        {/* Coluna Direita - Parâmetros, Gráfico e Comparação */}
         <div className="space-y-6">
           <ParametersSection
             parametros={parametros}
             onUpdate={atualizarParametros}
           />
+          
+          <CostBreakdownChart resultados={resultados} />
           
           <PriceComparisonTable resultados={resultados} />
         </div>
