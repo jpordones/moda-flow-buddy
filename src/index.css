@@ -72,10 +72,6 @@ All colors MUST be HSL.
     --brand-hover: 43 100% 48%;
     --brand-foreground: 0 0% 10%;
 
-    --header-bg: 45 100% 95%;
-    --header-foreground: 0 0% 10%;
-    --header-border: 45 50% 85%;
-
     --table-header: 45 100% 58%;
     --table-header-foreground: 0 0% 10%;
     --table-row-alt: 210 20% 98%;
@@ -159,10 +155,6 @@ All colors MUST be HSL.
     --brand: 45 100% 58%;
     --brand-hover: 43 100% 48%;
     --brand-foreground: 0 0% 10%;
-
-    --header-bg: 45 100% 95%;
-    --header-foreground: 0 0% 10%;
-    --header-border: 45 50% 85%;
 
     --table-header: 45 100% 58%;
     --table-header-foreground: 0 0% 10%;

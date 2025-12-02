@@ -88,11 +88,6 @@ export default {
           hover: "hsl(var(--brand-hover))",
           foreground: "hsl(var(--brand-foreground))",
         },
-        header: {
-          bg: "hsl(var(--header-bg))",
-          foreground: "hsl(var(--header-foreground))",
-          border: "hsl(var(--header-border))",
-        },
         table: {
           header: "hsl(var(--table-header))",
           "header-foreground": "hsl(var(--table-header-foreground))",
