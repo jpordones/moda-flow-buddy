@@ -25,7 +25,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 flex h-16 items-center justify-between gap-4 border-b border-brand-hover bg-brand px-6 shadow-sm">
+    <header className="sticky top-0 z-50 flex h-16 items-center justify-between gap-4 border-b border-header-border bg-header-bg px-6 shadow-sm">
       {/* Left Section */}
       <div className="flex items-center gap-4">
         <SidebarTrigger />
@@ -34,11 +34,11 @@ export function Header() {
       {/* Center Section - Search */}
       <div className="flex-1 max-w-md">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-600" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
             placeholder="Buscar produtos, transações..."
-            className="pl-10 bg-white border-gray-300"
+            className="pl-10 bg-white border-border"
           />
         </div>
       </div>
@@ -48,8 +48,8 @@ export function Header() {
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative text-brand-foreground hover:bg-brand-hover">
-              <Bell className="h-5 w-5 text-brand-foreground" />
+            <Button variant="ghost" size="icon" className="relative text-header-foreground hover:bg-white/50">
+              <Bell className="h-5 w-5 text-header-foreground" />
               {notificationCount > 0 && (
                 <Badge 
                   variant="danger" 
@@ -83,17 +83,17 @@ export function Header() {
 
         {/* Daily Balance */}
         <div className="hidden md:flex flex-col items-end">
-          <span className="text-xs text-brand-foreground/70">Saldo do dia</span>
-          <span className="font-bold text-green-700">R$ 0,00</span>
+          <span className="text-xs text-header-foreground/70">Saldo do dia</span>
+          <span className="font-bold text-success">R$ 0,00</span>
         </div>
 
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-brand-hover">
+            <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-white/50">
               <Avatar className="h-9 w-9">
                 <AvatarImage src="/placeholder.svg" alt="Avatar" />
-                <AvatarFallback className="bg-brand text-brand-foreground">U</AvatarFallback>
+                <AvatarFallback className="bg-white text-header-foreground">U</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
@@ -101,7 +101,7 @@ export function Header() {
             <div className="flex items-center gap-2 p-3 border-b">
               <Avatar className="h-10 w-10">
                 <AvatarImage src="/placeholder.svg" alt="Avatar" />
-                <AvatarFallback className="bg-brand text-brand-foreground">U</AvatarFallback>
+                <AvatarFallback className="bg-header-bg text-header-foreground">U</AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
                 <span className="font-medium">Usuário</span>
@@ -129,7 +129,7 @@ export function Header() {
         </DropdownMenu>
 
         {/* Dark Mode Toggle */}
-        <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="text-brand-foreground hover:bg-brand-hover">
+        <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="text-header-foreground hover:bg-white/50">
           {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </Button>
       </div>
