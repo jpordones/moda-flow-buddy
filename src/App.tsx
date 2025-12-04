@@ -9,6 +9,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import Dashboard from "./pages/Dashboard";
 import CashFlow from "./pages/CashFlow";
+import Products from "./pages/Products";
 import Inventory from "./pages/Inventory";
 import Costs from "./pages/Costs";
 import Settings from "./pages/Settings";
@@ -31,6 +32,7 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/fluxo-caixa" element={<CashFlow />} />
+                  <Route path="/produtos" element={<Products />} />
                   <Route path="/estoque" element={<Inventory />} />
                   <Route path="/custos" element={<Costs />} />
                   <Route path="/configuracoes" element={<Settings />} />
