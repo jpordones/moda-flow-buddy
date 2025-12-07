@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Search, Sun, Moon, User, Settings, HelpCircle, LogOut, Menu, X } from "lucide-react";
+import { Bell, Search, Sun, Moon, User, Settings, HelpCircle, LogOut, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import fedcomLogo from "@/assets/FEDCOM.svg";
 
 export function Header() {
@@ -21,10 +22,26 @@ export function Header() {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const navigate = useNavigate();
   const { isMobile } = useSidebar();
+  const { user, profile, signOut } = useAuth();
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
     document.documentElement.classList.toggle("dark");
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
+  };
+
+  const getInitials = () => {
+    if (profile?.full_name) {
+      return profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    }
+    if (user?.email) {
+      return user.email[0].toUpperCase();
+    }
+    return 'U';
   };
 
   return (
@@ -113,25 +130,25 @@ export function Header() {
 
           {/* User Menu */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-sidebar-accent p-0">
-                <Avatar className="h-9 w-9 border-2 border-header-foreground/20">
-                  <AvatarImage src="/placeholder.svg" alt="Avatar" />
-                  <AvatarFallback className="bg-brand text-brand-foreground font-semibold">U</AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64">
-              <div className="flex items-center gap-3 p-4 border-b">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src="/placeholder.svg" alt="Avatar" />
-                  <AvatarFallback className="bg-brand text-brand-foreground font-semibold">U</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <span className="font-semibold text-foreground">Usuário</span>
-                  <span className="text-sm text-muted-foreground">usuario@email.com</span>
-                </div>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-sidebar-accent p-0">
+              <Avatar className="h-9 w-9 border-2 border-header-foreground/20">
+                <AvatarImage src={profile?.logo_url || "/placeholder.svg"} alt="Avatar" />
+                <AvatarFallback className="bg-brand text-brand-foreground font-semibold">{getInitials()}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64">
+            <div className="flex items-center gap-3 p-4 border-b">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={profile?.logo_url || "/placeholder.svg"} alt="Avatar" />
+                <AvatarFallback className="bg-brand text-brand-foreground font-semibold">{getInitials()}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="font-semibold text-foreground">{profile?.full_name || 'Usuário'}</span>
+                <span className="text-sm text-muted-foreground">{user?.email}</span>
               </div>
+            </div>
               
               {/* Mobile Balance */}
               <div className="lg:hidden p-3 border-b">
@@ -154,11 +171,11 @@ export function Header() {
                 <span>Ajuda</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-3 p-3 text-danger cursor-pointer">
-                <LogOut className="h-4 w-4" />
-                <span>Sair</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
+            <DropdownMenuItem onClick={handleSignOut} className="gap-3 p-3 text-danger cursor-pointer">
+              <LogOut className="h-4 w-4" />
+              <span>Sair</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
           </DropdownMenu>
 
           {/* Dark Mode Toggle */}
