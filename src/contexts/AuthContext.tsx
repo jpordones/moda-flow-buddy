@@ -14,6 +14,7 @@ interface Profile {
   default_margin: number;
   monthly_sales_goal: number;
   onboarding_completed: boolean;
+  current_team_id: string | null;
 }
 
 interface AuthContextType {
