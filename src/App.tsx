@@ -16,6 +16,7 @@ import Inventory from "./pages/Inventory";
 import Costs from "./pages/Costs";
 import Settings from "./pages/Settings";
 import Plans from "./pages/Plans";
+import Team from "./pages/Team";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
@@ -104,6 +105,13 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <Plans />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/equipe" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Team />
                 </AppLayout>
               </ProtectedRoute>
             } />

@@ -1,4 +1,4 @@
-import { LayoutDashboard, TrendingUp, Package, ShoppingBag, Calculator, Settings, X, Crown } from "lucide-react";
+import { LayoutDashboard, TrendingUp, Package, ShoppingBag, Calculator, Settings, X, Crown, Users } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import fedcomLogo from "@/assets/FEDCOM.svg";
 import {
@@ -21,6 +21,7 @@ const menuItems = [
   { title: "Produtos", url: "/produtos", icon: ShoppingBag },
   { title: "Estoque", url: "/estoque", icon: Package },
   { title: "Custos & Precificação", url: "/custos", icon: Calculator },
+  { title: "Equipe", url: "/equipe", icon: Users },
   { title: "Planos", url: "/planos", icon: Crown },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
