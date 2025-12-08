@@ -15,6 +15,7 @@ import Products from "./pages/Products";
 import Inventory from "./pages/Inventory";
 import Costs from "./pages/Costs";
 import Settings from "./pages/Settings";
+import Plans from "./pages/Plans";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
@@ -96,6 +97,13 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <Settings />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/planos" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Plans />
                 </AppLayout>
               </ProtectedRoute>
             } />

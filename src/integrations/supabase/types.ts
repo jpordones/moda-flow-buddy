@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      plans: {
+        Row: {
+          created_at: string
+          has_cash_flow: boolean
+          has_export_excel: boolean
+          has_export_pdf: boolean
+          has_multi_users: boolean
+          has_priority_support: boolean
+          has_reports: boolean
+          has_stock_management: boolean
+          id: string
+          max_cost_analyses: number
+          max_products: number
+          max_users: number
+          name: string
+          price: number
+          type: Database["public"]["Enums"]["plan_type"]
+        }
+        Insert: {
+          created_at?: string
+          has_cash_flow?: boolean
+          has_export_excel?: boolean
+          has_export_pdf?: boolean
+          has_multi_users?: boolean
+          has_priority_support?: boolean
+          has_reports?: boolean
+          has_stock_management?: boolean
+          id?: string
+          max_cost_analyses?: number
+          max_products?: number
+          max_users?: number
+          name: string
+          price?: number
+          type: Database["public"]["Enums"]["plan_type"]
+        }
+        Update: {
+          created_at?: string
+          has_cash_flow?: boolean
+          has_export_excel?: boolean
+          has_export_pdf?: boolean
+          has_multi_users?: boolean
+          has_priority_support?: boolean
+          has_reports?: boolean
+          has_stock_management?: boolean
+          id?: string
+          max_cost_analyses?: number
+          max_products?: number
+          max_users?: number
+          name?: string
+          price?: number
+          type?: Database["public"]["Enums"]["plan_type"]
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           company_document: string | null
@@ -59,15 +113,77 @@ export type Database = {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          cancelled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string
+          id: string
+          plan_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string
+          id?: string
+          plan_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string
+          id?: string
+          plan_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_plan: {
+        Args: { p_user_id: string }
+        Returns: {
+          has_cash_flow: boolean
+          has_export_excel: boolean
+          has_export_pdf: boolean
+          has_multi_users: boolean
+          has_priority_support: boolean
+          has_reports: boolean
+          has_stock_management: boolean
+          max_cost_analyses: number
+          max_products: number
+          max_users: number
+          plan_id: string
+          plan_name: string
+          plan_type: Database["public"]["Enums"]["plan_type"]
+          subscription_status: string
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      plan_type: "free" | "starter" | "professional" | "enterprise"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -194,6 +310,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      plan_type: ["free", "starter", "professional", "enterprise"],
+    },
   },
 } as const
