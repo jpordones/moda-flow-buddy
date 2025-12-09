@@ -99,7 +99,10 @@ export default function Dashboard() {
           value={totalStock.toString()}
           icon={Package}
           variant="info"
-          trend={{ value: `${lowStockItems} com estoque baixo`, positive: false }}
+          trend={products.length === 0 
+            ? { value: "Adicione produtos para ver métricas", positive: true }
+            : { value: `${lowStockItems} com estoque baixo`, positive: lowStockItems === 0 }
+          }
         />
       </div>
 
