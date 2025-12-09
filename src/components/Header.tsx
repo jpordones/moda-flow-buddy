@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell, Search, Sun, Moon, User, Settings, HelpCircle, LogOut, X, Crown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,12 @@ import { useSubscription } from "@/hooks/useSubscription";
 import fedcomLogo from "@/assets/FEDCOM.svg";
 
 export function Header() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false;
+  });
   const [notificationCount] = useState(3);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const navigate = useNavigate();
@@ -26,14 +31,38 @@ export function Header() {
   const { user, profile, signOut } = useAuth();
   const { currentPlan } = useSubscription();
 
+  useEffect(() => {
+    // Persist dark mode preference
+    const savedMode = localStorage.getItem('darkMode');
+    if (savedMode === 'true') {
+      document.documentElement.classList.add('dark');
+      setIsDarkMode(true);
+    }
+  }, []);
+
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
     document.documentElement.classList.toggle("dark");
+    localStorage.setItem('darkMode', String(newMode));
   };
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
+  };
+
+  const getCompanyInitial = () => {
+    if (profile?.company_name) {
+      return profile.company_name[0].toUpperCase();
+    }
+    if (profile?.full_name) {
+      return profile.full_name[0].toUpperCase();
+    }
+    if (user?.email) {
+      return user.email[0].toUpperCase();
+    }
+    return 'E';
   };
 
   const getInitials = () => {
@@ -151,24 +180,35 @@ export function Header() {
             <span className="text-xs font-medium">Plano {getPlanDisplayName()}</span>
           </Badge>
 
+          {/* Dark Mode Toggle */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleDarkMode} 
+            className="text-header-foreground hover:bg-sidebar-accent"
+            title={isDarkMode ? "Modo claro" : "Modo escuro"}
+          >
+            {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </Button>
+
           {/* User Menu */}
           <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-sidebar-accent p-0">
-              <Avatar className="h-9 w-9 border-2 border-header-foreground/20">
-                <AvatarImage src={profile?.logo_url || "/placeholder.svg"} alt="Avatar" />
-                <AvatarFallback className="bg-brand text-brand-foreground font-semibold">{getInitials()}</AvatarFallback>
+            <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-sidebar-accent p-0">
+              <Avatar className="h-10 w-10 border-2 border-amber-600/30">
+                <AvatarImage src={profile?.logo_url || ""} alt="Avatar" />
+                <AvatarFallback className="bg-amber-600 text-white font-bold text-lg">{getCompanyInitial()}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64">
             <div className="flex items-center gap-3 p-4 border-b">
               <Avatar className="h-12 w-12">
-                <AvatarImage src={profile?.logo_url || "/placeholder.svg"} alt="Avatar" />
-                <AvatarFallback className="bg-brand text-brand-foreground font-semibold">{getInitials()}</AvatarFallback>
+                <AvatarImage src={profile?.logo_url || ""} alt="Avatar" />
+                <AvatarFallback className="bg-amber-600 text-white font-bold text-lg">{getCompanyInitial()}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
-                <span className="font-semibold text-foreground">{profile?.full_name || 'Usuário'}</span>
+                <span className="font-semibold text-foreground">{profile?.company_name || profile?.full_name || 'Empresa'}</span>
                 <span className="text-sm text-muted-foreground">{user?.email}</span>
               </div>
             </div>
@@ -210,16 +250,6 @@ export function Header() {
             </DropdownMenuItem>
           </DropdownMenuContent>
           </DropdownMenu>
-
-          {/* Dark Mode Toggle */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={toggleDarkMode} 
-            className="text-header-foreground hover:bg-sidebar-accent"
-          >
-            {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </Button>
         </div>
       </div>
 
