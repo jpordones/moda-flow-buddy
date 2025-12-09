@@ -305,10 +305,28 @@ export default function CashFlow() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTransactions.length === 0 ? (
+                {filteredTransactions.length === 0 && transactions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="py-16">
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <span className="text-6xl mb-4">💰</span>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          Nenhuma transação registrada
+                        </h3>
+                        <p className="text-muted-foreground mb-4">
+                          Comece adicionando uma entrada ou saída financeira
+                        </p>
+                        <Button variant="action" className="gap-2" onClick={() => setIsDialogOpen(true)}>
+                          <Plus className="h-4 w-4" />
+                          Nova Transação
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredTransactions.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                      Nenhuma transação encontrada
+                      Nenhuma transação encontrada para o filtro atual
                     </TableCell>
                   </TableRow>
                 ) : (

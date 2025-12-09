@@ -113,9 +113,19 @@ export function FixedCostsSection({ custosFixos, onAdd, onUpdate, onDelete }: Fi
       </CardHeader>
       <CardContent className="space-y-3 p-6 pt-0">
         {custosFixos.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">
-            Nenhum custo fixo cadastrado
-          </p>
+          <div className="flex flex-col items-center justify-center text-center py-12 bg-muted/30 rounded-lg border-2 border-dashed border-muted">
+            <span className="text-5xl mb-4">📊</span>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Configure seus custos fixos
+            </h3>
+            <p className="text-muted-foreground mb-4 max-w-xs">
+              Adicione seus custos mensais para calcular preços ideais
+            </p>
+            <Button variant="action" size="sm" className="gap-2" onClick={() => setIsDialogOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Adicionar Custo Fixo
+            </Button>
+          </div>
         ) : (
           <>
             {custosFixos.map((custo) => (
