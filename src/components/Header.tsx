@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Search, Sun, Moon, User, Settings, HelpCircle, LogOut, X } from "lucide-react";
+import { Bell, Search, Sun, Moon, User, Settings, HelpCircle, LogOut, X, Crown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 import fedcomLogo from "@/assets/FEDCOM.svg";
 
 export function Header() {
@@ -23,6 +24,7 @@ export function Header() {
   const navigate = useNavigate();
   const { isMobile } = useSidebar();
   const { user, profile, signOut } = useAuth();
+  const { currentPlan } = useSubscription();
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -42,6 +44,17 @@ export function Header() {
       return user.email[0].toUpperCase();
     }
     return 'U';
+  };
+
+  const getPlanDisplayName = () => {
+    if (!currentPlan) return 'Free';
+    const planNames: Record<string, string> = {
+      free: 'Free',
+      starter: 'Starter',
+      professional: 'Pro',
+      enterprise: 'Enterprise'
+    };
+    return planNames[currentPlan.plan_type] || 'Free';
   };
 
   return (
@@ -121,12 +134,22 @@ export function Header() {
           </DropdownMenu>
 
           {/* Daily Balance - Desktop only */}
-          <div className="hidden lg:flex items-center">
+          <div className="hidden lg:flex items-center gap-2">
             <div className="balance-card">
               <span className="text-xs text-header-foreground/70">Saldo do dia</span>
               <span className="block font-bold text-success text-sm">R$ 0,00</span>
             </div>
           </div>
+
+          {/* Plan Badge - Click navigates to /planos */}
+          <Badge 
+            variant="outline" 
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 cursor-pointer hover:bg-muted/50 transition-colors border-amber-500/50 text-amber-600"
+            onClick={() => navigate("/planos")}
+          >
+            <Crown className="h-3.5 w-3.5" />
+            <span className="text-xs font-medium">Plano {getPlanDisplayName()}</span>
+          </Badge>
 
           {/* User Menu */}
           <DropdownMenu>
@@ -150,11 +173,21 @@ export function Header() {
               </div>
             </div>
               
-              {/* Mobile Balance */}
-              <div className="lg:hidden p-3 border-b">
+              {/* Mobile Balance & Plan */}
+              <div className="lg:hidden p-3 border-b space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Saldo do dia</span>
                   <span className="font-bold text-success">R$ 0,00</span>
+                </div>
+                <div 
+                  className="flex justify-between items-center cursor-pointer"
+                  onClick={() => navigate("/planos")}
+                >
+                  <span className="text-sm text-muted-foreground">Seu plano</span>
+                  <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-600">
+                    <Crown className="h-3 w-3 mr-1" />
+                    {getPlanDisplayName()}
+                  </Badge>
                 </div>
               </div>
 

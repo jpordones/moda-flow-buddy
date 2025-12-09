@@ -16,25 +16,82 @@ const planIcons: Record<PlanType, React.ReactNode> = {
 
 const planColors: Record<PlanType, string> = {
   free: 'from-slate-500 to-slate-600',
-  starter: 'from-blue-500 to-blue-600',
+  starter: 'from-amber-500 to-amber-600',
   professional: 'from-purple-500 to-purple-600',
-  enterprise: 'from-amber-500 to-amber-600'
+  enterprise: 'from-blue-500 to-blue-600'
 };
 
+// Static plan data matching the requirements
+const staticPlans = [
+  {
+    type: 'free' as PlanType,
+    name: 'Gratuito',
+    price: 0,
+    description: 'Para começar',
+    features: [
+      { text: '10 produtos', included: true },
+      { text: '1 usuário', included: true },
+      { text: 'Relatórios básicos', included: true },
+      { text: 'Suporte por email', included: true },
+    ]
+  },
+  {
+    type: 'starter' as PlanType,
+    name: 'Starter',
+    price: 49,
+    badge: 'Recomendado',
+    description: 'Para pequenos negócios',
+    features: [
+      { text: '100 produtos', included: true },
+      { text: '2 usuários', included: true },
+      { text: 'Relatórios completos', included: true },
+      { text: 'Exportação ilimitada', included: true },
+    ]
+  },
+  {
+    type: 'professional' as PlanType,
+    name: 'Professional',
+    price: 99,
+    badge: 'Mais Popular',
+    description: 'Para equipes em crescimento',
+    features: [
+      { text: 'Produtos ilimitados', included: true },
+      { text: '5 usuários', included: true },
+      { text: 'Previsão com IA', included: true },
+      { text: 'Integrações', included: true },
+      { text: 'Suporte prioritário', included: true },
+    ]
+  },
+  {
+    type: 'enterprise' as PlanType,
+    name: 'Enterprise',
+    price: 249,
+    description: 'Para grandes empresas',
+    features: [
+      { text: 'Tudo do Professional', included: true },
+      { text: 'Usuários ilimitados', included: true },
+      { text: 'Multi-lojas', included: true },
+      { text: 'API dedicada', included: true },
+      { text: 'White-label', included: true },
+    ]
+  }
+];
+
 const features: PlanFeature[] = [
-  { name: 'Produtos cadastrados', free: '5', starter: '25', professional: '100', enterprise: 'Ilimitado' },
-  { name: 'Análises de custo/mês', free: '10', starter: '50', professional: '200', enterprise: 'Ilimitado' },
-  { name: 'Exportar PDF', free: false, starter: true, professional: true, enterprise: true },
-  { name: 'Exportar Excel', free: false, starter: false, professional: true, enterprise: true },
-  { name: 'Gestão de estoque', free: false, starter: true, professional: true, enterprise: true },
-  { name: 'Fluxo de caixa', free: false, starter: false, professional: true, enterprise: true },
-  { name: 'Relatórios avançados', free: false, starter: false, professional: true, enterprise: true },
-  { name: 'Multi-usuários', free: false, starter: false, professional: '5 usuários', enterprise: 'Ilimitado' },
+  { name: 'Produtos cadastrados', free: '10', starter: '100', professional: 'Ilimitado', enterprise: 'Ilimitado' },
+  { name: 'Usuários', free: '1', starter: '2', professional: '5', enterprise: 'Ilimitado' },
+  { name: 'Relatórios', free: 'Básicos', starter: 'Completos', professional: 'Completos', enterprise: 'Completos' },
+  { name: 'Exportação', free: false, starter: true, professional: true, enterprise: true },
+  { name: 'Previsão com IA', free: false, starter: false, professional: true, enterprise: true },
+  { name: 'Integrações', free: false, starter: false, professional: true, enterprise: true },
+  { name: 'Multi-lojas', free: false, starter: false, professional: false, enterprise: true },
+  { name: 'API dedicada', free: false, starter: false, professional: false, enterprise: true },
+  { name: 'White-label', free: false, starter: false, professional: false, enterprise: true },
   { name: 'Suporte prioritário', free: false, starter: false, professional: true, enterprise: true },
 ];
 
 export default function Plans() {
-  const { plans, currentPlan, loading, upgradePlan } = useSubscription();
+  const { currentPlan, loading, upgradePlan } = useSubscription();
 
   const handleUpgrade = async (planType: PlanType) => {
     if (planType === 'enterprise') {
@@ -80,23 +137,27 @@ export default function Plans() {
 
       {/* Plan Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-        {plans.map(plan => {
+        {staticPlans.map(plan => {
           const isCurrentPlan = currentPlan?.plan_type === plan.type;
           const isPopular = plan.type === 'professional';
+          const isRecommended = plan.type === 'starter';
           
           return (
             <Card 
-              key={plan.id} 
+              key={plan.type} 
               className={cn(
                 "relative flex flex-col transition-all duration-300 hover:shadow-lg",
                 isCurrentPlan && "ring-2 ring-primary",
-                isPopular && "border-primary"
+                isPopular && "border-primary border-2"
               )}
             >
-              {isPopular && (
+              {(isPopular || isRecommended) && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground">
-                    Mais Popular
+                  <Badge className={cn(
+                    "text-white",
+                    isPopular ? "bg-purple-600 hover:bg-purple-600" : "bg-amber-500 hover:bg-amber-500"
+                  )}>
+                    {plan.badge}
                   </Badge>
                 </div>
               )}
@@ -104,23 +165,18 @@ export default function Plans() {
               <CardHeader className="text-center pb-2">
                 <div className={cn(
                   "w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-white bg-gradient-to-br",
-                  planColors[plan.type as PlanType]
+                  planColors[plan.type]
                 )}>
-                  {planIcons[plan.type as PlanType]}
+                  {planIcons[plan.type]}
                 </div>
                 <CardTitle className="text-xl">{plan.name}</CardTitle>
-                <CardDescription>
-                  {plan.type === 'free' && 'Para começar'}
-                  {plan.type === 'starter' && 'Para pequenos negócios'}
-                  {plan.type === 'professional' && 'Para equipes em crescimento'}
-                  {plan.type === 'enterprise' && 'Para grandes empresas'}
-                </CardDescription>
+                <CardDescription>{plan.description}</CardDescription>
               </CardHeader>
 
               <CardContent className="flex-1">
                 <div className="text-center mb-6">
                   <span className="text-4xl font-bold">
-                    {plan.price === 0 ? 'Grátis' : `R$ ${plan.price.toFixed(2).replace('.', ',')}`}
+                    {plan.price === 0 ? 'Grátis' : `R$ ${plan.price}`}
                   </span>
                   {plan.price > 0 && (
                     <span className="text-muted-foreground">/mês</span>
@@ -128,36 +184,41 @@ export default function Plans() {
                 </div>
 
                 <ul className="space-y-3">
-                  <FeatureItem 
-                    included={true} 
-                    text={plan.max_products === -1 ? 'Produtos ilimitados' : `${plan.max_products} produtos`} 
-                  />
-                  <FeatureItem 
-                    included={true} 
-                    text={plan.max_cost_analyses === -1 ? 'Análises ilimitadas' : `${plan.max_cost_analyses} análises/mês`} 
-                  />
-                  <FeatureItem included={plan.has_export_pdf} text="Exportar PDF" />
-                  <FeatureItem included={plan.has_export_excel} text="Exportar Excel" />
-                  <FeatureItem included={plan.has_stock_management} text="Gestão de estoque" />
-                  <FeatureItem included={plan.has_cash_flow} text="Fluxo de caixa" />
-                  <FeatureItem included={plan.has_reports} text="Relatórios avançados" />
-                  <FeatureItem 
-                    included={plan.has_multi_users} 
-                    text={plan.max_users === -1 ? 'Usuários ilimitados' : `${plan.max_users} usuário${plan.max_users > 1 ? 's' : ''}`} 
-                  />
-                  <FeatureItem included={plan.has_priority_support} text="Suporte prioritário" />
+                  {plan.features.map((feature, index) => (
+                    <FeatureItem 
+                      key={index}
+                      included={feature.included} 
+                      text={feature.text} 
+                    />
+                  ))}
                 </ul>
               </CardContent>
 
               <CardFooter>
-                <Button 
-                  className="w-full" 
-                  variant={isCurrentPlan ? "outline" : isPopular ? "default" : "secondary"}
-                  disabled={isCurrentPlan}
-                  onClick={() => handleUpgrade(plan.type as PlanType)}
-                >
-                  {isCurrentPlan ? 'Plano Atual' : plan.type === 'enterprise' ? 'Falar com Vendas' : 'Escolher Plano'}
-                </Button>
+                {isCurrentPlan ? (
+                  <Button 
+                    className="w-full" 
+                    variant="outline"
+                    disabled
+                  >
+                    Plano Atual
+                  </Button>
+                ) : plan.type === 'enterprise' ? (
+                  <Button 
+                    className="w-full" 
+                    variant="outline"
+                    onClick={() => handleUpgrade(plan.type)}
+                  >
+                    Falar com vendas
+                  </Button>
+                ) : (
+                  <Button 
+                    className="w-full bg-amber-500 hover:bg-amber-600 text-white" 
+                    onClick={() => handleUpgrade(plan.type)}
+                  >
+                    Fazer Upgrade
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           );
@@ -172,8 +233,8 @@ export default function Plans() {
             <thead>
               <tr className="border-b">
                 <th className="text-left py-4 px-4 font-medium">Recurso</th>
-                {plans.map(plan => (
-                  <th key={plan.id} className="text-center py-4 px-4 font-medium">
+                {staticPlans.map(plan => (
+                  <th key={plan.type} className="text-center py-4 px-4 font-medium">
                     {plan.name}
                   </th>
                 ))}
