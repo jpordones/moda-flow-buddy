@@ -10,9 +10,10 @@ import { toast } from 'sonner';
 import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, Loader2 } from 'lucide-react';
 import fedcomLogo from '@/assets/FEDCOM.svg';
 import { z } from 'zod';
+import { validatePassword, getPasswordStrength } from '@/lib/passwordValidation';
+import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator';
 
 const emailSchema = z.string().email('Email inválido');
-const passwordSchema = z.string().min(6, 'Senha deve ter no mínimo 6 caracteres');
 
 type AuthMode = 'login' | 'register' | 'forgot-password';
 
@@ -32,6 +33,9 @@ export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  // Get password validation result for registration
+  const passwordValidation = validatePassword(password);
+
   useEffect(() => {
     if (!loading && user) {
       navigate('/');
@@ -49,17 +53,18 @@ export default function Auth() {
       }
     }
 
-    if (mode !== 'forgot-password') {
-      try {
-        passwordSchema.parse(password);
-      } catch (e) {
-        if (e instanceof z.ZodError) {
-          newErrors.password = e.errors[0].message;
-        }
+    if (mode === 'login') {
+      // For login, just check if password is provided
+      if (!password) {
+        newErrors.password = 'Senha é obrigatória';
       }
     }
 
     if (mode === 'register') {
+      // For registration, use strong password validation
+      if (!passwordValidation.valid) {
+        newErrors.password = passwordValidation.message || 'Senha não atende aos requisitos';
+      }
       if (!fullName.trim()) {
         newErrors.fullName = 'Nome é obrigatório';
       }
@@ -73,19 +78,6 @@ export default function Auth() {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-
-  const getPasswordStrength = (pass: string): { strength: number; label: string; color: string } => {
-    let strength = 0;
-    if (pass.length >= 6) strength++;
-    if (pass.length >= 8) strength++;
-    if (/[A-Z]/.test(pass)) strength++;
-    if (/[0-9]/.test(pass)) strength++;
-    if (/[^A-Za-z0-9]/.test(pass)) strength++;
-
-    if (strength <= 2) return { strength, label: 'Fraca', color: 'bg-danger' };
-    if (strength <= 3) return { strength, label: 'Média', color: 'bg-warning' };
-    return { strength, label: 'Forte', color: 'bg-success' };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -130,8 +122,6 @@ export default function Auth() {
       setIsLoading(false);
     }
   };
-
-  const passwordStrength = getPasswordStrength(password);
 
   if (loading) {
     return (
@@ -229,21 +219,10 @@ export default function Auth() {
                   )}
                   
                   {mode === 'register' && password && (
-                    <div className="space-y-1">
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5].map((i) => (
-                          <div
-                            key={i}
-                            className={`h-1 flex-1 rounded-full ${
-                              i <= passwordStrength.strength ? passwordStrength.color : 'bg-muted'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <p className={`text-xs ${passwordStrength.color.replace('bg-', 'text-')}`}>
-                        Força: {passwordStrength.label}
-                      </p>
-                    </div>
+                    <PasswordStrengthIndicator 
+                      password={password} 
+                      checks={passwordValidation.checks} 
+                    />
                   )}
                 </div>
               )}
