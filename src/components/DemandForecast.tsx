@@ -45,13 +45,17 @@ export function DemandForecast() {
 
   const handleForecast = async () => {
     if (!productName.trim()) {
-      toast.error("Digite o nome do produto");
+      toast.error("Produto não informado", {
+        description: "Digite o nome do produto para gerar a previsão"
+      });
       return;
     }
 
     const hasData = historicalData.some(d => d.vendas > 0);
     if (!hasData) {
-      toast.error("Preencha pelo menos um mês com dados de vendas");
+      toast.error("Dados insuficientes", {
+        description: "Preencha pelo menos um mês com dados de vendas"
+      });
       return;
     }
 
@@ -68,15 +72,21 @@ export function DemandForecast() {
       if (error) throw error;
       
       if (data.error) {
-        toast.error(data.error);
+        toast.error("Erro na previsão", {
+          description: data.error
+        });
         return;
       }
 
       setForecast(data.forecast);
-      toast.success("Previsão gerada com sucesso!");
+      toast.success(`Previsão gerada para "${productName}"`, {
+        description: `Demanda estimada: ${data.forecast.previsao_proximos_30_dias} unidades/mês`
+      });
     } catch (error) {
       console.error('Error:', error);
-      toast.error("Erro ao gerar previsão. Tente novamente.");
+      toast.error("Falha na análise", {
+        description: "Não foi possível gerar a previsão. Tente novamente."
+      });
     } finally {
       setIsLoading(false);
     }

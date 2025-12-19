@@ -92,32 +92,48 @@ export default function Auth() {
         const { error } = await signIn(email, password);
         if (error) {
           if (error.message.includes('Invalid login credentials')) {
-            toast.error('Email ou senha incorretos');
+            toast.error('Falha no login', {
+              description: 'Email ou senha incorretos. Verifique suas credenciais.'
+            });
           } else {
-            toast.error(error.message);
+            toast.error('Erro na autenticação', {
+              description: error.message
+            });
           }
         } else {
-          toast.success('Login realizado com sucesso!');
+          toast.success(`Bem-vindo de volta!`, {
+            description: `Login realizado com sucesso`
+          });
           navigate('/');
         }
       } else if (mode === 'register') {
         const { error } = await signUp(email, password, fullName);
         if (error) {
           if (error.message.includes('already registered')) {
-            toast.error('Este email já está cadastrado');
+            toast.error('Email já cadastrado', {
+              description: 'Este email já possui uma conta. Tente fazer login.'
+            });
           } else {
-            toast.error(error.message);
+            toast.error('Erro no cadastro', {
+              description: error.message
+            });
           }
         } else {
-          toast.success('Conta criada com sucesso!');
+          toast.success(`Conta criada com sucesso!`, {
+            description: `Bem-vindo, ${fullName}! Complete seu perfil.`
+          });
           navigate('/onboarding');
         }
       } else if (mode === 'forgot-password') {
-        toast.success('Email de recuperação enviado!');
+        toast.success('Email enviado', {
+          description: `Verifique sua caixa de entrada em ${email}`
+        });
         setMode('login');
       }
     } catch (error) {
-      toast.error('Ocorreu um erro. Tente novamente.');
+      toast.error('Erro inesperado', {
+        description: 'Ocorreu um problema. Tente novamente.'
+      });
     } finally {
       setIsLoading(false);
     }

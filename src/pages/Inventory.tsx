@@ -59,7 +59,9 @@ export default function Inventory() {
     e.preventDefault();
     
     if (!formData.name || !formData.sku || !formData.category || !formData.size || !formData.color || !formData.quantity || !formData.costPrice || !formData.salePrice) {
-      toast.error("Preencha todos os campos obrigatórios");
+      toast.error("Campos obrigatórios", {
+        description: "Preencha todos os campos para cadastrar o produto"
+      });
       return;
     }
 
@@ -77,6 +79,8 @@ export default function Inventory() {
 
     saveProducts([...products, newProduct]);
     
+    const productInfo = `${formData.name} (${formData.size}/${formData.color})`;
+    
     setFormData({
       name: "",
       sku: "",
@@ -89,12 +93,20 @@ export default function Inventory() {
     });
     
     setIsDialogOpen(false);
-    toast.success("Produto cadastrado com sucesso!");
+    toast.success("Produto cadastrado", {
+      description: `"${productInfo}" adicionado com ${formData.quantity} unidades`
+    });
   };
 
   const handleDelete = (id: string) => {
+    const product = products.find(p => p.id === id);
     saveProducts(products.filter(p => p.id !== id));
-    toast.success("Produto removido");
+    
+    if (product) {
+      toast.success("Produto removido", {
+        description: `"${product.name}" foi excluído do estoque`
+      });
+    }
   };
 
   const filteredProducts = products.filter(p => {

@@ -76,6 +76,9 @@ export default function CashFlow() {
 
     saveTransactions([newTransaction, ...transactions]);
     
+    const typeLabel = formData.type === "entrada" ? "Entrada" : "Saída";
+    const formattedValue = parseFloat(formData.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    
     setFormData({
       date: new Date().toISOString().split('T')[0],
       type: "entrada",
@@ -86,12 +89,22 @@ export default function CashFlow() {
     });
     
     setIsDialogOpen(false);
-    toast.success("Transação registrada com sucesso!");
+    toast.success(`${typeLabel} registrada`, {
+      description: `${formData.description} - ${formattedValue}`
+    });
   };
 
   const handleDelete = (id: string) => {
+    const transaction = transactions.find(t => t.id === id);
     saveTransactions(transactions.filter(t => t.id !== id));
-    toast.success("Transação removida");
+    
+    if (transaction) {
+      const typeLabel = transaction.type === "entrada" ? "Entrada" : "Saída";
+      const formattedValue = parseFloat(transaction.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      toast.success(`${typeLabel} removida`, {
+        description: `${transaction.description} - ${formattedValue}`
+      });
+    }
   };
 
   const filteredTransactions = transactions.filter(t => {
