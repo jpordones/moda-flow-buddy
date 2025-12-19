@@ -1,1 +1,4 @@
 project_id = "fsgcllovrymkybauicql"
+
+[functions.demand-forecast]
+verify_jwt = false

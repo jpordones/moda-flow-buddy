@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { DollarSign, TrendingUp, TrendingDown, Package, AlertCircle, ShoppingBag } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useEffect, useState } from "react";
-
+import { DemandForecast } from "@/components/DemandForecast";
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
 export default function Dashboard() {
@@ -215,6 +215,9 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Previsão de Demanda com IA */}
+      <DemandForecast />
     </div>
   );
 }
