@@ -8,7 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Grid, List, Package, Edit, Copy, Trash2, Calculator, AlertTriangle, ArrowUpDown } from "lucide-react";
+import { Plus, Search, Grid, List, Package, Edit, Copy, Trash2, Calculator, AlertTriangle, ArrowUpDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useProducts } from "@/hooks/useProducts";
@@ -27,6 +27,7 @@ export default function Products() {
   const { 
     products, 
     stats, 
+    isLoading,
     addProduct, 
     updateProduct, 
     deleteProduct, 
@@ -86,51 +87,75 @@ export default function Products() {
       return sortOrder === 'asc' ? comparison : -comparison;
     });
 
-  const handleAddProduct = (data: ProductFormData) => {
+  const handleAddProduct = async (data: ProductFormData) => {
     if (!data.name || !data.category || !data.costPrice || !data.salePrice || !data.quantity) {
       toast.error("Campos obrigatórios", {
         description: "Preencha nome, categoria, custo, preço e quantidade"
       });
       return;
     }
-    addProduct(data);
-    setIsFormOpen(false);
-    toast.success(`Produto cadastrado`, {
-      description: `"${data.name}" adicionado ao catálogo`
-    });
+    const result = await addProduct(data);
+    if (result) {
+      setIsFormOpen(false);
+      toast.success(`Produto cadastrado`, {
+        description: `"${data.name}" adicionado ao catálogo`
+      });
+    } else {
+      toast.error("Erro ao cadastrar", {
+        description: "Não foi possível salvar o produto"
+      });
+    }
   };
 
-  const handleEditProduct = (data: ProductFormData) => {
+  const handleEditProduct = async (data: ProductFormData) => {
     if (!editingProduct) return;
-    updateProduct(editingProduct.id, data);
+    const result = await updateProduct(editingProduct.id, data);
     const productName = data.name || editingProduct.name;
     setEditingProduct(null);
-    toast.success(`Produto atualizado`, {
-      description: `"${productName}" foi salvo com sucesso`
-    });
+    if (result) {
+      toast.success(`Produto atualizado`, {
+        description: `"${productName}" foi salvo com sucesso`
+      });
+    } else {
+      toast.error("Erro ao atualizar", {
+        description: "Não foi possível atualizar o produto"
+      });
+    }
   };
 
-  const handleDeleteProduct = () => {
+  const handleDeleteProduct = async () => {
     if (!deleteProductId) return;
     const product = products.find(p => p.id === deleteProductId);
-    deleteProduct(deleteProductId);
+    const success = await deleteProduct(deleteProductId);
     setDeleteProductId(null);
-    toast.success(`Produto excluído`, {
-      description: product ? `"${product.name}" removido do catálogo` : undefined
-    });
+    if (success) {
+      toast.success(`Produto excluído`, {
+        description: product ? `"${product.name}" removido do catálogo` : undefined
+      });
+    } else {
+      toast.error("Erro ao excluir", {
+        description: "Não foi possível remover o produto"
+      });
+    }
   };
 
-  const handleDuplicateProduct = (id: string) => {
+  const handleDuplicateProduct = async (id: string) => {
     const product = products.find(p => p.id === id);
-    duplicateProduct(id);
-    toast.success(`Produto duplicado`, {
-      description: product ? `Cópia de "${product.name}" criada` : undefined
-    });
+    const result = await duplicateProduct(id);
+    if (result) {
+      toast.success(`Produto duplicado`, {
+        description: product ? `Cópia de "${product.name}" criada` : undefined
+      });
+    } else {
+      toast.error("Erro ao duplicar", {
+        description: "Não foi possível duplicar o produto"
+      });
+    }
   };
 
-  const handleStockMovement = (productId: string, quantity: number, type: 'entrada' | 'saida', reason: string) => {
+  const handleStockMovement = async (productId: string, quantity: number, type: 'entrada' | 'saida', reason: string) => {
     const product = products.find(p => p.id === productId);
-    const success = updateStock(productId, quantity, type, reason);
+    const success = await updateStock(productId, quantity, type, reason);
     if (success) {
       const action = type === 'entrada' ? 'adicionadas' : 'removidas';
       toast.success(`Estoque atualizado`, {
@@ -248,7 +273,11 @@ export default function Products() {
           </div>
         </CardHeader>
         <CardContent>
-          {filteredProducts.length === 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div className="text-center py-12">
               <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">Nenhum produto encontrado</h3>

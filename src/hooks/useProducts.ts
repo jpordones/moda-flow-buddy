@@ -1,33 +1,94 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Product, ProductFormData, StockStatus, StockMovement } from '@/types/products';
+import { Product, ProductFormData, StockStatus } from '@/types/products';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
-const PRODUCTS_STORAGE_KEY = 'fedcom-products';
+interface DbProduct {
+  id: string;
+  team_id: string;
+  name: string;
+  sku: string;
+  description: string | null;
+  category: string;
+  status: string;
+  cost_price: number;
+  sale_price: number;
+  quantity: number;
+  min_stock: number;
+  unit: string;
+  size: string | null;
+  color: string | null;
+  image_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+function mapDbToProduct(db: DbProduct): Product {
+  return {
+    id: db.id,
+    name: db.name,
+    sku: db.sku,
+    category: db.category,
+    description: db.description || undefined,
+    imageUrl: db.image_url || undefined,
+    status: db.status as Product['status'],
+    variableCosts: [],
+    fixedCostAllocation: 100,
+    customMargin: undefined,
+    salePrice: db.sale_price,
+    costPrice: db.cost_price,
+    priceHistory: [],
+    quantity: db.quantity,
+    minStock: db.min_stock,
+    maxStock: 200,
+    unit: db.unit,
+    location: undefined,
+    size: db.size || undefined,
+    color: db.color || undefined,
+    createdAt: db.created_at,
+    updatedAt: db.updated_at,
+  };
+}
 
 export function useProducts() {
+  const { profile, user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+  const teamId = profile?.current_team_id;
+
+  const fetchProducts = useCallback(async () => {
+    if (!teamId) {
+      setProducts([]);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      const stored = localStorage.getItem(PRODUCTS_STORAGE_KEY);
-      if (stored) {
-        setProducts(JSON.parse(stored));
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('team_id', teamId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching products:', error);
+        setProducts([]);
+      } else {
+        setProducts((data as DbProduct[]).map(mapDbToProduct));
       }
     } catch (error) {
-      console.error('Error loading products:', error);
+      console.error('Error fetching products:', error);
+      setProducts([]);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [teamId]);
 
-  const saveProducts = useCallback((newProducts: Product[]) => {
-    try {
-      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(newProducts));
-      setProducts(newProducts);
-    } catch (error) {
-      console.error('Error saving products:', error);
-    }
-  }, []);
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const generateSKU = useCallback((category: string) => {
     const prefix = category.substring(0, 3).toUpperCase();
@@ -35,133 +96,168 @@ export function useProducts() {
     return `${prefix}-${timestamp}`;
   }, []);
 
-  const addProduct = useCallback((formData: ProductFormData): Product => {
-    const now = new Date().toISOString();
+  const addProduct = useCallback(async (formData: ProductFormData): Promise<Product | null> => {
+    if (!teamId) return null;
+
     const costPrice = parseFloat(formData.costPrice) || 0;
     const salePrice = parseFloat(formData.salePrice) || 0;
-    
-    const newProduct: Product = {
-      id: `prod_${Date.now()}`,
-      name: formData.name,
-      sku: formData.sku || generateSKU(formData.category),
-      category: formData.category,
-      description: formData.description,
-      status: formData.status,
-      variableCosts: formData.variableCosts,
-      fixedCostAllocation: formData.fixedCostAllocation,
-      customMargin: formData.customMargin,
-      salePrice,
-      costPrice,
-      priceHistory: [{ date: now, price: salePrice, reason: 'Cadastro inicial' }],
-      quantity: parseInt(formData.quantity) || 0,
-      minStock: parseInt(formData.minStock) || 10,
-      maxStock: parseInt(formData.maxStock) || 200,
-      unit: formData.unit,
-      location: formData.location,
-      productionTime: formData.productionTime ? parseInt(formData.productionTime) : undefined,
-      dailyCapacity: formData.dailyCapacity ? parseInt(formData.dailyCapacity) : undefined,
-      leadTime: formData.leadTime ? parseInt(formData.leadTime) : undefined,
-      monthlySalesAvg: formData.monthlySalesAvg ? parseFloat(formData.monthlySalesAvg) : undefined,
-      seasonality: formData.seasonality,
-      salesChannel: formData.salesChannel,
-      size: formData.size,
-      color: formData.color,
-      createdAt: now,
-      updatedAt: now,
-    };
+    const sku = formData.sku || generateSKU(formData.category);
 
-    saveProducts([...products, newProduct]);
-    return newProduct;
-  }, [products, saveProducts, generateSKU]);
+    const { data, error } = await supabase
+      .from('products')
+      .insert({
+        team_id: teamId,
+        name: formData.name,
+        sku,
+        category: formData.category,
+        description: formData.description || null,
+        status: formData.status,
+        cost_price: costPrice,
+        sale_price: salePrice,
+        quantity: parseInt(formData.quantity) || 0,
+        min_stock: parseInt(formData.minStock) || 10,
+        unit: formData.unit || 'un',
+        size: formData.size || null,
+        color: formData.color || null,
+      })
+      .select()
+      .single();
 
-  const updateProduct = useCallback((id: string, formData: Partial<ProductFormData>): Product | null => {
-    const productIndex = products.findIndex(p => p.id === id);
-    if (productIndex === -1) return null;
-
-    const existingProduct = products[productIndex];
-    const now = new Date().toISOString();
-    
-    const newSalePrice = formData.salePrice !== undefined 
-      ? parseFloat(formData.salePrice) 
-      : existingProduct.salePrice;
-    
-    const priceHistory = [...existingProduct.priceHistory];
-    if (newSalePrice !== existingProduct.salePrice) {
-      priceHistory.push({ date: now, price: newSalePrice, reason: 'Atualização de preço' });
+    if (error) {
+      console.error('Error adding product:', error);
+      return null;
     }
 
-    const updatedProduct: Product = {
-      ...existingProduct,
-      name: formData.name ?? existingProduct.name,
-      sku: formData.sku ?? existingProduct.sku,
-      category: formData.category ?? existingProduct.category,
-      description: formData.description ?? existingProduct.description,
-      status: formData.status ?? existingProduct.status,
-      variableCosts: formData.variableCosts ?? existingProduct.variableCosts,
-      fixedCostAllocation: formData.fixedCostAllocation ?? existingProduct.fixedCostAllocation,
-      customMargin: formData.customMargin ?? existingProduct.customMargin,
-      salePrice: newSalePrice,
-      costPrice: formData.costPrice !== undefined ? parseFloat(formData.costPrice) : existingProduct.costPrice,
-      priceHistory,
-      quantity: formData.quantity !== undefined ? parseInt(formData.quantity) : existingProduct.quantity,
-      minStock: formData.minStock !== undefined ? parseInt(formData.minStock) : existingProduct.minStock,
-      maxStock: formData.maxStock !== undefined ? parseInt(formData.maxStock) : existingProduct.maxStock,
-      unit: formData.unit ?? existingProduct.unit,
-      location: formData.location ?? existingProduct.location,
-      size: formData.size ?? existingProduct.size,
-      color: formData.color ?? existingProduct.color,
-      updatedAt: now,
-    };
-
-    const newProducts = [...products];
-    newProducts[productIndex] = updatedProduct;
-    saveProducts(newProducts);
-    return updatedProduct;
-  }, [products, saveProducts]);
-
-  const deleteProduct = useCallback((id: string) => {
-    saveProducts(products.filter(p => p.id !== id));
-  }, [products, saveProducts]);
-
-  const duplicateProduct = useCallback((id: string): Product | null => {
-    const product = products.find(p => p.id === id);
-    if (!product) return null;
-
-    const now = new Date().toISOString();
-    const newProduct: Product = {
-      ...product,
-      id: `prod_${Date.now()}`,
-      name: `${product.name} (Cópia)`,
-      sku: generateSKU(product.category),
-      priceHistory: [{ date: now, price: product.salePrice, reason: 'Duplicado' }],
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    saveProducts([...products, newProduct]);
+    const newProduct = mapDbToProduct(data as DbProduct);
+    setProducts(prev => [newProduct, ...prev]);
     return newProduct;
-  }, [products, saveProducts, generateSKU]);
+  }, [teamId, generateSKU]);
 
-  const updateStock = useCallback((id: string, quantity: number, type: 'entrada' | 'saida', reason: string) => {
-    const productIndex = products.findIndex(p => p.id === id);
-    if (productIndex === -1) return false;
+  const updateProduct = useCallback(async (id: string, formData: Partial<ProductFormData>): Promise<Product | null> => {
+    const updates: Record<string, unknown> = {};
+    
+    if (formData.name !== undefined) updates.name = formData.name;
+    if (formData.sku !== undefined) updates.sku = formData.sku;
+    if (formData.category !== undefined) updates.category = formData.category;
+    if (formData.description !== undefined) updates.description = formData.description || null;
+    if (formData.status !== undefined) updates.status = formData.status;
+    if (formData.costPrice !== undefined) updates.cost_price = parseFloat(formData.costPrice) || 0;
+    if (formData.salePrice !== undefined) updates.sale_price = parseFloat(formData.salePrice) || 0;
+    if (formData.quantity !== undefined) updates.quantity = parseInt(formData.quantity) || 0;
+    if (formData.minStock !== undefined) updates.min_stock = parseInt(formData.minStock) || 10;
+    if (formData.unit !== undefined) updates.unit = formData.unit;
+    if (formData.size !== undefined) updates.size = formData.size || null;
+    if (formData.color !== undefined) updates.color = formData.color || null;
 
-    const product = products[productIndex];
+    const { data, error } = await supabase
+      .from('products')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating product:', error);
+      return null;
+    }
+
+    const updatedProduct = mapDbToProduct(data as DbProduct);
+    setProducts(prev => prev.map(p => p.id === id ? updatedProduct : p));
+    return updatedProduct;
+  }, []);
+
+  const deleteProduct = useCallback(async (id: string): Promise<boolean> => {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting product:', error);
+      return false;
+    }
+
+    setProducts(prev => prev.filter(p => p.id !== id));
+    return true;
+  }, []);
+
+  const duplicateProduct = useCallback(async (id: string): Promise<Product | null> => {
+    const product = products.find(p => p.id === id);
+    if (!product || !teamId) return null;
+
+    const { data, error } = await supabase
+      .from('products')
+      .insert({
+        team_id: teamId,
+        name: `${product.name} (Cópia)`,
+        sku: generateSKU(product.category),
+        category: product.category,
+        description: product.description || null,
+        status: product.status,
+        cost_price: product.costPrice,
+        sale_price: product.salePrice,
+        quantity: product.quantity,
+        min_stock: product.minStock,
+        unit: product.unit,
+        size: product.size || null,
+        color: product.color || null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error duplicating product:', error);
+      return null;
+    }
+
+    const newProduct = mapDbToProduct(data as DbProduct);
+    setProducts(prev => [newProduct, ...prev]);
+    return newProduct;
+  }, [products, teamId, generateSKU]);
+
+  const updateStock = useCallback(async (id: string, quantity: number, type: 'entrada' | 'saida', reason: string): Promise<boolean> => {
+    const product = products.find(p => p.id === id);
+    if (!product || !teamId || !user) return false;
+
     const newQuantity = type === 'entrada' 
       ? product.quantity + quantity 
       : product.quantity - quantity;
 
     if (newQuantity < 0) return false;
 
-    const newProducts = [...products];
-    newProducts[productIndex] = {
-      ...product,
-      quantity: newQuantity,
-      updatedAt: new Date().toISOString(),
-    };
-    saveProducts(newProducts);
+    // Update product quantity
+    const { error: updateError } = await supabase
+      .from('products')
+      .update({ quantity: newQuantity })
+      .eq('id', id);
+
+    if (updateError) {
+      console.error('Error updating stock:', updateError);
+      return false;
+    }
+
+    // Log stock movement
+    const { error: movementError } = await supabase
+      .from('stock_movements')
+      .insert({
+        product_id: id,
+        team_id: teamId,
+        user_id: user.id,
+        type,
+        quantity,
+        reason,
+      });
+
+    if (movementError) {
+      console.error('Error logging stock movement:', movementError);
+    }
+
+    setProducts(prev => prev.map(p => 
+      p.id === id ? { ...p, quantity: newQuantity, updatedAt: new Date().toISOString() } : p
+    ));
+    
     return true;
-  }, [products, saveProducts]);
+  }, [products, teamId, user]);
 
   const getStockStatus = useCallback((product: Product): { status: StockStatus; label: string; color: string } => {
     const { quantity, minStock, maxStock } = product;
@@ -217,5 +313,6 @@ export function useProducts() {
     updateStock,
     getStockStatus,
     generateSKU,
+    refetch: fetchProducts,
   };
 }
