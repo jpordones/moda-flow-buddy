@@ -88,39 +88,60 @@ export default function Products() {
 
   const handleAddProduct = (data: ProductFormData) => {
     if (!data.name || !data.category || !data.costPrice || !data.salePrice || !data.quantity) {
-      toast.error("Preencha todos os campos obrigatórios");
+      toast.error("Campos obrigatórios", {
+        description: "Preencha nome, categoria, custo, preço e quantidade"
+      });
       return;
     }
     addProduct(data);
     setIsFormOpen(false);
-    toast.success("Produto cadastrado com sucesso!");
+    toast.success(`Produto cadastrado`, {
+      description: `"${data.name}" adicionado ao catálogo`
+    });
   };
 
   const handleEditProduct = (data: ProductFormData) => {
     if (!editingProduct) return;
     updateProduct(editingProduct.id, data);
+    const productName = data.name || editingProduct.name;
     setEditingProduct(null);
-    toast.success("Produto atualizado!");
+    toast.success(`Produto atualizado`, {
+      description: `"${productName}" foi salvo com sucesso`
+    });
   };
 
   const handleDeleteProduct = () => {
     if (!deleteProductId) return;
+    const product = products.find(p => p.id === deleteProductId);
     deleteProduct(deleteProductId);
     setDeleteProductId(null);
-    toast.success("Produto excluído");
+    toast.success(`Produto excluído`, {
+      description: product ? `"${product.name}" removido do catálogo` : undefined
+    });
   };
 
   const handleDuplicateProduct = (id: string) => {
+    const product = products.find(p => p.id === id);
     duplicateProduct(id);
-    toast.success("Produto duplicado!");
+    toast.success(`Produto duplicado`, {
+      description: product ? `Cópia de "${product.name}" criada` : undefined
+    });
   };
 
   const handleStockMovement = (productId: string, quantity: number, type: 'entrada' | 'saida', reason: string) => {
+    const product = products.find(p => p.id === productId);
     const success = updateStock(productId, quantity, type, reason);
     if (success) {
-      toast.success(`Estoque ${type === 'entrada' ? 'adicionado' : 'removido'} com sucesso!`);
+      const action = type === 'entrada' ? 'adicionadas' : 'removidas';
+      toast.success(`Estoque atualizado`, {
+        description: product 
+          ? `${quantity} unidades ${action} de "${product.name}"` 
+          : `${quantity} unidades ${action}`
+      });
     } else {
-      toast.error("Erro ao movimentar estoque");
+      toast.error("Erro no estoque", {
+        description: "Não foi possível atualizar o estoque"
+      });
     }
   };
 

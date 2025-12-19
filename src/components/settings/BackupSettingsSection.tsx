@@ -29,9 +29,13 @@ export function BackupSettingsSection({ onExport, onImport, onReset }: BackupSet
     if (file) {
       try {
         await onImport(file);
-        toast.success('Configurações importadas com sucesso!');
+        toast.success('Configurações restauradas', {
+          description: `Dados importados de "${file.name}"`
+        });
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Erro ao importar configurações');
+        toast.error('Erro na importação', {
+          description: error instanceof Error ? error.message : 'Arquivo inválido ou corrompido'
+        });
       }
     }
     if (fileInputRef.current) {
@@ -41,7 +45,9 @@ export function BackupSettingsSection({ onExport, onImport, onReset }: BackupSet
 
   const handleReset = () => {
     onReset();
-    toast.success('Configurações restauradas para o padrão');
+    toast.success('Configurações restauradas', {
+      description: 'Todos os valores foram resetados para o padrão'
+    });
   };
 
   return (

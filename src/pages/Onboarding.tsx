@@ -87,13 +87,19 @@ export default function Onboarding() {
         });
 
         if (error) {
-          toast.error('Erro ao salvar configurações');
+          toast.error('Erro ao salvar', {
+            description: 'Não foi possível salvar suas configurações'
+          });
         } else {
-          toast.success('Configuração concluída com sucesso!');
+          toast.success(`Bem-vindo ao FEDCOM, ${data.companyName}!`, {
+            description: 'Sua empresa foi configurada com sucesso'
+          });
           navigate('/');
         }
       } catch (error) {
-        toast.error('Ocorreu um erro. Tente novamente.');
+        toast.error('Erro inesperado', {
+          description: 'Ocorreu um problema. Tente novamente.'
+        });
       } finally {
         setIsLoading(false);
       }
@@ -112,7 +118,9 @@ export default function Onboarding() {
       await updateProfile({ onboarding_completed: true });
       navigate('/');
     } catch (error) {
-      toast.error('Ocorreu um erro. Tente novamente.');
+      toast.error('Erro inesperado', {
+        description: 'Não foi possível pular o onboarding'
+      });
     } finally {
       setIsLoading(false);
     }
