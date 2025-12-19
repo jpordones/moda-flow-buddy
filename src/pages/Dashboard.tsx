@@ -4,21 +4,19 @@ import { DollarSign, TrendingUp, TrendingDown, Package, AlertCircle, ShoppingBag
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useEffect, useState } from "react";
 import { DemandForecast } from "@/components/DemandForecast";
+import { useProducts } from "@/hooks/useProducts";
+
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
 export default function Dashboard() {
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
+  const { products, stats } = useProducts();
 
   useEffect(() => {
     const storedTransactions = localStorage.getItem("transactions");
-    const storedProducts = localStorage.getItem("products");
     
     if (storedTransactions) {
       setTransactions(JSON.parse(storedTransactions));
-    }
-    if (storedProducts) {
-      setProducts(JSON.parse(storedProducts));
     }
   }, []);
 
@@ -41,9 +39,9 @@ export default function Dashboard() {
 
   const balance = totalIncome - totalExpense;
 
-  const totalStock = products.reduce((sum, p) => sum + p.quantity, 0);
-  const stockValue = products.reduce((sum, p) => sum + (p.quantity * p.salePrice), 0);
-  const lowStockItems = products.filter(p => p.quantity < 10).length;
+  const totalStock = stats.totalStock;
+  const stockValue = stats.totalValue;
+  const lowStockItems = stats.lowStockCount;
 
   // Dados para gráfico de fluxo
   const cashFlowData = [
@@ -99,7 +97,7 @@ export default function Dashboard() {
           value={totalStock.toString()}
           icon={Package}
           variant="info"
-          trend={products.length === 0 
+          trend={stats.totalProducts === 0 
             ? { value: "Adicione produtos para ver métricas", positive: true }
             : { value: `${lowStockItems} com estoque baixo`, positive: lowStockItems === 0 }
           }
