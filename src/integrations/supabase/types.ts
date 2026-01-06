@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      costs: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          team_id: string
+          type: string
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          team_id: string
+          type: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          team_id?: string
+          type?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "costs_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plans: {
         Row: {
           created_at: string
@@ -284,6 +334,62 @@ export type Database = {
           },
         ]
       }
+      team_settings: {
+        Row: {
+          backup_frequency: string | null
+          created_at: string
+          default_currency: string
+          default_margin: number | null
+          enable_email_alerts: boolean | null
+          enable_notifications: boolean | null
+          fiscal_year_start: number | null
+          id: string
+          low_stock_threshold: number | null
+          tax_rate: number | null
+          tax_regime: string | null
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          backup_frequency?: string | null
+          created_at?: string
+          default_currency?: string
+          default_margin?: number | null
+          enable_email_alerts?: boolean | null
+          enable_notifications?: boolean | null
+          fiscal_year_start?: number | null
+          id?: string
+          low_stock_threshold?: number | null
+          tax_rate?: number | null
+          tax_regime?: string | null
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          backup_frequency?: string | null
+          created_at?: string
+          default_currency?: string
+          default_margin?: number | null
+          enable_email_alerts?: boolean | null
+          enable_notifications?: boolean | null
+          fiscal_year_start?: number | null
+          id?: string
+          low_stock_threshold?: number | null
+          tax_rate?: number | null
+          tax_regime?: string | null
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_settings_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teams: {
         Row: {
           created_at: string
@@ -307,6 +413,69 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          payment_method: string | null
+          product_id: string | null
+          reference_date: string
+          status: string
+          team_id: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          payment_method?: string | null
+          product_id?: string | null
+          reference_date?: string
+          status?: string
+          team_id: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          payment_method?: string | null
+          product_id?: string | null
+          reference_date?: string
+          status?: string
+          team_id?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
