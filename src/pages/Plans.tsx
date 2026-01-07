@@ -1,5 +1,6 @@
-import { Check, X, Crown, Zap, Building2, Sparkles } from 'lucide-react';
+import { Check, X, Crown, Zap, Building2, Sparkles, Loader2 } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useStripePayment } from '@/hooks/useStripePayment';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -91,15 +92,15 @@ const features: PlanFeature[] = [
 ];
 
 export default function Plans() {
-  const { currentPlan, loading, upgradePlan } = useSubscription();
+  const { currentPlan, loading } = useSubscription();
+  const { subscribe, loading: stripeLoading, stripeSubscription, openCustomerPortal } = useStripePayment();
 
   const handleUpgrade = async (planType: PlanType) => {
-    if (planType === 'enterprise') {
-      window.open('mailto:contato@fedcom.com.br?subject=Interesse no Plano Enterprise', '_blank');
-      return;
-    }
-    await upgradePlan(planType);
+    await subscribe(planType);
   };
+
+  // Use Stripe subscription if available, otherwise fall back to database subscription
+  const activePlanType = stripeSubscription?.plan_type || currentPlan?.plan_type || 'free';
 
   if (loading) {
     return (
@@ -127,20 +128,26 @@ export default function Plans() {
       </div>
 
       {/* Current Plan Badge */}
-      {currentPlan && (
-        <div className="flex justify-center mb-8">
+      {activePlanType && (
+        <div className="flex justify-center gap-4 mb-8">
           <Badge variant="outline" className="text-base px-4 py-2">
-            Plano atual: <span className="font-semibold ml-1">{currentPlan.plan_name}</span>
+            Plano atual: <span className="font-semibold ml-1 capitalize">{activePlanType}</span>
           </Badge>
+          {stripeSubscription?.subscribed && (
+            <Button variant="outline" size="sm" onClick={openCustomerPortal} disabled={stripeLoading}>
+              Gerenciar Assinatura
+            </Button>
+          )}
         </div>
       )}
 
       {/* Plan Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-        {staticPlans.map(plan => {
-          const isCurrentPlan = currentPlan?.plan_type === plan.type;
+      {staticPlans.map(plan => {
+          const isCurrentPlan = activePlanType === plan.type;
           const isPopular = plan.type === 'professional';
           const isRecommended = plan.type === 'starter';
+          const canUpgrade = !isCurrentPlan && plan.type !== 'free';
           
           return (
             <Card 
@@ -203,11 +210,20 @@ export default function Plans() {
                   >
                     Plano Atual
                   </Button>
+                ) : plan.type === 'free' ? (
+                  <Button 
+                    className="w-full" 
+                    variant="outline"
+                    disabled
+                  >
+                    Plano Básico
+                  </Button>
                 ) : plan.type === 'enterprise' ? (
                   <Button 
                     className="w-full" 
                     variant="outline"
                     onClick={() => handleUpgrade(plan.type)}
+                    disabled={stripeLoading}
                   >
                     Falar com vendas
                   </Button>
@@ -215,8 +231,16 @@ export default function Plans() {
                   <Button 
                     className="w-full bg-amber-500 hover:bg-amber-600 text-white" 
                     onClick={() => handleUpgrade(plan.type)}
+                    disabled={stripeLoading}
                   >
-                    Fazer Upgrade
+                    {stripeLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processando...
+                      </>
+                    ) : (
+                      'Fazer Upgrade'
+                    )}
                   </Button>
                 )}
               </CardFooter>
