@@ -8,14 +8,16 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Grid, List, Package, Edit, Copy, Trash2, Calculator, AlertTriangle, ArrowUpDown, Loader2 } from "lucide-react";
+import { Plus, Search, Grid, List, Package, Edit, Copy, Trash2, Calculator, AlertTriangle, ArrowUpDown, Loader2, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useProducts } from "@/hooks/useProducts";
+import { useSubscription } from "@/hooks/useSubscription";
 import { ProductForm } from "@/components/products/ProductForm";
 import { ProductCard } from "@/components/products/ProductCard";
 import { ProductStats } from "@/components/products/ProductStats";
 import { StockMovementDialog } from "@/components/products/StockMovementDialog";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import { Product, ProductFormData, defaultCategories } from "@/types/products";
 
 type ViewMode = 'grid' | 'table';
@@ -35,6 +37,9 @@ export default function Products() {
     updateStock,
     getStockStatus 
   } = useProducts();
+  
+  const { currentPlan, isWithinLimit, getRemainingLimit } = useSubscription();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchTerm, setSearchTerm] = useState("");
@@ -48,6 +53,14 @@ export default function Products() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deleteProductId, setDeleteProductId] = useState<string | null>(null);
   const [stockMovementProduct, setStockMovementProduct] = useState<Product | null>(null);
+
+  // Plan limits
+  const productLimit = currentPlan?.max_products ?? 5;
+  const currentProductCount = stats.totalProducts;
+  const isUnlimited = productLimit === -1;
+  const remainingProducts = isUnlimited ? Infinity : getRemainingLimit('products', currentProductCount);
+  const isAtLimit = !isUnlimited && remainingProducts <= 0;
+  const isNearLimit = !isUnlimited && remainingProducts <= 2 && remainingProducts > 0;
 
   // Filter and sort products
   const filteredProducts = products
@@ -94,6 +107,13 @@ export default function Products() {
       });
       return;
     }
+    
+    // Check product limit before adding
+    if (isAtLimit) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    
     const result = await addProduct(data);
     if (result) {
       setIsFormOpen(false);
@@ -140,6 +160,12 @@ export default function Products() {
   };
 
   const handleDuplicateProduct = async (id: string) => {
+    // Check product limit before duplicating
+    if (isAtLimit) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    
     const product = products.find(p => p.id === id);
     const result = await duplicateProduct(id);
     if (result) {
@@ -193,17 +219,35 @@ export default function Products() {
     }
   };
 
+  const handleOpenAddForm = () => {
+    if (isAtLimit) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    setIsFormOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Produtos</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight">Produtos</h1>
+            {!isUnlimited && (
+              <Badge 
+                variant={isAtLimit ? "danger" : isNearLimit ? "warning" : "secondary"}
+                className="text-xs"
+              >
+                {currentProductCount}/{productLimit} produtos
+              </Badge>
+            )}
+          </div>
           <p className="text-muted-foreground">Gerencie seu catálogo de produtos</p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)} className="gap-2" variant="action">
-          <Plus className="h-4 w-4" />
-          Novo Produto
+        <Button onClick={handleOpenAddForm} className="gap-2" variant="action">
+          {isAtLimit ? <Crown className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+          {isAtLimit ? "Fazer Upgrade" : "Novo Produto"}
         </Button>
       </div>
 
@@ -448,6 +492,15 @@ export default function Products() {
         open={!!stockMovementProduct}
         onOpenChange={(open) => !open && setStockMovementProduct(null)}
         onSubmit={handleStockMovement}
+      />
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature={`Limite de ${productLimit} produtos`}
+        requiredPlan={currentPlan?.plan_type === 'free' ? 'starter' : 'professional'}
+        currentPlan={currentPlan?.plan_type}
       />
     </div>
   );
