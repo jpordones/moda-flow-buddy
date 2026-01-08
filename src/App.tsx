@@ -19,6 +19,7 @@ import Plans from "./pages/Plans";
 import Team from "./pages/Team";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -113,6 +114,11 @@ const App = () => (
                 <AppLayout>
                   <Team />
                 </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/sucesso" element={
+              <ProtectedRoute>
+                <PaymentSuccess />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

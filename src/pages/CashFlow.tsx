@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Search, Trash2, TrendingUp, TrendingDown } from "lucide-react";
+import { Plus, Search, Trash2, TrendingUp, TrendingDown, Lock, Crown } from "lucide-react";
 import { toast } from "sonner";
+import { useSubscription } from "@/hooks/useSubscription";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 interface Transaction {
   id: string;
@@ -35,6 +37,9 @@ const expenseCategories = [
 const paymentMethods = ["Dinheiro", "Cartão de Crédito", "Cartão de Débito", "PIX", "Transferência Bancária"];
 
 export default function CashFlow() {
+  const { canUseFeature, currentPlan, loading: subscriptionLoading } = useSubscription();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -49,12 +54,16 @@ export default function CashFlow() {
     paymentMethod: "",
   });
 
+  const hasAccess = canUseFeature('has_cash_flow');
+
   useEffect(() => {
-    const stored = localStorage.getItem("transactions");
-    if (stored) {
-      setTransactions(JSON.parse(stored));
+    if (hasAccess) {
+      const stored = localStorage.getItem("transactions");
+      if (stored) {
+        setTransactions(JSON.parse(stored));
+      }
     }
-  }, []);
+  }, [hasAccess]);
 
   const saveTransactions = (newTransactions: Transaction[]) => {
     localStorage.setItem("transactions", JSON.stringify(newTransactions));
@@ -123,6 +132,86 @@ export default function CashFlow() {
     .reduce((sum, t) => sum + parseFloat(t.value), 0);
 
   const balance = totalIncome - totalExpense;
+
+  // Show blocked state if no access
+  if (!subscriptionLoading && !hasAccess) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Fluxo de Caixa</h1>
+            <p className="text-gray-600">Gerencie suas entradas e saídas financeiras</p>
+          </div>
+        </div>
+
+        {/* Blurred preview */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 rounded-lg flex items-center justify-center">
+            <Card className="max-w-md text-center p-6">
+              <div className="mx-auto mb-4 p-3 rounded-full bg-primary/10 w-fit">
+                <Lock className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Funcionalidade Premium</h3>
+              <p className="text-muted-foreground mb-4">
+                O Fluxo de Caixa está disponível a partir do plano Profissional. Faça upgrade para gerenciar suas finanças.
+              </p>
+              <Button onClick={() => setShowUpgradeModal(true)} className="gap-2" variant="action">
+                <Crown className="h-4 w-4" />
+                Ver Planos
+              </Button>
+            </Card>
+          </div>
+
+          {/* Preview content */}
+          <div className="grid gap-6 md:grid-cols-3 opacity-50 pointer-events-none">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+                <CardTitle className="text-sm font-medium text-gray-600">Total de Entradas</CardTitle>
+                <div className="p-2 rounded-lg bg-success-light">
+                  <TrendingUp className="h-5 w-5 text-success" />
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 pt-0">
+                <div className="text-3xl font-bold text-success">R$ 0,00</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+                <CardTitle className="text-sm font-medium text-gray-600">Total de Saídas</CardTitle>
+                <div className="p-2 rounded-lg bg-danger-light">
+                  <TrendingDown className="h-5 w-5 text-danger" />
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 pt-0">
+                <div className="text-3xl font-bold text-danger">R$ 0,00</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+                <CardTitle className="text-sm font-medium text-gray-600">Saldo</CardTitle>
+                <div className="p-2 rounded-lg bg-success-light">
+                  <TrendingUp className="h-5 w-5 text-success" />
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 pt-0">
+                <div className="text-3xl font-bold text-success">R$ 0,00</div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        <UpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          feature="Fluxo de Caixa"
+          requiredPlan="professional"
+          currentPlan={currentPlan?.plan_type}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

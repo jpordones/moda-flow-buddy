@@ -1,5 +1,6 @@
 import { LayoutDashboard, TrendingUp, Package, ShoppingBag, Calculator, Settings, X, Crown, Users } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { useNavigate } from "react-router-dom";
 import fedcomLogo from "@/assets/FEDCOM.svg";
 import {
   Sidebar,
@@ -13,7 +14,9 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -28,6 +31,20 @@ const menuItems = [
 
 export function AppSidebar() {
   const { open, isMobile, setOpenMobile } = useSidebar();
+  const { currentPlan } = useSubscription();
+  const navigate = useNavigate();
+
+  const getPlanDisplay = () => {
+    if (!currentPlan) return { name: "Free", color: "secondary" as const };
+    switch (currentPlan.plan_type) {
+      case "starter": return { name: "Starter", color: "info" as const };
+      case "professional": return { name: "Pro", color: "success" as const };
+      case "enterprise": return { name: "Enterprise", color: "warning" as const };
+      default: return { name: "Free", color: "secondary" as const };
+    }
+  };
+
+  const planDisplay = getPlanDisplay();
 
   return (
     <Sidebar 
@@ -100,6 +117,22 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Plan Badge */}
+        {open && (
+          <div className="px-4 py-3 mt-auto border-t border-sidebar-border">
+            <div 
+              className="flex items-center gap-2 p-2 rounded-lg bg-sidebar-accent/50 cursor-pointer hover:bg-sidebar-accent transition-colors"
+              onClick={() => navigate("/planos")}
+            >
+              <Crown className="h-4 w-4 text-warning" />
+              <span className="text-sm font-medium text-sidebar-foreground">Plano:</span>
+              <Badge variant={planDisplay.color} className="text-xs">
+                {planDisplay.name}
+              </Badge>
+            </div>
+          </div>
+        )}
       </SidebarContent>
     </Sidebar>
   );

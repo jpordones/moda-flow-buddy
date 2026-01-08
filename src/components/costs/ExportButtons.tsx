@@ -1,9 +1,11 @@
 import { Button } from '@/components/ui/button';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, Lock } from 'lucide-react';
 import { CustoFixo, CustoVariavel, ParametrosCalculo, ResultadosCalculo } from '@/types/costs';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useToast } from '@/hooks/use-toast';
+import { useSubscription } from '@/hooks/useSubscription';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ExportButtonsProps {
   custosFixos: CustoFixo[];
@@ -14,8 +16,25 @@ interface ExportButtonsProps {
 
 export function ExportButtons({ custosFixos, custosVariaveis, parametros, resultados }: ExportButtonsProps) {
   const { toast } = useToast();
+  const { canUseFeature, currentPlan } = useSubscription();
+
+  const canExportExcel = canUseFeature('has_export_excel');
+  const canExportPdf = canUseFeature('has_export_pdf');
+
+  const getRequiredPlan = () => {
+    return currentPlan?.plan_type === 'free' ? 'Starter' : 'Profissional';
+  };
 
   const exportToCSV = () => {
+    if (!canExportExcel) {
+      toast({
+        title: 'Funcionalidade Premium',
+        description: `Exportação Excel disponível a partir do plano ${getRequiredPlan()}`,
+        variant: 'destructive'
+      });
+      return;
+    }
+
     const data = [];
     
     // Cabeçalho
@@ -92,6 +111,15 @@ export function ExportButtons({ custosFixos, custosVariaveis, parametros, result
   };
 
   const exportToPDF = () => {
+    if (!canExportPdf) {
+      toast({
+        title: 'Funcionalidade Premium',
+        description: `Exportação PDF disponível a partir do plano ${getRequiredPlan()}`,
+        variant: 'destructive'
+      });
+      return;
+    }
+
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     
@@ -194,14 +222,48 @@ export function ExportButtons({ custosFixos, custosVariaveis, parametros, result
 
   return (
     <div className="flex gap-3">
-      <Button onClick={exportToCSV} variant="outline" className="gap-2">
-        <Download className="h-4 w-4" />
-        Exportar CSV
-      </Button>
-      <Button onClick={exportToPDF} className="gap-2">
-        <FileText className="h-4 w-4" />
-        Exportar PDF
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span>
+            <Button 
+              onClick={exportToCSV} 
+              variant="outline" 
+              className="gap-2"
+              disabled={!canExportExcel}
+            >
+              {!canExportExcel && <Lock className="h-3 w-3" />}
+              <Download className="h-4 w-4" />
+              Exportar CSV
+            </Button>
+          </span>
+        </TooltipTrigger>
+        {!canExportExcel && (
+          <TooltipContent>
+            <p>Disponível a partir do plano {getRequiredPlan()}</p>
+          </TooltipContent>
+        )}
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span>
+            <Button 
+              onClick={exportToPDF} 
+              className="gap-2"
+              disabled={!canExportPdf}
+            >
+              {!canExportPdf && <Lock className="h-3 w-3" />}
+              <FileText className="h-4 w-4" />
+              Exportar PDF
+            </Button>
+          </span>
+        </TooltipTrigger>
+        {!canExportPdf && (
+          <TooltipContent>
+            <p>Disponível a partir do plano {getRequiredPlan()}</p>
+          </TooltipContent>
+        )}
+      </Tooltip>
     </div>
   );
 }
