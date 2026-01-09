@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ResultadosCalculo } from '@/types/costs';
+import { formatarMoeda, formatarPorcentagem } from '@/lib/formatters';
 
 interface PriceComparisonTableProps {
   resultados: ResultadosCalculo;
@@ -73,7 +74,7 @@ export function PriceComparisonTable({ resultados }: PriceComparisonTableProps) 
                   </TableCell>
                   <TableCell className="text-right">
                     <span className="text-lg font-bold text-gray-900">
-                      R$ {cenario.preco.toFixed(2)}
+                      {formatarMoeda(cenario.preco)}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
@@ -82,7 +83,7 @@ export function PriceComparisonTable({ resultados }: PriceComparisonTableProps) 
                         cenario.lucro > 0 ? 'text-success' : 'text-gray-600'
                       }`}
                     >
-                      R$ {cenario.lucro.toFixed(2)}
+                      {formatarMoeda(cenario.lucro)}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
@@ -91,7 +92,7 @@ export function PriceComparisonTable({ resultados }: PriceComparisonTableProps) 
                         cenario.margem > 0 ? 'text-success' : 'text-gray-600'
                       }`}
                     >
-                      {cenario.margem.toFixed(1)}%
+                      {formatarPorcentagem(cenario.margem)}
                     </span>
                   </TableCell>
                 </TableRow>

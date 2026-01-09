@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Edit, Copy, Trash2, Calculator, Package } from "lucide-react";
 import { Product } from "@/types/products";
+import { formatarMoeda, formatarPorcentagem } from "@/lib/formatters";
 
 interface ProductCardProps {
   product: Product;
@@ -97,15 +98,15 @@ export function ProductCard({
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Preço de Venda</span>
-            <span className="font-bold text-lg">R$ {product.salePrice.toFixed(2)}</span>
+            <span className="font-bold text-lg">{formatarMoeda(product.salePrice)}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Custo</span>
-            <span className="text-sm">R$ {product.costPrice.toFixed(2)}</span>
+            <span className="text-sm">{formatarMoeda(product.costPrice)}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Margem</span>
-            <span className="text-sm font-medium text-success">{margin}%</span>
+            <span className="text-sm font-medium text-success">{formatarPorcentagem(margin, 0)}</span>
           </div>
         </div>
 

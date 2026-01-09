@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, DollarSign, TrendingUp, Banknote } from 'lucide-react';
 import { ResultadosCalculo } from '@/types/costs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { formatarMoeda, formatarPorcentagem } from '@/lib/formatters';
 
 interface ResultsCardsProps {
   resultados: ResultadosCalculo;
@@ -24,7 +25,7 @@ export function ResultsCards({ resultados }: ResultsCardsProps) {
               </CardHeader>
               <CardContent className="p-6 pt-0">
                 <div className="text-3xl font-bold text-gray-900">
-                  R$ {resultados.custoRealCompleto.toFixed(2)}
+                  {formatarMoeda(resultados.custoRealCompleto)}
                 </div>
                 <p className="text-xs text-gray-600 mt-1">
                   Custo completo por unidade
@@ -35,8 +36,8 @@ export function ResultsCards({ resultados }: ResultsCardsProps) {
           <TooltipContent>
             <div className="space-y-1">
               <p className="font-semibold">Breakdown do Custo:</p>
-              <p>Variável: R$ {resultados.custoVariavelTotal.toFixed(2)}</p>
-              <p>Fixo: R$ {resultados.custoFixoPorPeca.toFixed(2)}</p>
+              <p>Variável: {formatarMoeda(resultados.custoVariavelTotal)}</p>
+              <p>Fixo: {formatarMoeda(resultados.custoFixoPorPeca)}</p>
             </div>
           </TooltipContent>
         </Tooltip>
@@ -53,10 +54,10 @@ export function ResultsCards({ resultados }: ResultsCardsProps) {
         </CardHeader>
         <CardContent className="p-6 pt-0">
           <div className="text-3xl font-bold text-brand-foreground">
-            R$ {resultados.precoIdeal.toFixed(2)}
+            {formatarMoeda(resultados.precoIdeal)}
           </div>
           <p className="text-xs text-gray-600 mt-1">
-            Com margem de {resultados.margemPercentual.toFixed(1)}%
+            Com margem de {formatarPorcentagem(resultados.margemPercentual)}
           </p>
         </CardContent>
       </Card>
@@ -72,10 +73,10 @@ export function ResultsCards({ resultados }: ResultsCardsProps) {
         </CardHeader>
         <CardContent className="p-6 pt-0">
           <div className="text-3xl font-bold text-success">
-            {resultados.margemPercentual.toFixed(1)}%
+            {formatarPorcentagem(resultados.margemPercentual)}
           </div>
           <p className="text-xs text-gray-600 mt-1">
-            R$ {resultados.lucroPorPeca.toFixed(2)} por peça
+            {formatarMoeda(resultados.lucroPorPeca)} por peça
           </p>
         </CardContent>
       </Card>
@@ -91,7 +92,7 @@ export function ResultsCards({ resultados }: ResultsCardsProps) {
         </CardHeader>
         <CardContent className="p-6 pt-0">
           <div className="text-3xl font-bold text-success">
-            R$ {resultados.lucroPorPeca.toFixed(2)}
+            {formatarMoeda(resultados.lucroPorPeca)}
           </div>
           <p className="text-xs text-gray-600 mt-1">
             Lucro líquido por unidade

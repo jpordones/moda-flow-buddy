@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatarMoeda, formatarPorcentagem } from '@/lib/formatters';
 
 interface CostItemInputProps {
   id: string;
@@ -87,7 +88,7 @@ export function CostItemInput({ id, nome, valor, tipo, onUpdate, onDelete, showT
       </div>
       <div className="flex items-center gap-3">
         <span className="text-lg font-semibold text-foreground">
-          {tipo === 'percentual' ? `${valor}%` : `R$ ${valor.toFixed(2)}`}
+          {tipo === 'percentual' ? formatarPorcentagem(valor, 2) : formatarMoeda(valor)}
         </span>
         <div className="flex gap-1">
           <Button

@@ -7,6 +7,7 @@ import { DemandForecast } from "@/components/DemandForecast";
 import { useProducts } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { formatarMoeda } from "@/lib/formatters";
 
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
@@ -102,21 +103,21 @@ export default function Dashboard() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Saldo em Caixa"
-          value={`R$ ${balance.toFixed(2)}`}
+          value={formatarMoeda(balance)}
           icon={DollarSign}
           variant="success"
           trend={{ value: "12% vs mês anterior", positive: balance >= 0 }}
         />
         <MetricCard
           title="Entradas do Mês"
-          value={`R$ ${totalIncome.toFixed(2)}`}
+          value={formatarMoeda(totalIncome)}
           icon={TrendingUp}
           variant="success"
           trend={{ value: "8% vs mês anterior", positive: true }}
         />
         <MetricCard
           title="Saídas do Mês"
-          value={`R$ ${totalExpense.toFixed(2)}`}
+          value={formatarMoeda(totalExpense)}
           icon={TrendingDown}
           variant="danger"
           trend={{ value: "3% vs mês anterior", positive: false }}
@@ -136,13 +137,13 @@ export default function Dashboard() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <MetricCard
           title="Valor Total do Estoque"
-          value={`R$ ${stockValue.toFixed(2)}`}
+          value={formatarMoeda(stockValue)}
           icon={ShoppingBag}
           variant="indigo"
         />
         <MetricCard
           title="Lucro/Prejuízo Mensal"
-          value={`R$ ${balance.toFixed(2)}`}
+          value={formatarMoeda(balance)}
           icon={balance >= 0 ? TrendingUp : TrendingDown}
           variant="success"
         />
