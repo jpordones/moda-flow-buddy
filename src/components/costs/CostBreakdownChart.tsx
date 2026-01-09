@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { ResultadosCalculo } from '@/types/costs';
+import { formatarMoeda } from '@/lib/formatters';
 
 interface CostBreakdownChartProps {
   resultados: ResultadosCalculo;
@@ -55,7 +56,7 @@ export function CostBreakdownChart({ resultados }: CostBreakdownChartProps) {
       return (
         <div className="bg-card border border-border rounded-lg shadow-lg p-3">
           <p className="font-semibold text-foreground">{data.name}</p>
-          <p className="text-foreground">R$ {data.value.toFixed(2)}</p>
+          <p className="text-foreground">{formatarMoeda(data.value)}</p>
           <p className="text-muted-foreground text-sm">
             {((data.value / total) * 100).toFixed(1)}% do preço
           </p>
@@ -109,19 +110,19 @@ export function CostBreakdownChart({ resultados }: CostBreakdownChartProps) {
           <div className="p-3 bg-success/10 rounded-lg">
             <p className="text-xs text-gray-600">Custo Variável</p>
             <p className="text-lg font-bold text-success">
-              R$ {resultados.custoVariavelTotal.toFixed(2)}
+              {formatarMoeda(resultados.custoVariavelTotal)}
             </p>
           </div>
           <div className="p-3 bg-info/10 rounded-lg">
             <p className="text-xs text-gray-600">Custo Fixo</p>
             <p className="text-lg font-bold text-info">
-              R$ {resultados.custoFixoPorPeca.toFixed(2)}
+              {formatarMoeda(resultados.custoFixoPorPeca)}
             </p>
           </div>
           <div className="p-3 bg-warning/10 rounded-lg">
             <p className="text-xs text-gray-600">Lucro</p>
             <p className="text-lg font-bold text-warning">
-              R$ {resultados.lucroPorPeca.toFixed(2)}
+              {formatarMoeda(resultados.lucroPorPeca)}
             </p>
           </div>
         </div>

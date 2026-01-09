@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, DollarSign, AlertTriangle, TrendingUp } from "lucide-react";
+import { formatarMoeda } from "@/lib/formatters";
 
 interface ProductStatsProps {
   stats: {
@@ -41,7 +42,7 @@ export function ProductStats({ stats }: ProductStatsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold">
-            R$ {stats.totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            {formatarMoeda(stats.totalValue)}
           </div>
           <p className="text-xs text-muted-foreground">
             {stats.totalStock} unidades em estoque
@@ -58,10 +59,10 @@ export function ProductStats({ stats }: ProductStatsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold text-success">
-            R$ {stats.potentialProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            {formatarMoeda(stats.potentialProfit)}
           </div>
           <p className="text-xs text-muted-foreground">
-            Custo total: R$ {stats.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            Custo total: {formatarMoeda(stats.totalCost)}
           </p>
         </CardContent>
       </Card>
