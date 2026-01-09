@@ -2,40 +2,69 @@ import { MetricCard } from "@/components/MetricCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, TrendingUp, TrendingDown, Package, AlertCircle, ShoppingBag } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { DemandForecast } from "@/components/DemandForecast";
 import { useProducts } from "@/hooks/useProducts";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
+interface Transaction {
+  id: string;
+  type: string;
+  amount: number;
+  category: string;
+  reference_date: string;
+}
+
 export default function Dashboard() {
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const { profile } = useAuth();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const { products, stats } = useProducts();
 
-  useEffect(() => {
-    const storedTransactions = localStorage.getItem("transactions");
-    
-    if (storedTransactions) {
-      setTransactions(JSON.parse(storedTransactions));
+  const teamId = profile?.current_team_id;
+
+  const fetchTransactions = useCallback(async () => {
+    if (!teamId) {
+      setTransactions([]);
+      return;
     }
-  }, []);
+
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('id, type, amount, category, reference_date')
+      .eq('team_id', teamId)
+      .order('reference_date', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching transactions:', error);
+      setTransactions([]);
+    } else {
+      setTransactions(data || []);
+    }
+  }, [teamId]);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
 
   // Cálculos de métricas
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
   
   const monthlyTransactions = transactions.filter(t => {
-    const date = new Date(t.date);
+    const date = new Date(t.reference_date);
     return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
   });
 
   const totalIncome = monthlyTransactions
     .filter(t => t.type === "entrada")
-    .reduce((sum, t) => sum + parseFloat(t.value), 0);
+    .reduce((sum, t) => sum + t.amount, 0);
 
   const totalExpense = monthlyTransactions
     .filter(t => t.type === "saida")
-    .reduce((sum, t) => sum + parseFloat(t.value), 0);
+    .reduce((sum, t) => sum + t.amount, 0);
 
   const balance = totalIncome - totalExpense;
 
