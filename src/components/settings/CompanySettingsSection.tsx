@@ -4,8 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { CompanySettings } from "@/types/settings";
-import { Building2, Upload, X } from "lucide-react";
-import { useRef } from "react";
+import { Building2, Upload, X, Loader2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface CompanySettingsSectionProps {
   settings: CompanySettings;
@@ -14,24 +17,80 @@ interface CompanySettingsSectionProps {
 
 export function CompanySettingsSection({ settings, onUpdate }: CompanySettingsSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const { user, profile, updateProfile } = useAuth();
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        onUpdate({ logo: event.target?.result as string });
-      };
-      reader.readAsDataURL(file);
+    if (!file || !user) return;
+
+    // Validations
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, selecione uma imagem');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Imagem muito grande. Máximo 2MB');
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      // 1. Upload to storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('company-logos')
+        .upload(fileName, file, {
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      // 2. Get public URL
+      const { data: urlData } = supabase.storage
+        .from('company-logos')
+        .getPublicUrl(fileName);
+
+      const logoUrl = urlData.publicUrl;
+
+      // 3. Update profile in database
+      const { error: profileError } = await updateProfile({ logo_url: logoUrl });
+
+      if (profileError) throw profileError;
+
+      toast.success('Logo atualizada com sucesso!');
+      
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error);
+      toast.error('Erro ao fazer upload da logo');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
-  const removeLogo = () => {
-    onUpdate({ logo: null });
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  const removeLogo = async () => {
+    if (!user) return;
+    
+    try {
+      const { error } = await updateProfile({ logo_url: null });
+
+      if (error) throw error;
+
+      toast.success('Logo removida');
+      
+    } catch (error) {
+      toast.error('Erro ao remover logo');
     }
   };
+
+  const currentLogoUrl = profile?.logo_url;
 
   return (
     <Card>
@@ -89,18 +148,22 @@ export function CompanySettingsSection({ settings, onUpdate }: CompanySettingsSe
         <div className="space-y-2">
           <Label>Logo da Empresa</Label>
           <div className="flex items-center gap-4">
-            {settings.logo ? (
+            {currentLogoUrl ? (
               <div className="relative">
                 <img
-                  src={settings.logo}
+                  src={currentLogoUrl}
                   alt="Logo"
                   className="h-16 w-16 object-contain rounded-lg border border-border"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
                 <Button
                   variant="destructive"
                   size="icon"
                   className="absolute -top-2 -right-2 h-6 w-6"
                   onClick={removeLogo}
+                  disabled={uploading}
                 >
                   <X className="h-3 w-3" />
                 </Button>
@@ -118,15 +181,26 @@ export function CompanySettingsSection({ settings, onUpdate }: CompanySettingsSe
                 onChange={handleLogoUpload}
                 className="hidden"
                 id="logo-upload"
+                disabled={uploading}
               />
               <Button
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
               >
-                <Upload className="h-4 w-4 mr-2" />
-                {settings.logo ? 'Alterar Logo' : 'Enviar Logo'}
+                {uploading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4 mr-2" />
+                    {currentLogoUrl ? 'Alterar Logo' : 'Enviar Logo'}
+                  </>
+                )}
               </Button>
-              <p className="text-xs text-muted-foreground mt-1">PNG, JPG até 2MB</p>
+              <p className="text-xs text-muted-foreground mt-1">PNG, JPG ou SVG. Máximo 2MB</p>
             </div>
           </div>
         </div>
