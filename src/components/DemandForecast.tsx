@@ -4,9 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, TrendingUp, TrendingDown, Minus, Brain, Package, AlertTriangle, Lightbulb } from "lucide-react";
+import { Loader2, TrendingUp, TrendingDown, Minus, Brain, Package, AlertTriangle, Lightbulb, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { z } from "zod";
+
+// Schema de validação para inputs
+const demandForecastSchema = z.object({
+  productName: z.string()
+    .min(1, 'Nome do produto é obrigatório')
+    .max(100, 'Nome muito longo (máximo 100 caracteres)')
+    .regex(/^[a-zA-Z0-9\s\-_áéíóúâêôãõçÁÉÍÓÚÂÊÔÃÕÇ]+$/, 'Nome contém caracteres inválidos'),
+});
 
 interface ForecastResult {
   previsao_proximos_30_dias: number;
@@ -36,20 +45,50 @@ export function DemandForecast() {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [forecast, setForecast] = useState<ForecastResult | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const updateSales = (index: number, value: string) => {
     const newData = [...historicalData];
-    newData[index].vendas = parseInt(value) || 0;
+    // Sanitiza o valor para aceitar apenas números positivos
+    const sanitizedValue = Math.max(0, Math.min(parseInt(value) || 0, 999999));
+    newData[index].vendas = sanitizedValue;
     setHistoricalData(newData);
   };
 
-  const handleForecast = async () => {
-    if (!productName.trim()) {
-      toast.error("Produto não informado", {
-        description: "Digite o nome do produto para gerar a previsão"
+  const sanitizeInput = (input: string, maxLength: number): string => {
+    return input
+      .trim()
+      .slice(0, maxLength)
+      .replace(/[<>]/g, ''); // Remove caracteres potencialmente perigosos
+  };
+
+  const validateInputs = (): boolean => {
+    try {
+      demandForecastSchema.parse({
+        productName: productName.trim(),
       });
-      return;
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setErrors(newErrors);
+        toast.error('Dados inválidos', {
+          description: 'Verifique os campos e tente novamente'
+        });
+      }
+      return false;
     }
+  };
+
+  const handleForecast = async () => {
+    // Validação com Zod
+    if (!validateInputs()) return;
 
     const hasData = historicalData.some(d => d.vendas > 0);
     if (!hasData) {
@@ -61,12 +100,33 @@ export function DemandForecast() {
 
     setIsLoading(true);
     try {
+      // Sanitização do nome do produto
+      const sanitizedProductName = sanitizeInput(productName, 100);
+
+      // Sanitização dos dados históricos (limita valores)
+      const sanitizedHistoricalData = historicalData.map(item => ({
+        mes: sanitizeInput(item.mes, 20),
+        vendas: Math.max(0, Math.min(item.vendas, 999999))
+      }));
+
+      // Limita o tamanho total do payload
+      const payload = {
+        productName: sanitizedProductName,
+        historicalData: sanitizedHistoricalData,
+        period: 'últimos 6 meses'
+      };
+
+      const payloadSize = JSON.stringify(payload).length;
+      if (payloadSize > 10000) { // 10KB limit
+        toast.error('Dados muito grandes', {
+          description: 'Reduza a quantidade de dados históricos'
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('demand-forecast', {
-        body: { 
-          productName, 
-          historicalData,
-          period: 'últimos 6 meses'
-        }
+        body: payload
       });
 
       if (error) throw error;
@@ -79,7 +139,7 @@ export function DemandForecast() {
       }
 
       setForecast(data.forecast);
-      toast.success(`Previsão gerada para "${productName}"`, {
+      toast.success(`Previsão gerada para "${sanitizedProductName}"`, {
         description: `Demanda estimada: ${data.forecast.previsao_proximos_30_dias} unidades/mês`
       });
     } catch (error) {
@@ -129,8 +189,15 @@ export function DemandForecast() {
               placeholder="Ex: Camiseta Básica Preta"
               value={productName}
               onChange={(e) => setProductName(e.target.value)}
+              maxLength={100}
               className="mt-1"
             />
+            {errors.productName && (
+              <p className="text-sm text-destructive flex items-center gap-1 mt-1">
+                <AlertCircle className="h-3 w-3" />
+                {errors.productName}
+              </p>
+            )}
           </div>
 
           <div>
@@ -142,6 +209,7 @@ export function DemandForecast() {
                   <Input
                     type="number"
                     min="0"
+                    max="999999"
                     placeholder="0"
                     value={item.vendas || ''}
                     onChange={(e) => updateSales(index, e.target.value)}
