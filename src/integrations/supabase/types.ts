@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          resource_id: string | null
+          resource_type: string | null
+          team_id: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+          team_id?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+          team_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       costs: {
         Row: {
           amount: number
@@ -200,6 +241,7 @@ export type Database = {
           logo_url: string | null
           monthly_sales_goal: number | null
           onboarding_completed: boolean | null
+          public_email: string | null
           updated_at: string | null
         }
         Insert: {
@@ -215,6 +257,7 @@ export type Database = {
           logo_url?: string | null
           monthly_sales_goal?: number | null
           onboarding_completed?: boolean | null
+          public_email?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -230,6 +273,7 @@ export type Database = {
           logo_url?: string | null
           monthly_sales_goal?: number | null
           onboarding_completed?: boolean | null
+          public_email?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -570,6 +614,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_password_strength: { Args: { password: string }; Returns: boolean }
+      get_team_member_email: {
+        Args: { member_user_id: string; requesting_team_id: string }
+        Returns: string
+      }
       get_user_plan: {
         Args: { p_user_id: string }
         Returns: {
