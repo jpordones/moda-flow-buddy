@@ -13,36 +13,63 @@ export function useTeam() {
   const [userRole, setUserRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const teamId = profile?.current_team_id;
+
+  // Fetch user's teams via user_roles
   const fetchTeams = useCallback(async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('teams')
-      .select('*')
-      .order('created_at', { ascending: false });
+    // Buscar equipes através dos roles do usuário
+    const { data: rolesData, error: rolesError } = await supabase
+      .from('user_roles')
+      .select(`
+        team_id,
+        role,
+        teams (
+          id,
+          name,
+          owner_id,
+          created_at,
+          updated_at
+        )
+      `)
+      .eq('user_id', user.id);
 
-    if (error) {
-      console.error('Error fetching teams:', error);
+    if (rolesError) {
+      console.error('Error fetching teams:', rolesError);
       return;
     }
 
-    setTeams(data as Team[]);
-    
-    // Set current team from profile or first team
-    if (profile?.current_team_id) {
-      const current = data.find(t => t.id === profile.current_team_id);
-      if (current) setCurrentTeam(current as Team);
-    } else if (data.length > 0) {
-      setCurrentTeam(data[0] as Team);
-    }
-  }, [user, profile?.current_team_id]);
+    const teamsData = rolesData?.map(r => ({
+      ...(r.teams as Team),
+      userRole: r.role
+    })) || [];
 
+    setTeams(teamsData as Team[]);
+
+    if (teamId) {
+      const current = teamsData.find(t => t.id === teamId);
+      if (current) {
+        setCurrentTeam(current as Team);
+        setUserRole(current.userRole as AppRole);
+      }
+    } else if (teamsData.length > 0) {
+      setCurrentTeam(teamsData[0] as Team);
+      const role = rolesData?.find(r => r.team_id === teamsData[0].id)?.role;
+      setUserRole(role as AppRole || null);
+    }
+  }, [user, teamId]);
+
+  // Fetch team members - CORRIGIDO: não usar auth.admin no cliente
   const fetchMembers = useCallback(async () => {
-    if (!currentTeam) return;
+    if (!currentTeam) {
+      setMembers([]);
+      return;
+    }
 
     const { data: rolesData, error: rolesError } = await supabase
       .from('user_roles')
-      .select('*')
+      .select('id, user_id, role, created_at')
       .eq('team_id', currentTeam.id);
 
     if (rolesError) {
@@ -50,39 +77,52 @@ export function useTeam() {
       return;
     }
 
-    // Fetch profiles for each member
-    const memberPromises = (rolesData as UserRole[]).map(async (role) => {
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', role.user_id)
-        .single();
+    if (!rolesData || rolesData.length === 0) {
+      setMembers([]);
+      return;
+    }
 
-      const { data: userData } = await supabase.auth.admin?.getUserById?.(role.user_id) || { data: null };
+    // Buscar dados públicos através da tabela profiles (sem auth.admin)
+    const memberIds = rolesData.map(r => r.user_id);
+    
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .in('id', memberIds);
 
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError);
+    }
+
+    // Mapear membros com dados de perfil
+    const enrichedMembers: TeamMember[] = rolesData.map(role => {
+      const userProfile = profilesData?.find(p => p.id === role.user_id);
       return {
         id: role.id,
         user_id: role.user_id,
-        email: userData?.user?.email || 'Email não disponível',
-        full_name: profileData?.full_name || null,
+        email: 'Email via perfil', // Email não disponível via RLS, usar dados do auth context quando possível
+        full_name: userProfile?.full_name || null,
         role: role.role as AppRole,
         is_owner: currentTeam.owner_id === role.user_id,
         joined_at: role.created_at
-      } as TeamMember;
+      };
     });
 
-    const membersResult = await Promise.all(memberPromises);
-    setMembers(membersResult);
+    setMembers(enrichedMembers);
 
-    // Set current user's role
+    // Atualizar role do usuário atual
     const currentUserRole = rolesData.find(r => r.user_id === user?.id);
     if (currentUserRole) {
       setUserRole(currentUserRole.role as AppRole);
     }
   }, [currentTeam, user]);
 
+  // Fetch invitations - com RLS policies
   const fetchInvitations = useCallback(async () => {
-    if (!currentTeam) return;
+    if (!currentTeam) {
+      setInvitations([]);
+      return;
+    }
 
     const { data, error } = await supabase
       .from('team_invitations')
@@ -99,6 +139,18 @@ export function useTeam() {
     setInvitations(data as TeamInvitation[]);
   }, [currentTeam]);
 
+  // Permission checks
+  const canManageMembers = useCallback(() => {
+    if (!currentTeam || !user) return false;
+    return currentTeam.owner_id === user.id || userRole === 'admin' || userRole === 'manager';
+  }, [currentTeam, user, userRole]);
+
+  const canManageRoles = useCallback(() => {
+    if (!currentTeam || !user) return false;
+    return currentTeam.owner_id === user.id || userRole === 'admin';
+  }, [currentTeam, user, userRole]);
+
+  // Create team
   const createTeam = useCallback(async (name: string) => {
     if (!user) return null;
 
@@ -110,12 +162,14 @@ export function useTeam() {
 
     if (error) {
       console.error('Error creating team:', error);
-      toast.error('Erro ao criar equipe');
+      toast.error('Erro ao criar equipe', {
+        description: error.message
+      });
       return null;
     }
 
     // Add creator as admin
-    await supabase
+    const { error: roleError } = await supabase
       .from('user_roles')
       .insert({
         user_id: user.id,
@@ -123,11 +177,18 @@ export function useTeam() {
         role: 'admin'
       });
 
-    toast.success('Equipe criada com sucesso!');
+    if (roleError) {
+      console.error('Error adding role:', roleError);
+    }
+
+    toast.success('Equipe criada com sucesso!', {
+      description: `${name} foi criada`
+    });
     await fetchTeams();
     return data as Team;
   }, [user, fetchTeams]);
 
+  // Update team
   const updateTeam = useCallback(async (teamId: string, name: string) => {
     const { error } = await supabase
       .from('teams')
@@ -136,7 +197,9 @@ export function useTeam() {
 
     if (error) {
       console.error('Error updating team:', error);
-      toast.error('Erro ao atualizar equipe');
+      toast.error('Erro ao atualizar equipe', {
+        description: error.message
+      });
       return false;
     }
 
@@ -145,37 +208,49 @@ export function useTeam() {
     return true;
   }, [fetchTeams]);
 
-  const switchTeam = useCallback(async (teamId: string) => {
+  // Switch team
+  const switchTeam = useCallback(async (newTeamId: string) => {
     if (!user) return;
 
     const { error } = await supabase
       .from('profiles')
-      .update({ current_team_id: teamId })
+      .update({ current_team_id: newTeamId })
       .eq('id', user.id);
 
     if (error) {
       console.error('Error switching team:', error);
-      toast.error('Erro ao trocar de equipe');
+      toast.error('Erro ao trocar de equipe', {
+        description: error.message
+      });
       return;
     }
 
-    const team = teams.find(t => t.id === teamId);
+    const team = teams.find(t => t.id === newTeamId);
     if (team) {
       setCurrentTeam(team);
       toast.success(`Você está agora em: ${team.name}`);
     }
+    
+    // Reload to refresh all data with new team context
+    window.location.reload();
   }, [user, teams]);
 
+  // Invite member
   const inviteMember = useCallback(async (email: string, role: AppRole) => {
     if (!user || !currentTeam) return false;
+    if (!canManageMembers()) {
+      toast.error('Sem permissão para convidar membros');
+      return false;
+    }
 
     const { error } = await supabase
       .from('team_invitations')
       .insert({
         team_id: currentTeam.id,
-        email,
+        email: email.toLowerCase().trim(),
         role,
-        invited_by: user.id
+        invited_by: user.id,
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
       });
 
     if (error) {
@@ -183,17 +258,27 @@ export function useTeam() {
         toast.error('Este email já foi convidado');
       } else {
         console.error('Error inviting member:', error);
-        toast.error('Erro ao enviar convite');
+        toast.error('Erro ao enviar convite', {
+          description: error.message
+        });
       }
       return false;
     }
 
-    toast.success(`Convite enviado para ${email}`);
+    toast.success('Convite enviado!', {
+      description: `Convite para ${email} foi enviado`
+    });
     await fetchInvitations();
     return true;
-  }, [user, currentTeam, fetchInvitations]);
+  }, [user, currentTeam, canManageMembers, fetchInvitations]);
 
+  // Cancel invitation
   const cancelInvitation = useCallback(async (invitationId: string) => {
+    if (!canManageMembers()) {
+      toast.error('Sem permissão para cancelar convites');
+      return false;
+    }
+
     const { error } = await supabase
       .from('team_invitations')
       .delete()
@@ -201,16 +286,24 @@ export function useTeam() {
 
     if (error) {
       console.error('Error canceling invitation:', error);
-      toast.error('Erro ao cancelar convite');
+      toast.error('Erro ao cancelar convite', {
+        description: error.message
+      });
       return false;
     }
 
     toast.success('Convite cancelado');
     await fetchInvitations();
     return true;
-  }, [fetchInvitations]);
+  }, [canManageMembers, fetchInvitations]);
 
+  // Update member role
   const updateMemberRole = useCallback(async (memberId: string, newRole: AppRole) => {
+    if (!canManageRoles()) {
+      toast.error('Sem permissão para alterar cargos');
+      return false;
+    }
+
     const { error } = await supabase
       .from('user_roles')
       .update({ role: newRole })
@@ -218,16 +311,24 @@ export function useTeam() {
 
     if (error) {
       console.error('Error updating member role:', error);
-      toast.error('Erro ao atualizar cargo');
+      toast.error('Erro ao atualizar cargo', {
+        description: error.message
+      });
       return false;
     }
 
     toast.success('Cargo atualizado!');
     await fetchMembers();
     return true;
-  }, [fetchMembers]);
+  }, [canManageRoles, fetchMembers]);
 
+  // Remove member
   const removeMember = useCallback(async (memberId: string) => {
+    if (!canManageMembers()) {
+      toast.error('Sem permissão para remover membros');
+      return false;
+    }
+
     const { error } = await supabase
       .from('user_roles')
       .delete()
@@ -235,35 +336,34 @@ export function useTeam() {
 
     if (error) {
       console.error('Error removing member:', error);
-      toast.error('Erro ao remover membro');
+      toast.error('Erro ao remover membro', {
+        description: error.message
+      });
       return false;
     }
 
     toast.success('Membro removido da equipe');
     await fetchMembers();
     return true;
-  }, [fetchMembers]);
+  }, [canManageMembers, fetchMembers]);
 
-  const canManageMembers = useCallback(() => {
-    if (!currentTeam || !user) return false;
-    return currentTeam.owner_id === user.id || userRole === 'admin' || userRole === 'manager';
-  }, [currentTeam, user, userRole]);
-
-  const canManageRoles = useCallback(() => {
-    if (!currentTeam || !user) return false;
-    return currentTeam.owner_id === user.id || userRole === 'admin';
-  }, [currentTeam, user, userRole]);
-
+  // Load data on mount
   useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      await fetchTeams();
+      setLoading(false);
+    };
+
     if (user) {
-      fetchTeams().finally(() => setLoading(false));
+      loadData();
     }
   }, [user, fetchTeams]);
 
+  // Load members and invitations when team changes
   useEffect(() => {
     if (currentTeam) {
-      fetchMembers();
-      fetchInvitations();
+      Promise.all([fetchMembers(), fetchInvitations()]);
     }
   }, [currentTeam, fetchMembers, fetchInvitations]);
 
