@@ -1,13 +1,27 @@
-import { Check, X } from 'lucide-react';
-import { PasswordCheck, getPasswordStrength } from '@/lib/passwordValidation';
+import { Check, X, Clock, AlertTriangle } from 'lucide-react';
+import { 
+  PasswordCheck, 
+  getPasswordStrength, 
+  hasSequentialChars, 
+  hasCommonPatterns,
+  estimateCrackTime 
+} from '@/lib/passwordValidation';
 
 interface PasswordStrengthIndicatorProps {
   password: string;
   checks: PasswordCheck[];
+  showCrackTime?: boolean;
 }
 
-export function PasswordStrengthIndicator({ password, checks }: PasswordStrengthIndicatorProps) {
+export function PasswordStrengthIndicator({ 
+  password, 
+  checks, 
+  showCrackTime = true 
+}: PasswordStrengthIndicatorProps) {
   const { strength, label, color } = getPasswordStrength(password);
+  const hasSequences = hasSequentialChars(password);
+  const hasPatterns = hasCommonPatterns(password);
+  const crackTime = estimateCrackTime(password);
 
   return (
     <div className="space-y-3 mt-2">
@@ -23,10 +37,29 @@ export function PasswordStrengthIndicator({ password, checks }: PasswordStrength
             />
           ))}
         </div>
-        <p className={`text-xs font-medium ${color.replace('bg-', 'text-')}`}>
-          Força: {label}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className={`text-xs font-medium ${color.replace('bg-', 'text-')}`}>
+            Força: {label}
+          </p>
+          {showCrackTime && password.length > 0 && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {crackTime}
+            </p>
+          )}
+        </div>
       </div>
+
+      {/* Warnings for patterns */}
+      {(hasSequences || hasPatterns) && password.length > 0 && (
+        <div className="flex items-start gap-2 text-xs text-warning bg-warning/10 p-2 rounded-md">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+          <span>
+            {hasPatterns && 'Evite palavras comuns. '}
+            {hasSequences && 'Evite sequências óbvias (abc, 123).'}
+          </span>
+        </div>
+      )}
 
       {/* Checklist */}
       <div className="space-y-1.5 bg-muted/50 rounded-lg p-3">
