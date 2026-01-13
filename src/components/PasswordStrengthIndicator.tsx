@@ -1,81 +1,146 @@
-import { Check, X, Clock, AlertTriangle } from 'lucide-react';
-import { 
-  PasswordCheck, 
-  getPasswordStrength, 
-  hasSequentialChars, 
-  hasCommonPatterns,
-  estimateCrackTime 
-} from '@/lib/passwordValidation';
+import { Check, X, AlertTriangle, Shield } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
+import { PasswordCheck, comprehensivePasswordCheck, estimateCrackTime } from '@/lib/passwordValidation';
 
 interface PasswordStrengthIndicatorProps {
   password: string;
   checks: PasswordCheck[];
-  showCrackTime?: boolean;
+  showDetails?: boolean;
 }
 
 export function PasswordStrengthIndicator({ 
   password, 
-  checks, 
-  showCrackTime = true 
+  checks,
+  showDetails = true 
 }: PasswordStrengthIndicatorProps) {
-  const { strength, label, color } = getPasswordStrength(password);
-  const hasSequences = hasSequentialChars(password);
-  const hasPatterns = hasCommonPatterns(password);
-  const crackTime = estimateCrackTime(password);
+  const { result, hasWeakPatterns, hasSequences, recommendations } =
+    comprehensivePasswordCheck(password);
+
+  const strengthColors = {
+    'weak': 'bg-danger',
+    'medium': 'bg-warning',
+    'strong': 'bg-success',
+    'very-strong': 'bg-success'
+  };
+
+  const strengthLabels = {
+    'weak': 'Fraca',
+    'medium': 'Média',
+    'strong': 'Forte',
+    'very-strong': 'Muito Forte'
+  };
+
+  const strengthTextColors = {
+    'weak': 'text-danger',
+    'medium': 'text-warning',
+    'strong': 'text-success',
+    'very-strong': 'text-success'
+  };
+
+  const strengthValue = {
+    'weak': 25,
+    'medium': 50,
+    'strong': 75,
+    'very-strong': 100
+  };
 
   return (
-    <div className="space-y-3 mt-2">
-      {/* Strength bar */}
+    <div className="space-y-3 p-3 rounded-lg bg-muted/50 border">
+      {/* Barra de Progresso */}
       <div className="space-y-1">
-        <div className="flex gap-1">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div
-              key={i}
-              className={`h-1.5 flex-1 rounded-full transition-colors ${
-                i <= strength ? color : 'bg-muted'
-              }`}
-            />
-          ))}
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Força da senha:</span>
+          <span className={cn("font-semibold", strengthTextColors[result.strength])}>
+            {strengthLabels[result.strength]}
+          </span>
         </div>
-        <div className="flex items-center justify-between">
-          <p className={`text-xs font-medium ${color.replace('bg-', 'text-')}`}>
-            Força: {label}
-          </p>
-          {showCrackTime && password.length > 0 && (
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {crackTime}
-            </p>
-          )}
-        </div>
+        <Progress 
+          value={strengthValue[result.strength]} 
+          className="h-2"
+          indicatorClassName={strengthColors[result.strength]}
+        />
       </div>
 
-      {/* Warnings for patterns */}
-      {(hasSequences || hasPatterns) && password.length > 0 && (
-        <div className="flex items-start gap-2 text-xs text-warning bg-warning/10 p-2 rounded-md">
-          <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-          <span>
-            {hasPatterns && 'Evite palavras comuns. '}
-            {hasSequences && 'Evite sequências óbvias (abc, 123).'}
-          </span>
+      {/* Tempo para quebrar */}
+      {password.length > 0 && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Shield className="h-3 w-3" />
+          <span>Tempo para quebrar: <strong>{estimateCrackTime(password)}</strong></span>
         </div>
       )}
 
-      {/* Checklist */}
-      <div className="space-y-1.5 bg-muted/50 rounded-lg p-3">
-        {checks.map((check, index) => (
-          <div key={index} className="flex items-center gap-2 text-sm">
-            {check.valid ? (
-              <Check className="h-4 w-4 text-success flex-shrink-0" />
-            ) : (
-              <X className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            )}
-            <span className={check.valid ? 'text-foreground' : 'text-muted-foreground'}>
-              {check.label}
-            </span>
+      {/* Detalhes dos Checks */}
+      {showDetails && (
+        <div className="space-y-2">
+          <div className="text-xs font-medium text-muted-foreground">Requisitos:</div>
+          <div className="grid grid-cols-1 gap-1.5">
+            {checks.map((check, idx) => (
+              <CheckItem 
+                key={idx}
+                label={check.label} 
+                checked={check.valid} 
+              />
+            ))}
           </div>
-        ))}
-      </div>
+
+          {/* Avisos */}
+          {(hasWeakPatterns || hasSequences) && (
+            <div className="mt-2 p-2 rounded bg-warning/10 border border-warning/20">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
+                <div className="text-xs space-y-1">
+                  {hasWeakPatterns && (
+                    <p className="text-warning">⚠️ Senha contém palavra comum</p>
+                  )}
+                  {hasSequences && (
+                    <p className="text-warning">⚠️ Evite sequências óbvias</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Recomendações */}
+          {recommendations.length > 0 && !result.valid && (
+            <div className="mt-2 space-y-1">
+              <div className="text-xs font-medium text-muted-foreground">Sugestões:</div>
+              <ul className="text-xs space-y-0.5 text-muted-foreground">
+                {recommendations.slice(0, 3).map((rec, idx) => (
+                  <li key={idx} className="flex items-start gap-1">
+                    <span className="text-primary">•</span>
+                    <span>{rec}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface CheckItemProps {
+  label: string;
+  checked: boolean;
+}
+
+function CheckItem({ label, checked }: CheckItemProps) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      {checked ? (
+        <div className="flex items-center justify-center w-4 h-4 rounded-full bg-success/10">
+          <Check className="h-3 w-3 text-success" />
+        </div>
+      ) : (
+        <div className="flex items-center justify-center w-4 h-4 rounded-full bg-muted">
+          <X className="h-3 w-3 text-muted-foreground" />
+        </div>
+      )}
+      <span className={checked ? 'text-success' : 'text-muted-foreground'}>
+        {label}
+      </span>
     </div>
   );
 }
