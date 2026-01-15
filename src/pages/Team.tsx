@@ -92,147 +92,157 @@ export default function Team() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <Users className="h-8 w-8" />
-            Equipe
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie os membros e permissões da sua equipe
-          </p>
-        </div>
+    <div className="container mx-auto py-4 sm:py-8 px-2 sm:px-4">
+      <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 sm:gap-3">
+              <Users className="h-6 w-6 sm:h-8 sm:w-8" />
+              Equipe
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">
+              Gerencie os membros e permissões
+            </p>
+          </div>
 
-        {teams.length > 1 && (
-          <Select value={currentTeam?.id} onValueChange={switchTeam}>
-            <SelectTrigger className="w-[200px]">
-              <Building2 className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Selecione a equipe" />
-            </SelectTrigger>
-            <SelectContent>
-              {teams.map(team => (
-                <SelectItem key={team.id} value={team.id}>
-                  {team.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+          {teams.length > 1 && (
+            <Select value={currentTeam?.id} onValueChange={switchTeam}>
+              <SelectTrigger className="w-full sm:w-[200px] h-11">
+                <Building2 className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Selecione a equipe" />
+              </SelectTrigger>
+              <SelectContent>
+                {teams.map(team => (
+                  <SelectItem key={team.id} value={team.id}>
+                    {team.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
 
-      <Tabs defaultValue="members" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="members">
-            <Users className="h-4 w-4 mr-2" />
-            Membros ({members.length})
+      <Tabs defaultValue="members" className="space-y-4 sm:space-y-6">
+        <TabsList className="w-full grid grid-cols-3 h-auto p-1">
+          <TabsTrigger value="members" className="flex items-center gap-1 sm:gap-2 py-2 sm:py-2.5 text-xs sm:text-sm">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Membros</span>
+            <span className="sm:hidden">({members.length})</span>
+            <span className="hidden sm:inline">({members.length})</span>
           </TabsTrigger>
-          <TabsTrigger value="invitations">
-            <Mail className="h-4 w-4 mr-2" />
-            Convites ({invitations.length})
+          <TabsTrigger value="invitations" className="flex items-center gap-1 sm:gap-2 py-2 sm:py-2.5 text-xs sm:text-sm">
+            <Mail className="h-4 w-4" />
+            <span className="hidden sm:inline">Convites</span>
+            <span className="sm:hidden">({invitations.length})</span>
+            <span className="hidden sm:inline">({invitations.length})</span>
           </TabsTrigger>
-          <TabsTrigger value="settings">
-            <Shield className="h-4 w-4 mr-2" />
-            Configurações
+          <TabsTrigger value="settings" className="flex items-center gap-1 sm:gap-2 py-2 sm:py-2.5 text-xs sm:text-sm">
+            <Shield className="h-4 w-4" />
+            <span className="hidden sm:inline">Configurações</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="members" className="space-y-6">
+        <TabsContent value="members" className="space-y-4 sm:space-y-6">
           {/* Invite Member Card */}
           {canManageMembers() && (
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <UserPlus className="h-5 w-5" />
+              <CardHeader className="pb-2 sm:pb-4">
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                  <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
                   Convidar Membro
                 </CardTitle>
-                <CardDescription>
-                  Envie um convite por email para adicionar novos membros à equipe
+                <CardDescription className="text-xs sm:text-sm">
+                  Envie um convite por email para adicionar novos membros
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="flex-1">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="email@exemplo.com"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                    />
+                <div className="flex flex-col gap-3 sm:gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="email" className="text-sm">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="email@exemplo.com"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        className="h-11 text-base"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-sm">Cargo</Label>
+                      <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as AppRole)}>
+                        <SelectTrigger className="h-11">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(['viewer', 'seller', 'manager', 'admin'] as AppRole[]).map(role => (
+                            <SelectItem key={role} value={role}>
+                              {roleLabels[role]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div className="w-full md:w-48">
-                    <Label>Cargo</Label>
-                    <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as AppRole)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(['viewer', 'seller', 'manager', 'admin'] as AppRole[]).map(role => (
-                          <SelectItem key={role} value={role}>
-                            {roleLabels[role]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-end">
-                    <Button onClick={handleInvite} disabled={isInviting || !inviteEmail.trim()}>
-                      {isInviting ? 'Enviando...' : 'Enviar Convite'}
-                    </Button>
-                  </div>
+                  <Button 
+                    onClick={handleInvite} 
+                    disabled={isInviting || !inviteEmail.trim()}
+                    className="h-11 w-full sm:w-auto"
+                  >
+                    {isInviting ? 'Enviando...' : 'Enviar Convite'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Members List */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Membros da Equipe</CardTitle>
-              <CardDescription>
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg">Membros da Equipe</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 {currentTeam?.name} • {members.length} membro{members.length !== 1 ? 's' : ''}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {members.map(member => (
                   <div 
                     key={member.id} 
-                    className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
                   >
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-10 w-10">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <Avatar className="h-10 w-10 flex-shrink-0">
                         <AvatarFallback>
                           {member.full_name?.charAt(0) || member.email.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                          <span className="font-medium truncate">
                             {member.full_name || 'Sem nome'}
                           </span>
                           {member.is_owner && (
-                            <Crown className="h-4 w-4 text-amber-500" />
+                            <Crown className="h-4 w-4 text-amber-500 flex-shrink-0" />
                           )}
                           {member.user_id === user?.id && (
                             <Badge variant="outline" className="text-xs">Você</Badge>
                           )}
                         </div>
-                        <span className="text-sm text-muted-foreground">{member.email}</span>
+                        <span className="text-xs sm:text-sm text-muted-foreground truncate block">{member.email}</span>
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-3">
-                      <Badge className={cn(roleColors[member.role])}>
+                    <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 ml-13 sm:ml-0">
+                      <Badge className={cn(roleColors[member.role], "text-xs")}>
                         {roleLabels[member.role]}
                       </Badge>
                       
                       {canManageRoles() && !member.is_owner && member.user_id !== user?.id && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" className="h-10 w-10">
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -269,22 +279,21 @@ export default function Team() {
                                   className="text-destructive"
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
-                                  Remover da equipe
+                                  Remover
                                 </DropdownMenuItem>
                               </AlertDialogTrigger>
-                              <AlertDialogContent>
+                              <AlertDialogContent className="max-w-[95vw] sm:max-w-lg">
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Remover membro?</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Esta ação irá remover {member.full_name || member.email} da equipe. 
-                                    O membro perderá acesso a todos os dados.
+                                    Esta ação irá remover {member.full_name || member.email} da equipe.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                                  <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
                                   <AlertDialogAction 
                                     onClick={() => removeMember(member.id)}
-                                    className="bg-destructive text-destructive-foreground"
+                                    className="w-full sm:w-auto bg-destructive text-destructive-foreground"
                                   >
                                     Remover
                                   </AlertDialogAction>
@@ -310,20 +319,20 @@ export default function Team() {
 
           {/* Roles Legend */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Níveis de Acesso</CardTitle>
-              <CardDescription>
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg">Níveis de Acesso</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 Entenda as permissões de cada cargo
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {(['admin', 'manager', 'seller', 'viewer'] as AppRole[]).map(role => (
-                  <div key={role} className="flex items-start gap-3 p-3 rounded-lg border">
-                    <Badge className={cn(roleColors[role], "mt-0.5")}>
+                  <div key={role} className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border">
+                    <Badge className={cn(roleColors[role], "mt-0.5 text-xs flex-shrink-0")}>
                       {roleLabels[role]}
                     </Badge>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {roleDescriptions[role]}
                     </p>
                   </div>

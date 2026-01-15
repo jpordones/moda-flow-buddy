@@ -228,24 +228,24 @@ export default function Products() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header - Responsive */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">Produtos</h1>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Produtos</h1>
             {!isUnlimited && (
               <Badge 
                 variant={isAtLimit ? "danger" : isNearLimit ? "warning" : "secondary"}
                 className="text-xs"
               >
-                {currentProductCount}/{productLimit} produtos
+                {currentProductCount}/{productLimit}
               </Badge>
             )}
           </div>
-          <p className="text-muted-foreground">Gerencie seu catálogo de produtos</p>
+          <p className="text-sm sm:text-base text-muted-foreground">Gerencie seu catálogo de produtos</p>
         </div>
-        <Button onClick={handleOpenAddForm} className="gap-2" variant="action">
+        <Button onClick={handleOpenAddForm} className="gap-2 h-11 w-full sm:w-auto" variant="action">
           {isAtLimit ? <Crown className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
           {isAtLimit ? "Fazer Upgrade" : "Novo Produto"}
         </Button>
@@ -254,62 +254,71 @@ export default function Products() {
       {/* Stats */}
       <ProductStats stats={stats} />
 
-      {/* Filters and Actions */}
+      {/* Filters and Actions - Responsive */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row gap-4 justify-between">
-            <div className="flex flex-1 gap-3">
-              <div className="relative flex-1 max-w-md">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            {/* Search and Filters - Stack on mobile */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por nome ou SKU..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 h-11 text-base"
                 />
               </div>
-              <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  {defaultCategories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-[130px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="ativo">Ativos</SelectItem>
-                  <SelectItem value="inativo">Inativos</SelectItem>
-                  <SelectItem value="descontinuado">Descontinuados</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterStock} onValueChange={setFilterStock}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Estoque" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="critico">Sem estoque</SelectItem>
-                  <SelectItem value="baixo">Estoque baixo</SelectItem>
-                  <SelectItem value="normal">Estoque normal</SelectItem>
-                </SelectContent>
-              </Select>
+              
+              {/* Filters - Horizontal scroll on mobile */}
+              <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 -mx-2 px-2 sm:mx-0 sm:px-0">
+                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="w-[140px] sm:w-[160px] h-11 flex-shrink-0">
+                    <SelectValue placeholder="Categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    {defaultCategories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-[120px] sm:w-[130px] h-11 flex-shrink-0">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="ativo">Ativos</SelectItem>
+                    <SelectItem value="inativo">Inativos</SelectItem>
+                    <SelectItem value="descontinuado">Descontinuados</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filterStock} onValueChange={setFilterStock}>
+                  <SelectTrigger className="w-[130px] sm:w-[150px] h-11 flex-shrink-0">
+                    <SelectValue placeholder="Estoque" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="critico">Sem estoque</SelectItem>
+                    <SelectItem value="baixo">Estoque baixo</SelectItem>
+                    <SelectItem value="normal">Estoque normal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="flex gap-2">
+            
+            {/* View mode toggle */}
+            <div className="flex justify-end">
               <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
                 <TabsList>
-                  <TabsTrigger value="grid" className="gap-1">
+                  <TabsTrigger value="grid" className="gap-1 px-3">
                     <Grid className="h-4 w-4" />
+                    <span className="hidden sm:inline">Grid</span>
                   </TabsTrigger>
-                  <TabsTrigger value="table" className="gap-1">
+                  <TabsTrigger value="table" className="gap-1 px-3">
                     <List className="h-4 w-4" />
+                    <span className="hidden sm:inline">Lista</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -332,14 +341,14 @@ export default function Products() {
                 }
               </p>
               {products.length === 0 && (
-                <Button onClick={() => setIsFormOpen(true)} variant="action">
+                <Button onClick={() => setIsFormOpen(true)} variant="action" className="h-11 w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
                   Adicionar Produto
                 </Button>
               )}
             </div>
           ) : viewMode === 'grid' ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -353,7 +362,9 @@ export default function Products() {
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border overflow-hidden">
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block rounded-xl border overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -431,14 +442,52 @@ export default function Products() {
                   })}
                 </TableBody>
               </Table>
-            </div>
+              </div>
+              
+              {/* Mobile Card View for Table Mode */}
+              <div className="md:hidden space-y-3">
+                {filteredProducts.map((product) => {
+                  const stockStatus = getStockStatus(product);
+                  return (
+                    <Card key={product.id} className="p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="font-medium">{product.name}</h3>
+                          <p className="text-xs text-muted-foreground font-mono">{product.sku}</p>
+                        </div>
+                        <Badge variant={getStatusBadgeVariant(product.status) as any} className="text-xs">
+                          {product.status}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between items-center text-sm mb-3">
+                        <span className="text-muted-foreground">{product.category}</span>
+                        <span className="font-bold">R$ {product.salePrice.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <Badge variant={getStockBadgeVariant(stockStatus.status) as any} className="text-xs">
+                          {product.quantity} {product.unit}
+                        </Badge>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setEditingProduct(product)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-9 w-9 text-danger" onClick={() => setDeleteProductId(product.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
 
       {/* Add Product Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Cadastrar Novo Produto</DialogTitle>
             <DialogDescription>Preencha as informações do produto</DialogDescription>
@@ -452,7 +501,7 @@ export default function Products() {
 
       {/* Edit Product Dialog */}
       <Dialog open={!!editingProduct} onOpenChange={(open) => !open && setEditingProduct(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Produto</DialogTitle>
             <DialogDescription>{editingProduct?.name}</DialogDescription>
@@ -470,16 +519,16 @@ export default function Products() {
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteProductId} onOpenChange={(open) => !open && setDeleteProductId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[95vw] sm:max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir produto?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. O produto será removido permanentemente.
+              Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteProduct} className="bg-danger hover:bg-danger/90">
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteProduct} className="w-full sm:w-auto bg-danger hover:bg-danger/90">
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>

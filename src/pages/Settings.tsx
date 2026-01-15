@@ -21,33 +21,33 @@ export default function Settings() {
   } = useSettings();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Configurações</h1>
-        <p className="text-gray-600">Personalize o sistema de acordo com suas necessidades</p>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Configurações</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">Personalize o sistema de acordo com suas necessidades</p>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
-          <TabsTrigger value="general" className="flex items-center gap-2">
+      <Tabs defaultValue="general" className="space-y-4 sm:space-y-6">
+        <TabsList className="grid w-full grid-cols-4 h-auto p-1">
+          <TabsTrigger value="general" className="flex items-center gap-1 sm:gap-2 py-2 sm:py-2.5 text-xs sm:text-sm">
             <SettingsIcon className="h-4 w-4" />
             <span className="hidden sm:inline">Geral</span>
           </TabsTrigger>
-          <TabsTrigger value="business" className="flex items-center gap-2">
+          <TabsTrigger value="business" className="flex items-center gap-1 sm:gap-2 py-2 sm:py-2.5 text-xs sm:text-sm">
             <Building2 className="h-4 w-4" />
             <span className="hidden sm:inline">Negócio</span>
           </TabsTrigger>
-          <TabsTrigger value="calculations" className="flex items-center gap-2">
+          <TabsTrigger value="calculations" className="flex items-center gap-1 sm:gap-2 py-2 sm:py-2.5 text-xs sm:text-sm">
             <Calculator className="h-4 w-4" />
             <span className="hidden sm:inline">Cálculos</span>
           </TabsTrigger>
-          <TabsTrigger value="advanced" className="flex items-center gap-2">
+          <TabsTrigger value="advanced" className="flex items-center gap-1 sm:gap-2 py-2 sm:py-2.5 text-xs sm:text-sm">
             <Database className="h-4 w-4" />
             <span className="hidden sm:inline">Avançado</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="general" className="space-y-6">
+        <TabsContent value="general" className="space-y-4 sm:space-y-6">
           <CurrencySettingsSection
             settings={settings.currency}
             onUpdate={(updates) => updateSettings('currency', updates)}
@@ -59,7 +59,7 @@ export default function Settings() {
           />
         </TabsContent>
 
-        <TabsContent value="business" className="space-y-6">
+        <TabsContent value="business" className="space-y-4 sm:space-y-6">
           <CompanySettingsSection
             settings={settings.company}
             onUpdate={(updates) => updateSettings('company', updates)}
@@ -70,7 +70,7 @@ export default function Settings() {
           />
         </TabsContent>
 
-        <TabsContent value="calculations" className="space-y-6">
+        <TabsContent value="calculations" className="space-y-4 sm:space-y-6">
           <CalculationSettingsSection
             settings={settings.calculations}
             onUpdate={(updates) => updateSettings('calculations', updates)}
@@ -81,7 +81,7 @@ export default function Settings() {
           />
         </TabsContent>
 
-        <TabsContent value="advanced" className="space-y-6">
+        <TabsContent value="advanced" className="space-y-4 sm:space-y-6">
           <ExportSettingsSection
             settings={settings.export}
             onUpdate={(updates) => updateSettings('export', updates)}

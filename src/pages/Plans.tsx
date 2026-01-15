@@ -119,30 +119,30 @@ export default function Plans() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">Escolha seu Plano</h1>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+    <div className="container mx-auto py-4 sm:py-8 px-4">
+      <div className="text-center mb-6 sm:mb-12">
+        <h1 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4">Escolha seu Plano</h1>
+        <p className="text-muted-foreground text-sm sm:text-lg max-w-2xl mx-auto">
           Selecione o plano ideal para o seu negócio. Faça upgrade a qualquer momento.
         </p>
       </div>
 
       {/* Current Plan Badge */}
       {activePlanType && (
-        <div className="flex justify-center gap-4 mb-8">
-          <Badge variant="outline" className="text-base px-4 py-2">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 mb-6 sm:mb-8">
+          <Badge variant="outline" className="text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2">
             Plano atual: <span className="font-semibold ml-1 capitalize">{activePlanType}</span>
           </Badge>
           {stripeSubscription?.subscribed && (
-            <Button variant="outline" size="sm" onClick={openCustomerPortal} disabled={stripeLoading}>
+            <Button variant="outline" size="sm" onClick={openCustomerPortal} disabled={stripeLoading} className="h-10 sm:h-auto">
               Gerenciar Assinatura
             </Button>
           )}
         </div>
       )}
 
-      {/* Plan Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+      {/* Plan Cards - Responsive grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-16">
       {staticPlans.map(plan => {
           const isCurrentPlan = activePlanType === plan.type;
           const isPopular = plan.type === 'professional';
@@ -249,16 +249,16 @@ export default function Plans() {
         })}
       </div>
 
-      {/* Features Comparison Table */}
-      <div className="mt-16">
-        <h2 className="text-2xl font-bold text-center mb-8">Comparativo de Recursos</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+      {/* Features Comparison Table - Hidden on mobile, shown on tablet+ */}
+      <div className="mt-8 sm:mt-16 hidden md:block">
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-8">Comparativo de Recursos</h2>
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full border-collapse min-w-[600px]">
             <thead>
-              <tr className="border-b">
-                <th className="text-left py-4 px-4 font-medium">Recurso</th>
+              <tr className="border-b bg-muted/50">
+                <th className="text-left py-3 sm:py-4 px-3 sm:px-4 font-medium text-sm sm:text-base">Recurso</th>
                 {staticPlans.map(plan => (
-                  <th key={plan.type} className="text-center py-4 px-4 font-medium">
+                  <th key={plan.type} className="text-center py-3 sm:py-4 px-2 sm:px-4 font-medium text-sm sm:text-base">
                     {plan.name}
                   </th>
                 ))}
@@ -266,18 +266,18 @@ export default function Plans() {
             </thead>
             <tbody>
               {features.map((feature, index) => (
-                <tr key={feature.name} className={cn("border-b", index % 2 === 0 && "bg-muted/50")}>
-                  <td className="py-4 px-4">{feature.name}</td>
-                  <td className="text-center py-4 px-4">
+                <tr key={feature.name} className={cn("border-b", index % 2 === 0 && "bg-muted/30")}>
+                  <td className="py-3 sm:py-4 px-3 sm:px-4 text-sm sm:text-base">{feature.name}</td>
+                  <td className="text-center py-3 sm:py-4 px-2 sm:px-4">
                     <FeatureValue value={feature.free} />
                   </td>
-                  <td className="text-center py-4 px-4">
+                  <td className="text-center py-3 sm:py-4 px-2 sm:px-4">
                     <FeatureValue value={feature.starter} />
                   </td>
-                  <td className="text-center py-4 px-4">
+                  <td className="text-center py-3 sm:py-4 px-2 sm:px-4">
                     <FeatureValue value={feature.professional} />
                   </td>
-                  <td className="text-center py-4 px-4">
+                  <td className="text-center py-3 sm:py-4 px-2 sm:px-4">
                     <FeatureValue value={feature.enterprise} />
                   </td>
                 </tr>
@@ -288,12 +288,12 @@ export default function Plans() {
       </div>
 
       {/* FAQ or CTA */}
-      <div className="mt-16 text-center">
-        <h2 className="text-2xl font-bold mb-4">Dúvidas?</h2>
-        <p className="text-muted-foreground mb-6">
-          Entre em contato conosco para saber mais sobre nossos planos e encontrar a melhor opção para você.
+      <div className="mt-8 sm:mt-16 text-center px-4">
+        <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4">Dúvidas?</h2>
+        <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">
+          Entre em contato conosco para saber mais sobre nossos planos.
         </p>
-        <Button variant="outline" size="lg">
+        <Button variant="outline" size="lg" className="h-12 w-full sm:w-auto">
           Falar com Suporte
         </Button>
       </div>

@@ -93,14 +93,14 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">Visão geral do seu negócio</p>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">Visão geral do seu negócio</p>
       </div>
 
-      {/* Métricas principais */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      {/* Métricas principais - Responsive grid */}
+      <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Saldo em Caixa"
           value={formatarMoeda(balance)}
@@ -134,7 +134,8 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {/* Secondary metrics - Responsive grid */}
+      <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <MetricCard
           title="Valor Total do Estoque"
           value={formatarMoeda(stockValue)}
@@ -155,29 +156,30 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Gráficos */}
-      <div className="grid gap-6 md:grid-cols-2">
+      {/* Gráficos - Responsive grid */}
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
         <Card className="shadow-sm border rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-foreground">Fluxo de Caixa</CardTitle>
-            <CardDescription className="text-muted-foreground">Evolução de entradas e saídas nos últimos 6 meses</CardDescription>
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="text-base sm:text-lg text-foreground">Fluxo de Caixa</CardTitle>
+            <CardDescription className="text-xs sm:text-sm text-muted-foreground">Evolução de entradas e saídas nos últimos 6 meses</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+          <CardContent className="px-2 sm:px-6">
+            <ResponsiveContainer width="100%" height={250} className="sm:!h-[300px]">
               <LineChart data={cashFlowData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontSize: 10 }} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontSize: 10 }} width={50} />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: "hsl(var(--card))", 
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "var(--radius)",
-                    color: "hsl(var(--foreground))"
+                    color: "hsl(var(--foreground))",
+                    fontSize: "12px"
                   }}
                   labelStyle={{ color: "hsl(var(--foreground))" }}
                 />
-                <Legend wrapperStyle={{ color: "hsl(var(--foreground))" }} />
+                <Legend wrapperStyle={{ color: "hsl(var(--foreground))", fontSize: "12px" }} />
                 <Line type="monotone" dataKey="entrada" stroke="hsl(var(--success))" strokeWidth={2} name="Entradas" />
                 <Line type="monotone" dataKey="saida" stroke="hsl(var(--danger))" strokeWidth={2} name="Saídas" />
               </LineChart>
@@ -186,26 +188,27 @@ export default function Dashboard() {
         </Card>
 
         <Card className="shadow-sm border rounded-xl">
-          <CardHeader>
-            <CardTitle className="text-foreground">Entradas vs Saídas</CardTitle>
-            <CardDescription className="text-muted-foreground">Comparativo do mês atual</CardDescription>
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="text-base sm:text-lg text-foreground">Entradas vs Saídas</CardTitle>
+            <CardDescription className="text-xs sm:text-sm text-muted-foreground">Comparativo do mês atual</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+          <CardContent className="px-2 sm:px-6">
+            <ResponsiveContainer width="100%" height={250} className="sm:!h-[300px]">
               <BarChart data={[{ name: "Este Mês", entrada: totalIncome, saida: totalExpense }]}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontSize: 10 }} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tick={{ fontSize: 10 }} width={50} />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: "hsl(var(--card))", 
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "var(--radius)",
-                    color: "hsl(var(--foreground))"
+                    color: "hsl(var(--foreground))",
+                    fontSize: "12px"
                   }}
                   labelStyle={{ color: "hsl(var(--foreground))" }}
                 />
-                <Legend wrapperStyle={{ color: "hsl(var(--foreground))" }} />
+                <Legend wrapperStyle={{ color: "hsl(var(--foreground))", fontSize: "12px" }} />
                 <Bar dataKey="entrada" fill="hsl(var(--success))" name="Entradas" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="saida" fill="hsl(var(--danger))" name="Saídas" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -213,13 +216,13 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border rounded-xl md:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-foreground">Despesas por Categoria</CardTitle>
-            <CardDescription className="text-muted-foreground">Distribuição dos gastos do mês</CardDescription>
+        <Card className="shadow-sm border rounded-xl lg:col-span-2">
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="text-base sm:text-lg text-foreground">Despesas por Categoria</CardTitle>
+            <CardDescription className="text-xs sm:text-sm text-muted-foreground">Distribuição dos gastos do mês</CardDescription>
           </CardHeader>
-          <CardContent className="flex justify-center">
-            <ResponsiveContainer width="100%" height={300}>
+          <CardContent className="flex justify-center px-2 sm:px-6">
+            <ResponsiveContainer width="100%" height={250} className="sm:!h-[300px]">
               <PieChart>
                 <Pie
                   data={expensesByCategory}
@@ -227,9 +230,10 @@ export default function Dashboard() {
                   cy="50%"
                   labelLine={false}
                   label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={100}
+                  outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
+                  className="text-xs sm:text-sm"
                 >
                   {expensesByCategory.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -240,7 +244,8 @@ export default function Dashboard() {
                     backgroundColor: "hsl(var(--card))", 
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "var(--radius)",
-                    color: "hsl(var(--foreground))"
+                    color: "hsl(var(--foreground))",
+                    fontSize: "12px"
                   }}
                   labelStyle={{ color: "hsl(var(--foreground))" }}
                 />
