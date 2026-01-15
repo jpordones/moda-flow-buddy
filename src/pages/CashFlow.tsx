@@ -214,28 +214,29 @@ export default function CashFlow() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 md:space-y-6">
+      {/* Header - Mobile optimized */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Fluxo de Caixa</h1>
-          <p className="text-muted-foreground">Gerencie suas entradas e saídas financeiras</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Fluxo de Caixa</h1>
+          <p className="text-sm md:text-base text-muted-foreground">Gerencie suas entradas e saídas financeiras</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
+            <Button className="gap-2 w-full sm:w-auto h-11">
               <Plus className="h-4 w-4" />
               Nova Transação
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-foreground">Registrar Transação</DialogTitle>
               <DialogDescription className="text-muted-foreground">Adicione uma nova entrada ou saída financeira</DialogDescription>
             </DialogHeader>
             
             <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="date" className="text-foreground font-medium">Data</Label>
                   <Input
@@ -243,6 +244,7 @@ export default function CashFlow() {
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    className="h-11 text-base"
                     required
                   />
                 </div>
@@ -250,7 +252,7 @@ export default function CashFlow() {
                 <div className="space-y-2">
                   <Label htmlFor="type" className="text-foreground font-medium">Tipo</Label>
                   <Select value={formData.type} onValueChange={(value: "entrada" | "saida") => setFormData({ ...formData, type: value, category: "" })}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11 text-base">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -270,6 +272,7 @@ export default function CashFlow() {
                   placeholder="0.00"
                   value={formData.value}
                   onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                  className="h-11 text-base"
                   required
                 />
               </div>
@@ -277,7 +280,7 @@ export default function CashFlow() {
               <div className="space-y-2">
                 <Label htmlFor="category" className="text-foreground font-medium">Categoria</Label>
                 <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-11 text-base">
                     <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
                   <SelectContent>
@@ -291,7 +294,7 @@ export default function CashFlow() {
               <div className="space-y-2">
                 <Label htmlFor="paymentMethod" className="text-foreground font-medium">Forma de Pagamento</Label>
                 <Select value={formData.paymentMethod} onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-11 text-base">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
@@ -309,44 +312,45 @@ export default function CashFlow() {
                   placeholder="Descrição da transação"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="h-11 text-base"
                   required
                 />
               </div>
 
-              <Button type="submit" variant="action" className="w-full">Registrar Transação</Button>
+              <Button type="submit" variant="action" className="w-full h-11">Registrar Transação</Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Resumo */}
-      <div className="grid gap-6 md:grid-cols-3">
+      {/* Resumo - Grid responsivo */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-4 md:p-6">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total de Entradas</CardTitle>
             <div className="p-2 rounded-lg bg-success/10 dark:bg-success/20">
               <TrendingUp className="h-5 w-5 text-success" />
             </div>
           </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <div className="text-3xl font-bold text-success">R$ {totalIncome.toFixed(2)}</div>
+          <CardContent className="p-4 md:p-6 pt-0">
+            <div className="text-2xl md:text-3xl font-bold text-success">R$ {totalIncome.toFixed(2)}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-4 md:p-6">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total de Saídas</CardTitle>
             <div className="p-2 rounded-lg bg-danger/10 dark:bg-danger/20">
               <TrendingDown className="h-5 w-5 text-danger" />
             </div>
           </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <div className="text-3xl font-bold text-danger">R$ {totalExpense.toFixed(2)}</div>
+          <CardContent className="p-4 md:p-6 pt-0">
+            <div className="text-2xl md:text-3xl font-bold text-danger">R$ {totalExpense.toFixed(2)}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-4 md:p-6">
             <CardTitle className="text-sm font-medium text-muted-foreground">Saldo</CardTitle>
             <div className={`p-2 rounded-lg ${balance >= 0 ? 'bg-success/10 dark:bg-success/20' : 'bg-danger/10 dark:bg-danger/20'}`}>
               {balance >= 0 ? (
@@ -356,8 +360,8 @@ export default function CashFlow() {
               )}
             </div>
           </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <div className={`text-3xl font-bold ${balance >= 0 ? 'text-success' : 'text-danger'}`}>
+          <CardContent className="p-4 md:p-6 pt-0">
+            <div className={`text-2xl md:text-3xl font-bold ${balance >= 0 ? 'text-success' : 'text-danger'}`}>
               R$ {balance.toFixed(2)}
             </div>
           </CardContent>
@@ -366,23 +370,24 @@ export default function CashFlow() {
 
       {/* Filtros e busca */}
       <Card>
-        <CardHeader className="p-6">
+        <CardHeader className="p-4 md:p-6">
           <CardTitle className="text-foreground">Histórico de Transações</CardTitle>
           <CardDescription className="text-muted-foreground">Visualize e gerencie todas as suas transações</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 p-6 pt-0">
-          <div className="flex gap-4">
+        <CardContent className="space-y-4 p-4 md:p-6 pt-0">
+          {/* Filtros - Stack em mobile */}
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar transações..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 h-11 text-base"
               />
             </div>
             <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px] h-11 text-base">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -393,7 +398,8 @@ export default function CashFlow() {
             </Select>
           </div>
 
-          <div className="rounded-xl border overflow-hidden">
+          {/* Tabela - Desktop */}
+          <div className="hidden lg:block rounded-xl border overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -418,7 +424,7 @@ export default function CashFlow() {
                         <p className="text-muted-foreground mb-4">
                           Comece adicionando uma entrada ou saída financeira
                         </p>
-                        <Button variant="action" className="gap-2" onClick={() => setIsDialogOpen(true)}>
+                        <Button variant="action" className="gap-2 h-11" onClick={() => setIsDialogOpen(true)}>
                           <Plus className="h-4 w-4" />
                           Nova Transação
                         </Button>
@@ -451,7 +457,7 @@ export default function CashFlow() {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleDelete(transaction.id)}
-                          className="h-8 w-8 hover:bg-danger-light hover:text-danger"
+                          className="h-10 w-10 hover:bg-danger-light hover:text-danger"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -461,6 +467,69 @@ export default function CashFlow() {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Cards - Mobile/Tablet */}
+          <div className="lg:hidden space-y-3">
+            {filteredTransactions.length === 0 && transactions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center py-12">
+                <span className="text-5xl mb-4">💰</span>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  Nenhuma transação registrada
+                </h3>
+                <p className="text-muted-foreground mb-4 text-sm">
+                  Comece adicionando uma entrada ou saída financeira
+                </p>
+                <Button variant="action" className="gap-2 h-11" onClick={() => setIsDialogOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                  Nova Transação
+                </Button>
+              </div>
+            ) : filteredTransactions.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                Nenhuma transação encontrada para o filtro atual
+              </div>
+            ) : (
+              filteredTransactions.map((transaction) => (
+                <Card key={transaction.id} className="p-4">
+                  <div className="space-y-3">
+                    {/* Header do card */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-foreground truncate">{transaction.description}</p>
+                        <p className="text-sm text-muted-foreground">{transaction.category}</p>
+                      </div>
+                      <Badge variant={transaction.type === "entrada" ? "success" : "danger"} className="shrink-0">
+                        {transaction.type === "entrada" ? "Entrada" : "Saída"}
+                      </Badge>
+                    </div>
+                    
+                    {/* Detalhes */}
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex gap-4 text-muted-foreground">
+                        <span>{new Date(transaction.date).toLocaleDateString('pt-BR')}</span>
+                        <span>{transaction.paymentMethod}</span>
+                      </div>
+                    </div>
+
+                    {/* Valor e ação */}
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <span className={`text-lg font-bold ${transaction.type === "entrada" ? "text-success" : "text-danger"}`}>
+                        {transaction.type === "entrada" ? "+" : "-"}R$ {parseFloat(transaction.value).toFixed(2)}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(transaction.id)}
+                        className="h-10 w-10 hover:bg-danger-light hover:text-danger"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
