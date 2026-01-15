@@ -148,32 +148,32 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-light via-background to-brand-light/50 dark:from-background dark:via-card dark:to-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-light via-background to-brand-light/50 dark:from-background dark:via-card dark:to-background px-4 py-8">
       <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <img src={fedcomLogo} alt="FEDCOM" className="h-24 w-auto" />
+        {/* Logo - Responsiva */}
+        <div className="flex justify-center mb-6 md:mb-8">
+          <img src={fedcomLogo} alt="FEDCOM" className="h-16 md:h-24 w-auto" />
         </div>
 
         <Card className="border-0 shadow-elevation-lg dark:shadow-dark-elevation-lg dark:border dark:border-border/50">
-          <CardHeader className="space-y-1 text-center pb-4">
-            <CardTitle className="text-2xl font-bold text-foreground">
+          <CardHeader className="space-y-1 text-center pb-4 px-4 md:px-6">
+            <CardTitle className="text-xl md:text-2xl font-bold text-foreground">
               {mode === 'login' && 'Entrar'}
               {mode === 'register' && 'Criar conta'}
               {mode === 'forgot-password' && 'Recuperar senha'}
             </CardTitle>
-            <CardDescription className="text-muted-foreground">
+            <CardDescription className="text-sm md:text-base text-muted-foreground">
               {mode === 'login' && 'Entre com suas credenciais para acessar'}
               {mode === 'register' && 'Preencha os dados para criar sua conta'}
               {mode === 'forgot-password' && 'Digite seu email para recuperar a senha'}
             </CardDescription>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="px-4 md:px-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === 'register' && (
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">Nome completo</Label>
+                  <Label htmlFor="fullName" className="text-sm md:text-base">Nome completo</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -182,7 +182,7 @@ export default function Auth() {
                       placeholder="Seu nome completo"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="pl-10 h-12"
+                      className="pl-10 h-12 text-base"
                     />
                   </div>
                   {errors.fullName && (
@@ -192,7 +192,7 @@ export default function Auth() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-sm md:text-base">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -201,7 +201,7 @@ export default function Auth() {
                     placeholder="seu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 h-12"
+                    className="pl-10 h-12 text-base"
                   />
                 </div>
                 {errors.email && (
@@ -211,7 +211,7 @@ export default function Auth() {
 
               {mode !== 'forgot-password' && (
                 <div className="space-y-2">
-                  <Label htmlFor="password">Senha</Label>
+                  <Label htmlFor="password" className="text-sm md:text-base">Senha</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -220,12 +220,12 @@ export default function Auth() {
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 pr-10 h-12"
+                      className="pl-10 pr-10 h-12 text-base"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -246,7 +246,7 @@ export default function Auth() {
               {mode === 'register' && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirmar senha</Label>
+                    <Label htmlFor="confirmPassword" className="text-sm md:text-base">Confirmar senha</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -255,7 +255,7 @@ export default function Auth() {
                         placeholder="••••••••"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="pl-10 h-12"
+                        className="pl-10 h-12 text-base"
                       />
                     </div>
                     {errors.confirmPassword && (
@@ -263,15 +263,16 @@ export default function Auth() {
                     )}
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-start space-x-3">
                     <Checkbox
                       id="terms"
                       checked={acceptTerms}
                       onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
+                      className="mt-0.5"
                     />
                     <label
                       htmlFor="terms"
-                      className="text-sm text-muted-foreground cursor-pointer"
+                      className="text-sm text-muted-foreground cursor-pointer leading-relaxed"
                     >
                       Aceito os{' '}
                       <a href="#" className="text-primary hover:underline">
@@ -290,7 +291,7 @@ export default function Auth() {
               )}
 
               {mode === 'login' && (
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="remember"
@@ -316,7 +317,7 @@ export default function Auth() {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full h-12 text-base"
                 size="lg"
                 disabled={isLoading}
               >
@@ -355,7 +356,7 @@ export default function Auth() {
               {mode === 'forgot-password' && (
                 <button
                   onClick={() => setMode('login')}
-                  className="text-sm text-primary hover:underline font-medium flex items-center justify-center gap-1 mx-auto"
+                  className="text-sm text-primary hover:underline font-medium flex items-center justify-center gap-1 mx-auto min-h-[44px]"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Voltar para login

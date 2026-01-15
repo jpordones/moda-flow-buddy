@@ -127,28 +127,29 @@ export default function Inventory() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 md:space-y-6">
+      {/* Header - Mobile optimized */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Estoque</h1>
-          <p className="text-muted-foreground">Gerencie seus produtos e inventário</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Estoque</h1>
+          <p className="text-sm md:text-base text-muted-foreground">Gerencie seus produtos e inventário</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
+            <Button className="gap-2 w-full sm:w-auto h-11">
               <Plus className="h-4 w-4" />
               Novo Produto
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-foreground">Cadastrar Produto</DialogTitle>
               <DialogDescription className="text-muted-foreground">Adicione um novo produto ao estoque</DialogDescription>
             </DialogHeader>
             
             <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="text-foreground font-medium">Nome do Produto</Label>
                   <Input
@@ -156,6 +157,7 @@ export default function Inventory() {
                     placeholder="Ex: Camiseta Básica"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="h-11 text-base"
                     required
                   />
                 </div>
@@ -167,16 +169,17 @@ export default function Inventory() {
                     placeholder="Ex: CAM-001"
                     value={formData.sku}
                     onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    className="h-11 text-base"
                     required
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="category" className="text-foreground font-medium">Categoria</Label>
                   <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11 text-base">
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
@@ -190,7 +193,7 @@ export default function Inventory() {
                 <div className="space-y-2">
                   <Label htmlFor="size" className="text-foreground font-medium">Tamanho</Label>
                   <Select value={formData.size} onValueChange={(value) => setFormData({ ...formData, size: value })}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11 text-base">
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
@@ -204,7 +207,7 @@ export default function Inventory() {
                 <div className="space-y-2">
                   <Label htmlFor="color" className="text-foreground font-medium">Cor</Label>
                   <Select value={formData.color} onValueChange={(value) => setFormData({ ...formData, color: value })}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11 text-base">
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
@@ -216,7 +219,7 @@ export default function Inventory() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="quantity" className="text-foreground font-medium">Quantidade</Label>
                   <Input
@@ -226,6 +229,7 @@ export default function Inventory() {
                     placeholder="0"
                     value={formData.quantity}
                     onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                    className="h-11 text-base"
                     required
                   />
                 </div>
@@ -239,6 +243,7 @@ export default function Inventory() {
                     placeholder="0.00"
                     value={formData.costPrice}
                     onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                    className="h-11 text-base"
                     required
                   />
                 </div>
@@ -252,75 +257,77 @@ export default function Inventory() {
                     placeholder="0.00"
                     value={formData.salePrice}
                     onChange={(e) => setFormData({ ...formData, salePrice: e.target.value })}
+                    className="h-11 text-base"
                     required
                   />
                 </div>
               </div>
 
-              <Button type="submit" variant="action" className="w-full">Cadastrar Produto</Button>
+              <Button type="submit" variant="action" className="w-full h-11">Cadastrar Produto</Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Resumo */}
-      <div className="grid gap-6 md:grid-cols-3">
+      {/* Resumo - Grid responsivo */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-4 md:p-6">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total de Produtos</CardTitle>
             <div className="p-2 rounded-lg bg-info/10 dark:bg-info/20">
               <Package className="h-5 w-5 text-info" />
             </div>
           </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <div className="text-3xl font-bold text-foreground">{totalStock}</div>
+          <CardContent className="p-4 md:p-6 pt-0">
+            <div className="text-2xl md:text-3xl font-bold text-foreground">{totalStock}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-4 md:p-6">
             <CardTitle className="text-sm font-medium text-muted-foreground">Valor Total do Estoque</CardTitle>
             <div className="p-2 rounded-lg bg-indigo/10 dark:bg-indigo/20">
               <DollarSign className="h-5 w-5 text-indigo" />
             </div>
           </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <div className="text-3xl font-bold text-foreground">R$ {totalValue.toFixed(2)}</div>
+          <CardContent className="p-4 md:p-6 pt-0">
+            <div className="text-2xl md:text-3xl font-bold text-foreground">R$ {totalValue.toFixed(2)}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 p-4 md:p-6">
             <CardTitle className="text-sm font-medium text-muted-foreground">Estoque Baixo</CardTitle>
             <div className="p-2 rounded-lg bg-warning/10 dark:bg-warning/20">
               <AlertTriangle className="h-5 w-5 text-warning" />
             </div>
           </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <div className="text-3xl font-bold text-warning">{lowStockItems} itens</div>
+          <CardContent className="p-4 md:p-6 pt-0">
+            <div className="text-2xl md:text-3xl font-bold text-warning">{lowStockItems} itens</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Lista de produtos */}
       <Card>
-        <CardHeader className="p-6">
+        <CardHeader className="p-4 md:p-6">
           <CardTitle className="text-foreground">Produtos</CardTitle>
           <CardDescription className="text-muted-foreground">Lista completa de produtos em estoque</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 p-6 pt-0">
-          <div className="flex gap-4">
+        <CardContent className="space-y-4 p-4 md:p-6 pt-0">
+          {/* Filtros - Stack em mobile */}
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar produtos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 h-11 text-base"
               />
             </div>
             <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px] h-11 text-base">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -332,7 +339,8 @@ export default function Inventory() {
             </Select>
           </div>
 
-          <div className="rounded-xl border overflow-hidden">
+          {/* Tabela - Desktop */}
+          <div className="hidden lg:block rounded-xl border overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -387,7 +395,7 @@ export default function Inventory() {
                             variant="ghost"
                             size="icon"
                             onClick={() => handleDelete(product.id)}
-                            className="h-8 w-8 hover:bg-danger-light hover:text-danger"
+                            className="h-10 w-10 hover:bg-danger-light hover:text-danger"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -398,6 +406,79 @@ export default function Inventory() {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Cards - Mobile/Tablet */}
+          <div className="lg:hidden space-y-3">
+            {filteredProducts.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                Nenhum produto encontrado
+              </div>
+            ) : (
+              filteredProducts.map((product) => {
+                const stockStatus = getStockStatus(product.quantity);
+                return (
+                  <Card key={product.id} className="p-4">
+                    <div className="space-y-3">
+                      {/* Header do card */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground truncate">{product.name}</p>
+                          <p className="text-sm text-muted-foreground font-mono">{product.sku}</p>
+                        </div>
+                        <Badge variant={stockStatus.variant} className="shrink-0">
+                          {stockStatus.label}
+                        </Badge>
+                      </div>
+                      
+                      {/* Detalhes */}
+                      <div className="grid grid-cols-3 gap-2 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Categoria</p>
+                          <p className="font-medium truncate">{product.category}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Tamanho</p>
+                          <p className="font-medium">{product.size}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Cor</p>
+                          <p className="font-medium">{product.color}</p>
+                        </div>
+                      </div>
+
+                      {/* Preços e quantidade */}
+                      <div className="flex items-center justify-between pt-2 border-t">
+                        <div className="flex gap-4">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Qtd</p>
+                            <p className={`font-bold ${product.quantity < 10 ? "text-warning" : ""}`}>
+                              {product.quantity}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Custo</p>
+                            <p className="font-medium">R$ {product.costPrice.toFixed(2)}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Venda</p>
+                            <p className="font-bold text-success">R$ {product.salePrice.toFixed(2)}</p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(product.id)}
+                          className="h-10 w-10 hover:bg-danger-light hover:text-danger"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })
+            )}
           </div>
         </CardContent>
       </Card>
