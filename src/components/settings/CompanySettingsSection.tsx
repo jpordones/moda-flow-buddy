@@ -100,7 +100,7 @@ export function CompanySettingsSection({ settings, onUpdate }: CompanySettingsSe
             <Building2 className="h-5 w-5 text-brand-foreground" />
           </div>
           <div>
-            <CardTitle className="text-gray-900">Informações da Empresa</CardTitle>
+            <CardTitle className="text-foreground">Informações da Empresa</CardTitle>
             <CardDescription>Dados que aparecerão nos relatórios exportados</CardDescription>
           </div>
         </div>
