@@ -46,94 +46,117 @@ export function AppSidebar() {
 
   const planDisplay = getPlanDisplay();
 
+  const handleNavClick = () => {
+    // Close mobile sidebar when navigating
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   return (
-    <Sidebar 
-      collapsible="icon"
-      className={cn(
-        "border-r border-sidebar-border transition-all duration-300",
-        isMobile && "fixed inset-y-0 left-0 z-50"
+    <>
+      {/* Mobile overlay backdrop */}
+      {isMobile && open && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+          onClick={() => setOpenMobile(false)}
+          aria-hidden="true"
+        />
       )}
-    >
-      <SidebarContent className="bg-sidebar">
-        {/* Header with Logo */}
-        <div className="flex items-center justify-between px-4 py-6">
-          <img 
-            src={fedcomLogo} 
-            alt="FEDCOM" 
-            className={cn(
-              "transition-all duration-300",
-              open ? "w-28 h-28" : "w-8 h-8"
-            )}
-          />
-          
-          {/* Close button for mobile */}
-          {isMobile && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setOpenMobile(false)}
-              className="text-sidebar-foreground hover:bg-sidebar-accent-hover"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          )}
-        </div>
-
-        <SidebarGroup>
-          <SidebarGroupLabel 
-            className={cn(
-              "text-sidebar-foreground/60 uppercase text-xs font-semibold tracking-wider px-4",
-              !open && "sr-only"
-            )}
-          >
-            Menu Principal
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-1 px-2">
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === "/"}
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-lg",
-                        "text-sidebar-foreground",
-                        "hover:bg-sidebar-accent-hover transition-colors duration-200"
-                      )}
-                      activeClassName="bg-sidebar-accent font-semibold border-l-[3px] border-sidebar-foreground -ml-[3px] pl-[calc(0.75rem+3px)]"
-                    >
-                      <item.icon className="h-5 w-5 shrink-0" />
-                      <span className={cn(
-                        "transition-opacity duration-200",
-                        !open && "opacity-0 w-0 overflow-hidden"
-                      )}>
-                        {item.title}
-                      </span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Plan Badge */}
-        {open && (
-          <div className="px-4 py-3 mt-auto border-t border-sidebar-border">
-            <div 
-              className="flex items-center gap-2 p-2 rounded-lg bg-sidebar-accent/50 cursor-pointer hover:bg-sidebar-accent transition-colors"
-              onClick={() => navigate("/planos")}
-            >
-              <Crown className="h-4 w-4 text-warning" />
-              <span className="text-sm font-medium text-sidebar-foreground">Plano:</span>
-              <Badge variant={planDisplay.color} className="text-xs">
-                {planDisplay.name}
-              </Badge>
-            </div>
-          </div>
+      
+      <Sidebar 
+        collapsible="icon"
+        className={cn(
+          "border-r border-sidebar-border transition-all duration-300",
+          isMobile && "fixed inset-y-0 left-0 z-50 w-[280px] shadow-xl"
         )}
-      </SidebarContent>
-    </Sidebar>
+      >
+        <SidebarContent className="bg-sidebar h-full">
+          {/* Header with Logo */}
+          <div className="flex items-center justify-between px-4 py-6">
+            <img 
+              src={fedcomLogo} 
+              alt="FEDCOM" 
+              className={cn(
+                "transition-all duration-300",
+                open ? "w-28 h-28" : "w-8 h-8",
+                isMobile && "w-20 h-20"
+              )}
+            />
+            
+            {/* Close button for mobile */}
+            {isMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setOpenMobile(false)}
+                className="h-11 w-11 text-sidebar-foreground hover:bg-sidebar-accent-hover"
+              >
+                <X className="h-6 w-6" />
+              </Button>
+            )}
+          </div>
+
+          <SidebarGroup>
+            <SidebarGroupLabel 
+              className={cn(
+                "text-sidebar-foreground/60 uppercase text-xs font-semibold tracking-wider px-4",
+                !open && !isMobile && "sr-only"
+              )}
+            >
+              Menu Principal
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-1 px-2">
+                {menuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild tooltip={item.title}>
+                      <NavLink
+                        to={item.url}
+                        end={item.url === "/"}
+                        onClick={handleNavClick}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-3 rounded-lg min-h-[44px]",
+                          "text-sidebar-foreground",
+                          "hover:bg-sidebar-accent-hover transition-colors duration-200"
+                        )}
+                        activeClassName="bg-sidebar-accent font-semibold border-l-[3px] border-sidebar-foreground -ml-[3px] pl-[calc(0.75rem+3px)]"
+                      >
+                        <item.icon className="h-5 w-5 shrink-0" />
+                        <span className={cn(
+                          "transition-opacity duration-200",
+                          !open && !isMobile && "opacity-0 w-0 overflow-hidden"
+                        )}>
+                          {item.title}
+                        </span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* Plan Badge */}
+          {(open || isMobile) && (
+            <div className="px-4 py-3 mt-auto border-t border-sidebar-border">
+              <div 
+                className="flex items-center gap-2 p-3 rounded-lg bg-sidebar-accent/50 cursor-pointer hover:bg-sidebar-accent transition-colors min-h-[44px]"
+                onClick={() => {
+                  handleNavClick();
+                  navigate("/planos");
+                }}
+              >
+                <Crown className="h-4 w-4 text-warning" />
+                <span className="text-sm font-medium text-sidebar-foreground">Plano:</span>
+                <Badge variant={planDisplay.color} className="text-xs">
+                  {planDisplay.name}
+                </Badge>
+              </div>
+            </div>
+          )}
+        </SidebarContent>
+      </Sidebar>
+    </>
   );
 }
