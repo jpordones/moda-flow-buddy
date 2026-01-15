@@ -112,92 +112,123 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    /* Background principal - azul escuro profundo #0a0f1e */
+    --background: 222 56% 8%;
+    /* Texto principal - branco suave #f9fafb */
+    --foreground: 210 20% 98%;
 
-    --card: 222 47% 14%;
-    --card-foreground: 210 40% 98%;
+    /* Cards e painéis - #131b2e */
+    --card: 222 44% 13%;
+    --card-foreground: 210 20% 98%;
 
-    --popover: 222 47% 14%;
-    --popover-foreground: 210 40% 98%;
+    /* Popovers e modais - #1f2937 */
+    --popover: 217 33% 17%;
+    --popover-foreground: 210 20% 98%;
 
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary - amarelo ajustado para dark #fbbf24 */
+    --primary: 43 96% 56%;
+    --primary-foreground: 222 56% 8%;
 
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary - #1a2332 */
+    --secondary: 218 34% 15%;
+    --secondary-foreground: 210 20% 98%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    /* Muted - #374151 */
+    --muted: 218 23% 23%;
+    /* Muted foreground - #9ca3af */
+    --muted-foreground: 218 11% 65%;
 
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    /* Accent - #1a2332 hover */
+    --accent: 218 34% 15%;
+    --accent-foreground: 210 20% 98%;
 
-    --success: 158 64% 40%;
-    --success-foreground: 0 0% 100%;
-    --success-light: 158 64% 15%;
+    /* Success - mais vibrante #10b981 */
+    --success: 160 84% 39%;
+    --success-foreground: 210 20% 98%;
+    --success-light: 160 84% 15%;
 
-    --danger: 0 73% 51%;
-    --danger-foreground: 0 0% 100%;
-    --danger-light: 0 73% 15%;
+    /* Danger - mais vibrante #ef4444 */
+    --danger: 0 84% 60%;
+    --danger-foreground: 210 20% 98%;
+    --danger-light: 0 84% 15%;
 
+    /* Warning - #f59e0b */
     --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning-foreground: 222 56% 8%;
     --warning-light: 38 92% 15%;
 
+    /* Info - mais vibrante #3b82f6 */
     --info: 217 91% 60%;
-    --info-foreground: 0 0% 100%;
+    --info-foreground: 210 20% 98%;
     --info-light: 217 91% 15%;
 
+    /* Indigo */
     --indigo: 243 75% 59%;
-    --indigo-foreground: 0 0% 100%;
+    --indigo-foreground: 210 20% 98%;
     --indigo-light: 243 75% 15%;
 
-    --destructive: 0 73% 51%;
-    --destructive-foreground: 0 0% 100%;
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 217 91% 60%;
+    /* Border - #374151 */
+    --border: 218 23% 23%;
+    /* Input - #374151 */
+    --input: 218 23% 23%;
+    /* Ring - amarelo para focus */
+    --ring: 43 96% 56%;
 
-    /* Sidebar - Dark theme */
-    --sidebar-background: 222 47% 14%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 210 40% 98%;
-    --sidebar-primary-foreground: 222 47% 14%;
-    --sidebar-accent: 217 33% 20%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-accent-hover: 217 33% 25%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 217 91% 60%;
+    /* Sidebar - Dark blue theme */
+    --sidebar-background: 222 56% 8%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-primary: 43 96% 56%;
+    --sidebar-primary-foreground: 222 56% 8%;
+    --sidebar-accent: 218 34% 18%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-accent-hover: 218 34% 22%;
+    --sidebar-border: 218 23% 20%;
+    --sidebar-ring: 43 96% 56%;
 
     /* Header - Dark theme */
-    --header: 222 47% 14%;
-    --header-foreground: 210 40% 98%;
-    --header-border: 217 33% 17%;
+    --header: 222 44% 13%;
+    --header-foreground: 210 20% 98%;
+    --header-border: 218 23% 20%;
 
-    /* Brand colors - Dark theme */
+    /* Brand colors - amarelo mais suave para dark */
     --brand: 43 96% 56%;
     --brand-hover: 38 92% 50%;
-    --brand-foreground: 0 0% 10%;
+    --brand-foreground: 222 56% 8%;
     --brand-light: 43 96% 15%;
 
     /* Table styling - Dark */
-    --table-header: 217 33% 17%;
-    --table-header-foreground: 210 40% 98%;
-    --table-row-alt: 222 47% 12%;
-    --table-row-hover: 217 33% 20%;
+    --table-header: 218 34% 15%;
+    --table-header-foreground: 210 20% 98%;
+    --table-row-alt: 222 50% 10%;
+    --table-row-hover: 218 34% 18%;
 
     /* Footer - Dark */
-    --footer: 222 47% 8%;
-    --footer-foreground: 210 40% 98%;
-    --footer-muted: 215 20% 65%;
-    --footer-border: 217 33% 17%;
+    --footer: 222 56% 6%;
+    --footer-foreground: 210 20% 98%;
+    --footer-muted: 218 11% 65%;
+    --footer-border: 218 23% 20%;
 
-    /* Shadows - Dark */
-    --shadow-sm: 0 2px 8px hsla(0, 0%, 0%, 0.3);
-    --shadow-md: 0 2px 12px hsla(0, 0%, 0%, 0.4);
-    --shadow-lg: 0 4px 20px hsla(0, 0%, 0%, 0.5);
+    /* Chart colors - mais vibrantes para dark */
+    --chart-1: 217 91% 60%;
+    --chart-2: 160 84% 45%;
+    --chart-3: 0 84% 60%;
+    --chart-4: 43 96% 56%;
+    --chart-5: 280 65% 60%;
+
+    /* Shadows - Dark mode com glow sutil */
+    --shadow-sm: 0 2px 8px hsla(222, 56%, 4%, 0.5);
+    --shadow-md: 0 4px 12px hsla(222, 56%, 4%, 0.6);
+    --shadow-lg: 0 8px 24px hsla(222, 56%, 4%, 0.7);
+    --shadow-elevation: 0 2px 8px hsla(222, 56%, 4%, 0.5), 0 0 0 1px hsla(218, 23%, 28%, 0.5);
+    --shadow-elevation-lg: 0 12px 24px hsla(222, 56%, 4%, 0.6), 0 0 0 1px hsla(218, 23%, 28%, 0.5);
+
+    /* Gradients - Dark */
+    --gradient-primary: linear-gradient(135deg, hsl(43 96% 56%), hsl(38 92% 50%));
+    --gradient-brand: linear-gradient(135deg, hsl(222 44% 13%), hsl(218 34% 18%));
   }
 }
 
