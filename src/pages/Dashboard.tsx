@@ -95,8 +95,8 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">Visão geral do seu negócio</p>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+        <p className="text-muted-foreground">Visão geral do seu negócio</p>
       </div>
 
       {/* Métricas principais */}
@@ -159,23 +159,25 @@ export default function Dashboard() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="shadow-sm border rounded-xl">
           <CardHeader>
-            <CardTitle className="text-gray-900">Fluxo de Caixa</CardTitle>
-            <CardDescription className="text-gray-600">Evolução de entradas e saídas nos últimos 6 meses</CardDescription>
+            <CardTitle className="text-foreground">Fluxo de Caixa</CardTitle>
+            <CardDescription className="text-muted-foreground">Evolução de entradas e saídas nos últimos 6 meses</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={cashFlowData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-                <YAxis stroke="hsl(var(--muted-foreground))" />
+                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: "hsl(var(--card))", 
                     border: "1px solid hsl(var(--border))",
-                    borderRadius: "var(--radius)" 
-                  }} 
+                    borderRadius: "var(--radius)",
+                    color: "hsl(var(--foreground))"
+                  }}
+                  labelStyle={{ color: "hsl(var(--foreground))" }}
                 />
-                <Legend />
+                <Legend wrapperStyle={{ color: "hsl(var(--foreground))" }} />
                 <Line type="monotone" dataKey="entrada" stroke="hsl(var(--success))" strokeWidth={2} name="Entradas" />
                 <Line type="monotone" dataKey="saida" stroke="hsl(var(--danger))" strokeWidth={2} name="Saídas" />
               </LineChart>
@@ -185,25 +187,27 @@ export default function Dashboard() {
 
         <Card className="shadow-sm border rounded-xl">
           <CardHeader>
-            <CardTitle className="text-gray-900">Entradas vs Saídas</CardTitle>
-            <CardDescription className="text-gray-600">Comparativo do mês atual</CardDescription>
+            <CardTitle className="text-foreground">Entradas vs Saídas</CardTitle>
+            <CardDescription className="text-muted-foreground">Comparativo do mês atual</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={[{ name: "Este Mês", entrada: totalIncome, saida: totalExpense }]}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-                <YAxis stroke="hsl(var(--muted-foreground))" />
+                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: "hsl(var(--card))", 
                     border: "1px solid hsl(var(--border))",
-                    borderRadius: "var(--radius)" 
-                  }} 
+                    borderRadius: "var(--radius)",
+                    color: "hsl(var(--foreground))"
+                  }}
+                  labelStyle={{ color: "hsl(var(--foreground))" }}
                 />
-                <Legend />
-                <Bar dataKey="entrada" fill="hsl(var(--success))" name="Entradas" />
-                <Bar dataKey="saida" fill="hsl(var(--danger))" name="Saídas" />
+                <Legend wrapperStyle={{ color: "hsl(var(--foreground))" }} />
+                <Bar dataKey="entrada" fill="hsl(var(--success))" name="Entradas" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="saida" fill="hsl(var(--danger))" name="Saídas" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -211,8 +215,8 @@ export default function Dashboard() {
 
         <Card className="shadow-sm border rounded-xl md:col-span-2">
           <CardHeader>
-            <CardTitle className="text-gray-900">Despesas por Categoria</CardTitle>
-            <CardDescription className="text-gray-600">Distribuição dos gastos do mês</CardDescription>
+            <CardTitle className="text-foreground">Despesas por Categoria</CardTitle>
+            <CardDescription className="text-muted-foreground">Distribuição dos gastos do mês</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
             <ResponsiveContainer width="100%" height={300}>
@@ -235,8 +239,10 @@ export default function Dashboard() {
                   contentStyle={{ 
                     backgroundColor: "hsl(var(--card))", 
                     border: "1px solid hsl(var(--border))",
-                    borderRadius: "var(--radius)" 
-                  }} 
+                    borderRadius: "var(--radius)",
+                    color: "hsl(var(--foreground))"
+                  }}
+                  labelStyle={{ color: "hsl(var(--foreground))" }}
                 />
               </PieChart>
             </ResponsiveContainer>

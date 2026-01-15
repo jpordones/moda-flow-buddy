@@ -148,14 +148,14 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-light via-background to-brand-light/50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-light via-background to-brand-light/50 dark:from-background dark:via-card dark:to-background p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <img src={fedcomLogo} alt="FEDCOM" className="h-24 w-auto" />
         </div>
 
-        <Card className="border-0 shadow-elevation-lg">
+        <Card className="border-0 shadow-elevation-lg dark:shadow-dark-elevation-lg dark:border dark:border-border/50">
           <CardHeader className="space-y-1 text-center pb-4">
             <CardTitle className="text-2xl font-bold text-foreground">
               {mode === 'login' && 'Entrar'}

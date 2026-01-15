@@ -16,12 +16,12 @@ interface MetricCardProps {
 
 export function MetricCard({ title, value, icon: Icon, trend, subtitle, variant = "default" }: MetricCardProps) {
   const iconVariantStyles = {
-    default: "bg-primary/10 text-primary",
-    success: "bg-success/10 text-success",
-    danger: "bg-danger/10 text-danger",
-    warning: "bg-warning/10 text-warning",
-    info: "bg-info/10 text-info",
-    indigo: "bg-indigo/10 text-indigo",
+    default: "bg-primary/10 text-primary dark:bg-primary/20",
+    success: "bg-success/10 text-success dark:bg-success/20",
+    danger: "bg-danger/10 text-danger dark:bg-danger/20",
+    warning: "bg-warning/10 text-warning dark:bg-warning/20",
+    info: "bg-info/10 text-info dark:bg-info/20",
+    indigo: "bg-indigo/10 text-indigo dark:bg-indigo/20",
   };
 
   return (
