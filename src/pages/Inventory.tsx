@@ -1,487 +1,292 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Search, Trash2, AlertTriangle, Package, DollarSign } from "lucide-react";
+import { Plus, Minus, Search, History, Loader2, Package } from "lucide-react";
 import { toast } from "sonner";
-
-interface Product {
-  id: string;
-  name: string;
-  sku: string;
-  category: string;
-  size: string;
-  color: string;
-  quantity: number;
-  costPrice: number;
-  salePrice: number;
-}
-
-const categories = ["Camisetas", "Calças", "Vestidos", "Shorts", "Saias", "Moletons", "Acessórios", "Outros"];
-const sizes = ["PP", "P", "M", "G", "GG", "XG", "Único"];
-const colors = ["Preto", "Branco", "Azul", "Vermelho", "Verde", "Amarelo", "Rosa", "Cinza", "Bege", "Marrom"];
+import { useInventory } from "@/hooks/useInventory";
+import { useProducts } from "@/hooks/useProducts";
+import { InventoryStats } from "@/components/inventory/InventoryStats";
+import { ProductInventoryCard } from "@/components/inventory/ProductInventoryCard";
+import { StockEntryDialog } from "@/components/inventory/StockEntryDialog";
+import { StockExitDialog } from "@/components/inventory/StockExitDialog";
+import { StockHistoryDialog } from "@/components/inventory/StockHistoryDialog";
+import { InventoryItem } from "@/types/inventory";
+import { defaultCategories } from "@/types/products";
 
 export default function Inventory() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { 
+    productsWithInventory, 
+    movements,
+    stats, 
+    isLoading,
+    addStockEntry,
+    addStockExit,
+    getItemStockStatus,
+    fetchMovements,
+  } = useInventory();
+  
+  const { products } = useProducts();
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [filterStock, setFilterStock] = useState<string>("all");
   
-  const [formData, setFormData] = useState({
-    name: "",
-    sku: "",
-    category: "",
-    size: "",
-    color: "",
-    quantity: "",
-    costPrice: "",
-    salePrice: "",
-  });
+  const [showEntryDialog, setShowEntryDialog] = useState(false);
+  const [showExitDialog, setShowExitDialog] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string | undefined>();
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | undefined>();
 
-  useEffect(() => {
-    const stored = localStorage.getItem("products");
-    if (stored) {
-      setProducts(JSON.parse(stored));
-    }
-  }, []);
-
-  const saveProducts = (newProducts: Product[]) => {
-    localStorage.setItem("products", JSON.stringify(newProducts));
-    setProducts(newProducts);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.name || !formData.sku || !formData.category || !formData.size || !formData.color || !formData.quantity || !formData.costPrice || !formData.salePrice) {
-      toast.error("Campos obrigatórios", {
-        description: "Preencha todos os campos para cadastrar o produto"
-      });
-      return;
-    }
-
-    const newProduct: Product = {
-      id: Date.now().toString(),
-      name: formData.name,
-      sku: formData.sku,
-      category: formData.category,
-      size: formData.size,
-      color: formData.color,
-      quantity: parseInt(formData.quantity),
-      costPrice: parseFloat(formData.costPrice),
-      salePrice: parseFloat(formData.salePrice),
-    };
-
-    saveProducts([...products, newProduct]);
-    
-    const productInfo = `${formData.name} (${formData.size}/${formData.color})`;
-    
-    setFormData({
-      name: "",
-      sku: "",
-      category: "",
-      size: "",
-      color: "",
-      quantity: "",
-      costPrice: "",
-      salePrice: "",
-    });
-    
-    setIsDialogOpen(false);
-    toast.success("Produto cadastrado", {
-      description: `"${productInfo}" adicionado com ${formData.quantity} unidades`
-    });
-  };
-
-  const handleDelete = (id: string) => {
-    const product = products.find(p => p.id === id);
-    saveProducts(products.filter(p => p.id !== id));
-    
-    if (product) {
-      toast.success("Produto removido", {
-        description: `"${product.name}" foi excluído do estoque`
-      });
-    }
-  };
-
-  const filteredProducts = products.filter(p => {
+  // Filter products
+  const filteredProducts = productsWithInventory.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          p.sku.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === "all" || p.category === filterCategory;
-    return matchesSearch && matchesCategory;
+    
+    let matchesStock = true;
+    if (filterStock === "critico") {
+      matchesStock = p.stockStatus === 'critico';
+    } else if (filterStock === "baixo") {
+      matchesStock = p.stockStatus === 'baixo';
+    } else if (filterStock === "normal") {
+      matchesStock = p.stockStatus === 'normal' || p.stockStatus === 'alto';
+    }
+    
+    return matchesSearch && matchesCategory && matchesStock;
   });
 
-  const totalStock = products.reduce((sum, p) => sum + p.quantity, 0);
-  const totalValue = products.reduce((sum, p) => sum + (p.quantity * p.salePrice), 0);
-  const lowStockItems = products.filter(p => p.quantity < 10).length;
-
-  const getStockStatus = (quantity: number) => {
-    if (quantity === 0) return { variant: "danger" as const, label: "Sem estoque" };
-    if (quantity < 10) return { variant: "warning" as const, label: "Estoque baixo" };
-    return { variant: "success" as const, label: "Em estoque" };
+  // Handlers
+  const handleStockEntry = async (data: {
+    productId: string;
+    size: string;
+    color: string;
+    quantity: number;
+    reason: string;
+    notes?: string;
+  }) => {
+    const product = products.find(p => p.id === data.productId);
+    const success = await addStockEntry(data);
+    if (success) {
+      toast.success("Entrada registrada", {
+        description: `+${data.quantity} un de ${product?.name || 'produto'} (${data.size}/${data.color})`
+      });
+    } else {
+      toast.error("Erro ao registrar entrada", {
+        description: "Não foi possível adicionar ao estoque"
+      });
+    }
+    return success;
   };
+
+  const handleStockExit = async (data: {
+    productId: string;
+    size: string;
+    color: string;
+    quantity: number;
+    reason: string;
+    notes?: string;
+  }) => {
+    const product = products.find(p => p.id === data.productId);
+    const success = await addStockExit(data);
+    if (success) {
+      toast.success("Saída registrada", {
+        description: `-${data.quantity} un de ${product?.name || 'produto'} (${data.size}/${data.color})`
+      });
+    } else {
+      toast.error("Erro ao registrar saída", {
+        description: "Verifique se há estoque suficiente"
+      });
+    }
+    return success;
+  };
+
+  const handleOpenEntry = (productId?: string) => {
+    setSelectedProductId(productId);
+    setShowEntryDialog(true);
+  };
+
+  const handleOpenExit = (item: InventoryItem) => {
+    setSelectedItem(item);
+    setShowExitDialog(true);
+  };
+
+  const handleViewHistory = async (productId: string) => {
+    await fetchMovements(productId, 100);
+    setSelectedProductId(productId);
+    setShowHistoryDialog(true);
+  };
+
+  const handleViewAllHistory = async () => {
+    await fetchMovements(undefined, 100);
+    setSelectedProductId(undefined);
+    setShowHistoryDialog(true);
+  };
+
+  const handleConfigureAlerts = (item: InventoryItem) => {
+    // TODO: Implement alerts configuration dialog
+    toast.info("Em breve", {
+      description: "Configuração de alertas será implementada em breve"
+    });
+  };
+
+  const selectedProductName = selectedProductId 
+    ? products.find(p => p.id === selectedProductId)?.name 
+    : undefined;
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* Header - Mobile optimized */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Estoque</h1>
-          <p className="text-sm md:text-base text-muted-foreground">Gerencie seus produtos e inventário</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Estoque</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
+            Gerencie quantidades e movimentações de estoque
+          </p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 w-full sm:w-auto h-11">
-              <Plus className="h-4 w-4" />
-              Novo Produto
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-foreground">Cadastrar Produto</DialogTitle>
-              <DialogDescription className="text-muted-foreground">Adicione um novo produto ao estoque</DialogDescription>
-            </DialogHeader>
-            
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-foreground font-medium">Nome do Produto</Label>
-                  <Input
-                    id="name"
-                    placeholder="Ex: Camiseta Básica"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="h-11 text-base"
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="sku" className="text-foreground font-medium">Código/SKU</Label>
-                  <Input
-                    id="sku"
-                    placeholder="Ex: CAM-001"
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    className="h-11 text-base"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category" className="text-foreground font-medium">Categoria</Label>
-                  <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                    <SelectTrigger className="h-11 text-base">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="size" className="text-foreground font-medium">Tamanho</Label>
-                  <Select value={formData.size} onValueChange={(value) => setFormData({ ...formData, size: value })}>
-                    <SelectTrigger className="h-11 text-base">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sizes.map((size) => (
-                        <SelectItem key={size} value={size}>{size}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="color" className="text-foreground font-medium">Cor</Label>
-                  <Select value={formData.color} onValueChange={(value) => setFormData({ ...formData, color: value })}>
-                    <SelectTrigger className="h-11 text-base">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {colors.map((color) => (
-                        <SelectItem key={color} value={color}>{color}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="quantity" className="text-foreground font-medium">Quantidade</Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                    className="h-11 text-base"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="costPrice" className="text-foreground font-medium">Preço de Custo</Label>
-                  <Input
-                    id="costPrice"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={formData.costPrice}
-                    onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
-                    className="h-11 text-base"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="salePrice" className="text-foreground font-medium">Preço de Venda</Label>
-                  <Input
-                    id="salePrice"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={formData.salePrice}
-                    onChange={(e) => setFormData({ ...formData, salePrice: e.target.value })}
-                    className="h-11 text-base"
-                    required
-                  />
-                </div>
-              </div>
-
-              <Button type="submit" variant="action" className="w-full h-11">Cadastrar Produto</Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <Button 
+            onClick={() => handleOpenEntry()} 
+            className="flex-1 sm:flex-none gap-2 h-11"
+            variant="action"
+          >
+            <Plus className="h-4 w-4" />
+            Nova Entrada
+          </Button>
+          <Button 
+            onClick={() => setShowExitDialog(true)} 
+            variant="outline" 
+            className="flex-1 sm:flex-none gap-2 h-11"
+          >
+            <Minus className="h-4 w-4" />
+            Nova Saída
+          </Button>
+          <Button 
+            onClick={handleViewAllHistory} 
+            variant="outline" 
+            className="flex-1 sm:flex-none gap-2 h-11"
+          >
+            <History className="h-4 w-4" />
+            <span className="hidden sm:inline">Histórico</span>
+          </Button>
+        </div>
       </div>
 
-      {/* Resumo - Grid responsivo */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 p-4 md:p-6">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total de Produtos</CardTitle>
-            <div className="p-2 rounded-lg bg-info/10 dark:bg-info/20">
-              <Package className="h-5 w-5 text-info" />
-            </div>
-          </CardHeader>
-          <CardContent className="p-4 md:p-6 pt-0">
-            <div className="text-2xl md:text-3xl font-bold text-foreground">{totalStock}</div>
-          </CardContent>
-        </Card>
+      {/* Stats */}
+      <InventoryStats stats={stats} />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 p-4 md:p-6">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Valor Total do Estoque</CardTitle>
-            <div className="p-2 rounded-lg bg-indigo/10 dark:bg-indigo/20">
-              <DollarSign className="h-5 w-5 text-indigo" />
-            </div>
-          </CardHeader>
-          <CardContent className="p-4 md:p-6 pt-0">
-            <div className="text-2xl md:text-3xl font-bold text-foreground">R$ {totalValue.toFixed(2)}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 p-4 md:p-6">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Estoque Baixo</CardTitle>
-            <div className="p-2 rounded-lg bg-warning/10 dark:bg-warning/20">
-              <AlertTriangle className="h-5 w-5 text-warning" />
-            </div>
-          </CardHeader>
-          <CardContent className="p-4 md:p-6 pt-0">
-            <div className="text-2xl md:text-3xl font-bold text-warning">{lowStockItems} itens</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Lista de produtos */}
+      {/* Filters */}
       <Card>
-        <CardHeader className="p-4 md:p-6">
-          <CardTitle className="text-foreground">Produtos</CardTitle>
-          <CardDescription className="text-muted-foreground">Lista completa de produtos em estoque</CardDescription>
+        <CardHeader className="pb-3">
+          <CardTitle>Produtos em Estoque</CardTitle>
+          <CardDescription>
+            Visualize e gerencie o estoque por produto e variação
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 p-4 md:p-6 pt-0">
-          {/* Filtros - Stack em mobile */}
-          <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
-            <div className="flex-1 relative">
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar produtos..."
+                placeholder="Buscar por nome ou SKU..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-11 text-base"
+                className="pl-10 h-11"
               />
             </div>
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-full sm:w-[200px] h-11 text-base">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as categorias</SelectItem>
-                {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Tabela - Desktop */}
-          <div className="hidden lg:block rounded-xl border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Tamanho</TableHead>
-                  <TableHead>Cor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Quantidade</TableHead>
-                  <TableHead>Preço de Custo</TableHead>
-                  <TableHead>Preço de Venda</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProducts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
-                      Nenhum produto encontrado
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredProducts.map((product) => {
-                    const stockStatus = getStockStatus(product.quantity);
-                    return (
-                      <TableRow key={product.id}>
-                        <TableCell className="font-mono text-sm">{product.sku}</TableCell>
-                        <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell>{product.category}</TableCell>
-                        <TableCell>{product.size}</TableCell>
-                        <TableCell>{product.color}</TableCell>
-                        <TableCell>
-                          <Badge variant={stockStatus.variant}>
-                            {stockStatus.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <span className={product.quantity < 10 ? "text-warning font-medium" : ""}>
-                              {product.quantity}
-                            </span>
-                            {product.quantity < 10 && product.quantity > 0 && (
-                              <AlertTriangle className="h-4 w-4 text-warning" />
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>R$ {product.costPrice.toFixed(2)}</TableCell>
-                        <TableCell className="font-medium">R$ {product.salePrice.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(product.id)}
-                            className="h-10 w-10 hover:bg-danger-light hover:text-danger"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Cards - Mobile/Tablet */}
-          <div className="lg:hidden space-y-3">
-            {filteredProducts.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">
-                Nenhum produto encontrado
-              </div>
-            ) : (
-              filteredProducts.map((product) => {
-                const stockStatus = getStockStatus(product.quantity);
-                return (
-                  <Card key={product.id} className="p-4">
-                    <div className="space-y-3">
-                      {/* Header do card */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-foreground truncate">{product.name}</p>
-                          <p className="text-sm text-muted-foreground font-mono">{product.sku}</p>
-                        </div>
-                        <Badge variant={stockStatus.variant} className="shrink-0">
-                          {stockStatus.label}
-                        </Badge>
-                      </div>
-                      
-                      {/* Detalhes */}
-                      <div className="grid grid-cols-3 gap-2 text-sm">
-                        <div>
-                          <p className="text-muted-foreground">Categoria</p>
-                          <p className="font-medium truncate">{product.category}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Tamanho</p>
-                          <p className="font-medium">{product.size}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Cor</p>
-                          <p className="font-medium">{product.color}</p>
-                        </div>
-                      </div>
-
-                      {/* Preços e quantidade */}
-                      <div className="flex items-center justify-between pt-2 border-t">
-                        <div className="flex gap-4">
-                          <div>
-                            <p className="text-xs text-muted-foreground">Qtd</p>
-                            <p className={`font-bold ${product.quantity < 10 ? "text-warning" : ""}`}>
-                              {product.quantity}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Custo</p>
-                            <p className="font-medium">R$ {product.costPrice.toFixed(2)}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Venda</p>
-                            <p className="font-bold text-success">R$ {product.salePrice.toFixed(2)}</p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(product.id)}
-                          className="h-10 w-10 hover:bg-danger-light hover:text-danger"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })
-            )}
+            <div className="flex gap-2">
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <SelectTrigger className="w-[150px] h-11">
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {defaultCategories.map(cat => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterStock} onValueChange={setFilterStock}>
+                <SelectTrigger className="w-[150px] h-11">
+                  <SelectValue placeholder="Estoque" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="critico">Crítico</SelectItem>
+                  <SelectItem value="baixo">Baixo</SelectItem>
+                  <SelectItem value="normal">Normal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Products List */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : filteredProducts.length === 0 ? (
+        <Card>
+          <CardContent className="text-center py-12">
+            <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Nenhum produto em estoque</h3>
+            <p className="text-muted-foreground mb-4">
+              {productsWithInventory.length === 0 
+                ? "Adicione produtos e faça a primeira entrada de estoque"
+                : "Tente ajustar os filtros de busca"
+              }
+            </p>
+            {productsWithInventory.length === 0 && products.length > 0 && (
+              <Button onClick={() => handleOpenEntry()} variant="action" className="h-11">
+                <Plus className="h-4 w-4 mr-2" />
+                Primeira Entrada
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {filteredProducts.map(product => (
+            <ProductInventoryCard
+              key={product.id}
+              product={product}
+              onEntry={handleOpenEntry}
+              onExit={handleOpenExit}
+              onViewHistory={handleViewHistory}
+              onConfigureAlerts={handleConfigureAlerts}
+              getItemStockStatus={getItemStockStatus}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Dialogs */}
+      <StockEntryDialog
+        open={showEntryDialog}
+        onOpenChange={setShowEntryDialog}
+        products={products}
+        onSubmit={handleStockEntry}
+        preselectedProductId={selectedProductId}
+      />
+
+      <StockExitDialog
+        open={showExitDialog}
+        onOpenChange={setShowExitDialog}
+        productsWithInventory={productsWithInventory}
+        onSubmit={handleStockExit}
+        preselectedItem={selectedItem}
+      />
+
+      <StockHistoryDialog
+        open={showHistoryDialog}
+        onOpenChange={setShowHistoryDialog}
+        movements={movements}
+        productName={selectedProductName}
+      />
     </div>
   );
 }
