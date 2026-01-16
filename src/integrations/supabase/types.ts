@@ -105,6 +105,63 @@ export type Database = {
           },
         ]
       }
+      inventory_items: {
+        Row: {
+          color: string | null
+          created_at: string
+          critical_stock: number
+          id: string
+          location: string | null
+          min_stock: number
+          product_id: string
+          quantity: number
+          size: string | null
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          critical_stock?: number
+          id?: string
+          location?: string | null
+          min_stock?: number
+          product_id: string
+          quantity?: number
+          size?: string | null
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          critical_stock?: number
+          id?: string
+          location?: string | null
+          min_stock?: number
+          product_id?: string
+          quantity?: number
+          size?: string | null
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plans: {
         Row: {
           created_at: string
@@ -178,6 +235,7 @@ export type Database = {
           team_id: string
           unit: string
           updated_at: string
+          variations: Json | null
         }
         Insert: {
           category: string
@@ -197,6 +255,7 @@ export type Database = {
           team_id: string
           unit?: string
           updated_at?: string
+          variations?: Json | null
         }
         Update: {
           category?: string
@@ -216,6 +275,7 @@ export type Database = {
           team_id?: string
           unit?: string
           updated_at?: string
+          variations?: Json | null
         }
         Relationships: [
           {
@@ -290,6 +350,10 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          inventory_item_id: string | null
+          new_stock: number | null
+          notes: string | null
+          previous_stock: number | null
           product_id: string
           quantity: number
           reason: string | null
@@ -300,6 +364,10 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          inventory_item_id?: string | null
+          new_stock?: number | null
+          notes?: string | null
+          previous_stock?: number | null
           product_id: string
           quantity: number
           reason?: string | null
@@ -310,6 +378,10 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          inventory_item_id?: string | null
+          new_stock?: number | null
+          notes?: string | null
+          previous_stock?: number | null
           product_id?: string
           quantity?: number
           reason?: string | null
@@ -318,6 +390,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "stock_movements_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stock_movements_product_id_fkey"
             columns: ["product_id"]
