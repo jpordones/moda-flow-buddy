@@ -6,6 +6,10 @@ import { VariableSalesCostsSection } from '@/components/pricing/VariableSalesCos
 import { TaxSettingsSection } from '@/components/pricing/TaxSettingsSection';
 import { PricingResultsCards } from '@/components/pricing/PricingResultsCards';
 import { PricingAnalysisSection } from '@/components/pricing/PricingAnalysisSection';
+import { PriceAnatomyCard } from '@/components/pricing/PriceAnatomyCard';
+import { MarketComparisonCard } from '@/components/pricing/MarketComparisonCard';
+import { MonthlyImpactCard } from '@/components/pricing/MonthlyImpactCard';
+import { SmartAlertsSection } from '@/components/pricing/SmartAlertsSection';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, FileDown } from 'lucide-react';
 
@@ -50,10 +54,22 @@ export default function Costs() {
         </div>
       </div>
 
+      {/* Alertas Inteligentes */}
+      <SmartAlertsSection result={result} data={data} />
+
       {/* Resultados */}
       <PricingResultsCards result={result} />
 
-      {/* Análise */}
+      {/* Anatomia do Preço */}
+      <PriceAnatomyCard result={result} data={data} />
+
+      {/* Comparação com Mercado */}
+      <MarketComparisonCard result={result} data={data} />
+
+      {/* Impacto Financeiro Mensal */}
+      <MonthlyImpactCard result={result} data={data} />
+
+      {/* Análise de Cenários */}
       <PricingAnalysisSection result={result} scenarios={scenarios} alerts={alerts} />
 
       {/* Grid Principal */}
