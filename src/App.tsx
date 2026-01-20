@@ -21,6 +21,12 @@ import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import NotFound from "./pages/NotFound";
+import AboutUs from "./pages/AboutUs";
+import Blog from "./pages/Blog";
+import Careers from "./pages/Careers";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfUse from "./pages/TermsOfUse";
+import LGPD from "./pages/LGPD";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +47,18 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function PublicLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      <main className="flex-1">
+        {children}
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -51,6 +69,14 @@ const App = () => (
           <Routes>
             {/* Public routes */}
             <Route path="/auth" element={<Auth />} />
+            
+            {/* Public institutional pages */}
+            <Route path="/sobre-nos" element={<PublicLayout><AboutUs /></PublicLayout>} />
+            <Route path="/blog" element={<PublicLayout><Blog /></PublicLayout>} />
+            <Route path="/carreiras" element={<PublicLayout><Careers /></PublicLayout>} />
+            <Route path="/politica-privacidade" element={<PublicLayout><PrivacyPolicy /></PublicLayout>} />
+            <Route path="/termos-uso" element={<PublicLayout><TermsOfUse /></PublicLayout>} />
+            <Route path="/lgpd" element={<PublicLayout><LGPD /></PublicLayout>} />
             
             {/* Onboarding route */}
             <Route path="/onboarding" element={
