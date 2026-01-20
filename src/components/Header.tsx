@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, Search, Sun, Moon, User, Settings, HelpCircle, LogOut, X, Crown } from "lucide-react";
+import { Search, Sun, Moon, User, Settings, HelpCircle, LogOut, X, Crown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import fedcomLogo from "@/assets/FEDCOM.svg";
 
 export function Header() {
@@ -24,7 +25,6 @@ export function Header() {
     }
     return false;
   });
-  const [notificationCount] = useState(3);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const navigate = useNavigate();
   const { isMobile } = useSidebar();
@@ -127,40 +127,8 @@ export function Header() {
             {showMobileSearch ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
           </Button>
 
-          {/* Notifications */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative text-header-foreground hover:bg-sidebar-accent">
-                <Bell className="h-5 w-5" />
-                {notificationCount > 0 && (
-                  <Badge 
-                    className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center p-0 text-xs bg-danger text-danger-foreground"
-                  >
-                    {notificationCount}
-                  </Badge>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <div className="p-3 font-semibold border-b text-foreground">Notificações</div>
-              <DropdownMenuItem className="p-3 cursor-pointer">
-                <div className="flex flex-col gap-1">
-                  <span className="font-medium text-foreground">Estoque baixo</span>
-                  <span className="text-sm text-muted-foreground">3 produtos precisam de reposição</span>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="p-3 cursor-pointer">
-                <div className="flex flex-col gap-1">
-                  <span className="font-medium text-foreground">Nova transação</span>
-                  <span className="text-sm text-muted-foreground">Entrada registrada há 2 horas</span>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="p-3 text-center text-primary cursor-pointer justify-center">
-                Ver todas as notificações
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Notifications - Using NotificationCenter component */}
+          <NotificationCenter />
 
           {/* Daily Balance - Desktop only */}
           <div className="hidden lg:flex items-center gap-2">
