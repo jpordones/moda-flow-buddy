@@ -162,6 +162,65 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          action_link: string | null
+          action_text: string | null
+          category: string
+          created_at: string | null
+          extra_data: Json | null
+          id: string
+          is_dismissed: boolean | null
+          is_read: boolean | null
+          message: string
+          read_at: string | null
+          team_id: string
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          action_link?: string | null
+          action_text?: string | null
+          category: string
+          created_at?: string | null
+          extra_data?: Json | null
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          message: string
+          read_at?: string | null
+          team_id: string
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          action_link?: string | null
+          action_text?: string | null
+          category?: string
+          created_at?: string | null
+          extra_data?: Json | null
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          message?: string
+          read_at?: string | null
+          team_id?: string
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plans: {
         Row: {
           created_at: string
