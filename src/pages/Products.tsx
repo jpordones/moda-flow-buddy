@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Search, Grid, List, Package, Edit, Copy, Trash2, Calculator, AlertTriangle, ArrowUpDown, Loader2, Crown, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useProducts } from "@/hooks/useProducts";
 import { useSubscription } from "@/hooks/useSubscription";
 import { ProductForm } from "@/components/products/ProductForm";
@@ -27,6 +27,7 @@ type SortOrder = 'asc' | 'desc';
 
 export default function Products() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { 
     products, 
     stats, 
@@ -56,6 +57,23 @@ export default function Products() {
   const [stockMovementProduct, setStockMovementProduct] = useState<Product | null>(null);
   const [smartPricingProduct, setSmartPricingProduct] = useState<Product | null>(null);
   const [showSmartPricing, setShowSmartPricing] = useState(false);
+
+  // Auto-open SmartPricing from query params (e.g., from ActionCenter)
+  useEffect(() => {
+    const id = searchParams.get("smartPricing");
+    if (!id || !products?.length) return;
+
+    const p = products.find(x => x.id === id);
+    if (!p) return;
+
+    setSmartPricingProduct(p);
+    setShowSmartPricing(true);
+
+    // Clear params to avoid reopening on every render
+    searchParams.delete("smartPricing");
+    searchParams.delete("objective");
+    setSearchParams(searchParams, { replace: true });
+  }, [products, searchParams, setSearchParams]);
 
   // Plan limits
   const productLimit = currentPlan?.max_products ?? 5;

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +16,13 @@ import { StockHistoryDialog } from "@/components/inventory/StockHistoryDialog";
 import { DemandForecastDialog } from "@/components/inventory/DemandForecastDialog";
 import { InventoryItem } from "@/types/inventory";
 import { defaultCategories, Product } from "@/types/products";
+import { cn } from "@/lib/utils";
 
 export default function Inventory() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const focusRef = useRef<HTMLDivElement>(null);
+  const [focusedProductId, setFocusedProductId] = useState<string | null>(null);
+
   const { 
     productsWithInventory, 
     movements,
@@ -29,6 +35,31 @@ export default function Inventory() {
   } = useInventory();
   
   const { products } = useProducts();
+
+  // Auto-focus product from query params (e.g., from ActionCenter)
+  useEffect(() => {
+    const focusId = searchParams.get("focus");
+    if (!focusId || !productsWithInventory?.length) return;
+
+    const exists = productsWithInventory.some(x => x.id === focusId);
+    if (!exists) return;
+
+    setFocusedProductId(focusId);
+
+    // Clear params
+    searchParams.delete("focus");
+    setSearchParams(searchParams, { replace: true });
+
+    // Remove highlight after 3 seconds
+    setTimeout(() => setFocusedProductId(null), 3000);
+  }, [productsWithInventory, searchParams, setSearchParams]);
+
+  // Scroll to focused product
+  useEffect(() => {
+    if (focusedProductId && focusRef.current) {
+      focusRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [focusedProductId]);
   
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -282,18 +313,29 @@ export default function Inventory() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {filteredProducts.map(product => (
-            <ProductInventoryCard
-              key={product.id}
-              product={product}
-              onEntry={handleOpenEntry}
-              onExit={handleOpenExit}
-              onViewHistory={handleViewHistory}
-              onConfigureAlerts={handleConfigureAlerts}
-              onForecast={openForecastForProduct}
-              getItemStockStatus={getItemStockStatus}
-            />
-          ))}
+          {filteredProducts.map(product => {
+            const isFocused = product.id === focusedProductId;
+            return (
+              <div
+                key={product.id}
+                ref={isFocused ? focusRef : undefined}
+                className={cn(
+                  "transition-all duration-300",
+                  isFocused && "ring-2 ring-primary/50 rounded-lg"
+                )}
+              >
+                <ProductInventoryCard
+                  product={product}
+                  onEntry={handleOpenEntry}
+                  onExit={handleOpenExit}
+                  onViewHistory={handleViewHistory}
+                  onConfigureAlerts={handleConfigureAlerts}
+                  onForecast={openForecastForProduct}
+                  getItemStockStatus={getItemStockStatus}
+                />
+              </div>
+            );
+          })}
         </div>
       )}
 
