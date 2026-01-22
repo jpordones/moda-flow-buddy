@@ -7,3 +7,4 @@ export { InventoryValueCard } from './InventoryValueCard';
 export { FinancialChart } from './FinancialChart';
 export { ProductAnalysisCards } from './ProductAnalysisCards';
 export { AIInsightsCard } from './AIInsightsCard';
+export { ActionCenter } from './ActionCenter';
