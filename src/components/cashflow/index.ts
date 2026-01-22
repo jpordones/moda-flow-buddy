@@ -4,3 +4,4 @@ export { CashFlowInsights } from './CashFlowInsights';
 export { CategoryBreakdown } from './CategoryBreakdown';
 export { TransactionList } from './TransactionList';
 export { TransactionDialog } from './TransactionDialog';
+export { DREReport } from './DREReport';

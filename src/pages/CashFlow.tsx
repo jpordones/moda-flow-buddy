@@ -13,7 +13,10 @@ import {
   CategoryBreakdown,
   TransactionList,
   TransactionDialog,
+  DREReport,
 } from "@/components/cashflow";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BarChart3, FileText, ArrowLeftRight } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -191,34 +194,65 @@ export default function CashFlow() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <CashFlowStats stats={stats} isLoading={isLoading} />
+      {/* Main Tabs */}
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
+          <TabsTrigger value="overview" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden sm:inline">Visão Geral</span>
+          </TabsTrigger>
+          <TabsTrigger value="dre" className="gap-2">
+            <FileText className="h-4 w-4" />
+            <span className="hidden sm:inline">DRE</span>
+          </TabsTrigger>
+          <TabsTrigger value="transactions" className="gap-2">
+            <ArrowLeftRight className="h-4 w-4" />
+            <span className="hidden sm:inline">Transações</span>
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Chart */}
-      <CashFlowChart 
-        data={chartData} 
-        period={period} 
-        onPeriodChange={setPeriod} 
-      />
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          {/* Stats Cards */}
+          <CashFlowStats stats={stats} isLoading={isLoading} />
 
-      {/* Insights */}
-      <CashFlowInsights insights={insights} />
+          {/* Chart */}
+          <CashFlowChart 
+            data={chartData} 
+            period={period} 
+            onPeriodChange={setPeriod} 
+          />
 
-      {/* Category Breakdown */}
-      <CategoryBreakdown 
-        income={categoryBreakdown.income}
-        expenses={categoryBreakdown.expenses}
-        totalIncome={stats.totalIncome}
-        totalExpenses={stats.totalExpenses}
-      />
+          {/* Insights */}
+          <CashFlowInsights insights={insights} />
 
-      {/* Transaction List */}
-      <TransactionList
-        transactions={transactions}
-        onEdit={openEditDialog}
-        onDelete={handleDeleteTransaction}
-        isLoading={isLoading}
-      />
+          {/* Category Breakdown */}
+          <CategoryBreakdown 
+            income={categoryBreakdown.income}
+            expenses={categoryBreakdown.expenses}
+            totalIncome={stats.totalIncome}
+            totalExpenses={stats.totalExpenses}
+          />
+        </TabsContent>
+
+        {/* DRE Tab */}
+        <TabsContent value="dre">
+          <DREReport 
+            transactions={transactions}
+            period={period === 'month' ? 'Este Mês' : period === 'week' ? 'Esta Semana' : period === 'quarter' ? 'Este Trimestre' : 'Este Ano'}
+          />
+        </TabsContent>
+
+        {/* Transactions Tab */}
+        <TabsContent value="transactions">
+          <TransactionList
+            transactions={transactions}
+            onEdit={openEditDialog}
+            onDelete={handleDeleteTransaction}
+            isLoading={isLoading}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Add/Edit Dialog */}
       <TransactionDialog
