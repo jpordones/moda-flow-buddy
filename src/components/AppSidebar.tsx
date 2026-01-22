@@ -74,15 +74,22 @@ export function AppSidebar() {
         <SidebarContent className="bg-sidebar h-full">
           {/* Header with Logo */}
           <div className="flex items-center justify-between px-4 py-6">
-            <img 
-              src={fedcomLogo} 
-              alt="FEDCOM" 
-              className={cn(
-                "transition-all duration-300",
-                open ? "w-28 h-28" : "w-8 h-8",
-                isMobile && "w-20 h-20"
-              )}
-            />
+            <button
+              type="button"
+              onClick={() => navigate("/app")}
+              className="rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40"
+              title="Ir para o Dashboard"
+            >
+              <img 
+                src={fedcomLogo} 
+                alt="FECOM" 
+                className={cn(
+                  "transition-all duration-300",
+                  open ? "w-28 h-28" : "w-8 h-8",
+                  isMobile && "w-20 h-20"
+                )}
+              />
+            </button>
             
             {/* Close button for mobile */}
             {isMobile && (
