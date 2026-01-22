@@ -19,14 +19,14 @@ import { cn } from "@/lib/utils";
 import { useSubscription } from "@/hooks/useSubscription";
 
 const menuItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Fluxo de Caixa", url: "/fluxo-caixa", icon: TrendingUp },
-  { title: "Produtos", url: "/produtos", icon: ShoppingBag },
-  { title: "Estoque", url: "/estoque", icon: Package },
-  { title: "Custos & Precificação", url: "/custos", icon: Calculator },
-  { title: "Equipe", url: "/equipe", icon: Users },
-  { title: "Planos", url: "/planos", icon: Crown },
-  { title: "Configurações", url: "/configuracoes", icon: Settings },
+  { title: "Dashboard", url: "/app", icon: LayoutDashboard },
+  { title: "Fluxo de Caixa", url: "/app/fluxo-caixa", icon: TrendingUp },
+  { title: "Produtos", url: "/app/produtos", icon: ShoppingBag },
+  { title: "Estoque", url: "/app/estoque", icon: Package },
+  { title: "Custos & Precificação", url: "/app/custos", icon: Calculator },
+  { title: "Equipe", url: "/app/equipe", icon: Users },
+  { title: "Planos", url: "/app/planos", icon: Crown },
+  { title: "Configurações", url: "/app/configuracoes", icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -113,7 +113,7 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild tooltip={item.title}>
                       <NavLink
                         to={item.url}
-                        end={item.url === "/"}
+                        end={item.url === "/app"}
                         onClick={handleNavClick}
                         className={cn(
                           "flex items-center gap-3 px-3 py-3 rounded-lg min-h-[44px]",
@@ -144,7 +144,7 @@ export function AppSidebar() {
                 className="flex items-center gap-2 p-3 rounded-lg bg-sidebar-accent/50 cursor-pointer hover:bg-sidebar-accent transition-colors min-h-[44px]"
                 onClick={() => {
                   handleNavClick();
-                  navigate("/planos");
+                  navigate("/app/planos");
                 }}
               >
                 <Crown className="h-4 w-4 text-warning" />
