@@ -11,6 +11,7 @@ import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
+import Landing from "./pages/Landing";
 import CashFlow from "./pages/CashFlow";
 import Products from "./pages/Products";
 import Inventory from "./pages/Inventory";
@@ -69,6 +70,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             {/* Public routes */}
+            <Route path="/" element={<PublicLayout><Landing /></PublicLayout>} />
             <Route path="/auth" element={<Auth />} />
             
             {/* Public institutional pages */}
@@ -87,7 +89,7 @@ const App = () => (
             } />
             
             {/* Protected routes with layout */}
-            <Route path="/" element={
+            <Route path="/dashboard" element={
               <ProtectedRoute>
                 <AppLayout>
                   <Dashboard />
