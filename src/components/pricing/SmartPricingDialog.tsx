@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Sparkles } from "lucide-react";
 import { formatarMoeda, formatarPorcentagem } from "@/lib/formatters";
+import { PricingExplainability } from "./PricingExplainability";
 
 interface Props {
   open: boolean;
@@ -131,7 +132,7 @@ export function SmartPricingDialog({ open, onOpenChange, product, onApplyPrice }
                   <CardHeader className="pb-2 pt-3 px-3">
                     <CardTitle className="text-xs text-primary flex items-center gap-1">
                       Recomendado
-                      <Badge variant="secondary" className="text-[10px] px-1 py-0">IA (MVP)</Badge>
+                      <Badge variant="secondary" className="text-[10px] px-1 py-0">Assistente</Badge>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="px-3 pb-3">
@@ -143,9 +144,12 @@ export function SmartPricingDialog({ open, onOpenChange, product, onApplyPrice }
                 </Card>
               </div>
 
+              {/* Explainability Section */}
+              <PricingExplainability product={product} rec={rec} />
+
               {rec.warnings.length > 0 && (
-                <div className="rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-3">
-                  <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400 font-medium text-sm mb-1">
+                <div className="rounded-lg border border-warning/50 bg-warning/10 p-3">
+                  <div className="flex items-center gap-2 text-warning font-medium text-sm mb-1">
                     <AlertTriangle className="h-4 w-4" />
                     Atenção
                   </div>
@@ -155,12 +159,11 @@ export function SmartPricingDialog({ open, onOpenChange, product, onApplyPrice }
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end justify-between">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end justify-between border-t pt-4">
                 <div className="text-sm space-y-1">
-                  <p className="font-medium">Por que esse preço?</p>
-                  <ul className="text-muted-foreground text-xs space-y-0.5">
-                    {rec.notes.map((n, i) => <li key={i}>{n}</li>)}
-                  </ul>
+                  <p className="text-xs text-muted-foreground">
+                    Você sempre pode ajustar. A recomendação é um ponto de partida.
+                  </p>
                 </div>
 
                 <div className="flex flex-col items-end gap-2 w-full sm:w-auto">

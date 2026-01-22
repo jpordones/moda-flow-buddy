@@ -15,6 +15,17 @@ export interface SmartPricingInputs {
   taxesPct?: number; // ex: 0 (MVP) ou 6
 }
 
+export interface PricingBreakdown {
+  baseCost: number;
+  feesPct: number;
+  taxesPct: number;
+  targetMarginPct: number;
+  objective: PricingObjective;
+  stockQty: number;
+  minStock: number;
+  marketPrice?: number;
+}
+
 export interface SmartPricingRecommendation {
   minPrice: number;
   targetPrice: number;
@@ -22,6 +33,7 @@ export interface SmartPricingRecommendation {
   recommendedPrice: number;
 
   expectedMarginPct: number;
+  breakdown: PricingBreakdown;
   notes: string[];
   warnings: string[];
 }
@@ -143,12 +155,24 @@ export function smartPriceRecommend(input: SmartPricingInputs): SmartPricingReco
   if (recommendedRounded < current * 0.85) warnings.push("Recomendação bem abaixo do preço atual — confira custo e mercado.");
   if (recommendedRounded > current * 1.25 && current > 0) warnings.push("Recomendação bem acima do preço atual — pode afetar conversão.");
 
+  const breakdown: PricingBreakdown = {
+    baseCost,
+    feesPct: feesPct ?? 0,
+    taxesPct: taxesPct ?? 0,
+    targetMarginPct,
+    objective,
+    stockQty: qty,
+    minStock,
+    marketPrice: marketPrice > 0 ? marketPrice : undefined,
+  };
+
   return {
     minPrice: Math.round(minPrice * 100) / 100,
     targetPrice: Math.round(targetPrice * 100) / 100,
     premiumPrice: Math.round(premiumPrice * 100) / 100,
     recommendedPrice: Math.round(recommendedRounded * 100) / 100,
     expectedMarginPct: Math.round(expectedMarginPct * 10) / 10,
+    breakdown,
     notes,
     warnings,
   };
