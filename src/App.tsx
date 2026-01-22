@@ -12,6 +12,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Landing from "./pages/Landing";
+import Pricing from "./pages/Pricing";
 import CashFlow from "./pages/CashFlow";
 import Products from "./pages/Products";
 import Inventory from "./pages/Inventory";
@@ -80,6 +81,7 @@ const App = () => (
             <Route path="/politica-privacidade" element={<PublicLayout><PrivacyPolicy /></PublicLayout>} />
             <Route path="/termos-uso" element={<PublicLayout><TermsOfUse /></PublicLayout>} />
             <Route path="/lgpd" element={<PublicLayout><LGPD /></PublicLayout>} />
+            <Route path="/precos" element={<PublicLayout><Pricing /></PublicLayout>} />
             
             {/* Onboarding route */}
             <Route path="/onboarding" element={
