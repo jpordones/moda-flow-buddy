@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Edit, Copy, Trash2, Calculator, Package } from "lucide-react";
+import { MoreHorizontal, Edit, Copy, Trash2, Calculator, Package, Sparkles } from "lucide-react";
 import { Product } from "@/types/products";
 import { formatarMoeda, formatarPorcentagem } from "@/lib/formatters";
 
@@ -13,6 +13,7 @@ interface ProductCardProps {
   onDuplicate: () => void;
   onDelete: () => void;
   onCalculatePrice: () => void;
+  onSmartPricing: () => void;
 }
 
 export function ProductCard({ 
@@ -21,7 +22,8 @@ export function ProductCard({
   onEdit, 
   onDuplicate, 
   onDelete,
-  onCalculatePrice 
+  onCalculatePrice,
+  onSmartPricing
 }: ProductCardProps) {
   const getStatusBadgeVariant = () => {
     switch (product.status) {
@@ -72,6 +74,10 @@ export function ProductCard({
               <DropdownMenuItem onClick={onCalculatePrice}>
                 <Calculator className="h-4 w-4 mr-2" />
                 Calcular Preço
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onSmartPricing}>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Preço inteligente
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onDuplicate}>
                 <Copy className="h-4 w-4 mr-2" />

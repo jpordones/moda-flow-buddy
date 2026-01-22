@@ -8,7 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Grid, List, Package, Edit, Copy, Trash2, Calculator, AlertTriangle, ArrowUpDown, Loader2, Crown } from "lucide-react";
+import { Plus, Search, Grid, List, Package, Edit, Copy, Trash2, Calculator, AlertTriangle, ArrowUpDown, Loader2, Crown, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useProducts } from "@/hooks/useProducts";
@@ -17,6 +17,7 @@ import { ProductForm } from "@/components/products/ProductForm";
 import { ProductCard } from "@/components/products/ProductCard";
 import { ProductStats } from "@/components/products/ProductStats";
 import { StockMovementDialog } from "@/components/products/StockMovementDialog";
+import { SmartPricingDialog } from "@/components/pricing/SmartPricingDialog";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { Product, ProductFormData, defaultCategories } from "@/types/products";
 
@@ -53,6 +54,8 @@ export default function Products() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deleteProductId, setDeleteProductId] = useState<string | null>(null);
   const [stockMovementProduct, setStockMovementProduct] = useState<Product | null>(null);
+  const [smartPricingProduct, setSmartPricingProduct] = useState<Product | null>(null);
+  const [showSmartPricing, setShowSmartPricing] = useState(false);
 
   // Plan limits
   const productLimit = currentPlan?.max_products ?? 5;
@@ -199,6 +202,21 @@ export default function Products() {
   const handleCalculatePrice = (product: Product) => {
     // Navigate to costs page with product data
     navigate('/custos', { state: { product } });
+  };
+
+  const handleApplySmartPrice = async (productId: string, newPrice: number) => {
+    const p = products.find(x => x.id === productId);
+    const result = await updateProduct(productId, { salePrice: String(newPrice) });
+
+    if (result) {
+      toast.success("Preço aplicado", {
+        description: p ? `Novo preço de "${p.name}": R$ ${newPrice.toFixed(2)}` : undefined,
+      });
+    } else {
+      toast.error("Erro ao aplicar preço", {
+        description: "Não foi possível atualizar o preço no momento.",
+      });
+    }
   };
 
   const getStatusBadgeVariant = (status: string) => {
@@ -358,6 +376,10 @@ export default function Products() {
                   onDuplicate={() => handleDuplicateProduct(product.id)}
                   onDelete={() => setDeleteProductId(product.id)}
                   onCalculatePrice={() => handleCalculatePrice(product)}
+                  onSmartPricing={() => {
+                    setSmartPricingProduct(product);
+                    setShowSmartPricing(true);
+                  }}
                 />
               ))}
             </div>
@@ -416,6 +438,7 @@ export default function Products() {
                               size="icon"
                               className="h-8 w-8"
                               onClick={() => setEditingProduct(product)}
+                              title="Editar"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -423,7 +446,20 @@ export default function Products() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
+                              onClick={() => {
+                                setSmartPricingProduct(product);
+                                setShowSmartPricing(true);
+                              }}
+                              title="Preço inteligente"
+                            >
+                              <Sparkles className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
                               onClick={() => handleDuplicateProduct(product.id)}
+                              title="Duplicar"
                             >
                               <Copy className="h-4 w-4" />
                             </Button>
@@ -432,6 +468,7 @@ export default function Products() {
                               size="icon"
                               className="h-8 w-8 hover:bg-danger/10 hover:text-danger"
                               onClick={() => setDeleteProductId(product.id)}
+                              title="Excluir"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -541,6 +578,14 @@ export default function Products() {
         open={!!stockMovementProduct}
         onOpenChange={(open) => !open && setStockMovementProduct(null)}
         onSubmit={handleStockMovement}
+      />
+
+      {/* Smart Pricing Dialog */}
+      <SmartPricingDialog
+        open={showSmartPricing}
+        onOpenChange={setShowSmartPricing}
+        product={smartPricingProduct}
+        onApplyPrice={handleApplySmartPrice}
       />
 
       {/* Upgrade Modal */}
