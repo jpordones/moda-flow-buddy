@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sun, Moon, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import fedcomLogo from "@/assets/FEDCOM.svg";
+import fedcomLogoDark from "@/assets/FEDCOM.svg";
+import fedcomLogoLight from "@/assets/FEDCOM_WHITE.svg";
 
 export function PublicHeader() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -41,10 +42,17 @@ export function PublicHeader() {
       <div className="container mx-auto flex h-full items-center justify-between px-4 sm:px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
+          {/* Dark mode: show white logo */}
           <img 
-            src={fedcomLogo} 
+            src={fedcomLogoLight} 
             alt="FEDCOM" 
-            className="h-8 w-auto"
+            className="hidden dark:block h-8 w-auto"
+          />
+          {/* Light mode: show dark logo */}
+          <img 
+            src={fedcomLogoDark} 
+            alt="FEDCOM" 
+            className="block dark:hidden h-8 w-auto"
           />
         </Link>
 
