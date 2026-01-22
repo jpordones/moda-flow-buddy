@@ -77,6 +77,12 @@ serve(async (req) => {
           break;
         }
 
+        // Get subscription details from Stripe
+        let subscriptionDetails: Stripe.Subscription | null = null;
+        if (session.subscription) {
+          subscriptionDetails = await stripe.subscriptions.retrieve(session.subscription as string);
+        }
+
         // Check if subscription exists
         const { data: existingSub } = await supabase
           .from("user_subscriptions")
@@ -84,17 +90,24 @@ serve(async (req) => {
           .eq("user_id", userId)
           .single();
 
+        const periodEnd = subscriptionDetails?.current_period_end 
+          ? new Date(subscriptionDetails.current_period_end * 1000).toISOString()
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
         const subscriptionData = {
           user_id: userId,
           plan_id: plan.id,
           status: "active",
           stripe_customer_id: session.customer as string,
           stripe_subscription_id: session.subscription as string,
-          stripe_price_id: session.metadata?.price_id || null,
+          stripe_price_id: subscriptionDetails?.items?.data[0]?.price?.id || null,
           current_period_start: new Date().toISOString(),
-          current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          current_period_end: periodEnd,
+          cancel_at_period_end: false,
           updated_at: new Date().toISOString(),
         };
+
+        let subscriptionId: string | null = null;
 
         if (existingSub) {
           // Update existing subscription
@@ -103,6 +116,8 @@ serve(async (req) => {
             .update(subscriptionData)
             .eq("id", existingSub.id);
 
+          subscriptionId = existingSub.id;
+
           if (error) {
             logStep("Error updating subscription", { error });
           } else {
@@ -110,15 +125,32 @@ serve(async (req) => {
           }
         } else {
           // Create new subscription
-          const { error } = await supabase
+          const { data: newSub, error } = await supabase
             .from("user_subscriptions")
-            .insert(subscriptionData);
+            .insert(subscriptionData)
+            .select("id")
+            .single();
+
+          subscriptionId = newSub?.id || null;
 
           if (error) {
             logStep("Error creating subscription", { error });
           } else {
             logStep("Subscription created", { userId, planType });
           }
+        }
+
+        // Record payment in history
+        if (session.amount_total && subscriptionId) {
+          await supabase.from("payment_history").insert({
+            user_id: userId,
+            subscription_id: subscriptionId,
+            amount: session.amount_total / 100,
+            currency: (session.currency || "brl").toUpperCase(),
+            status: "succeeded",
+            description: `Assinatura ${planType} - Primeiro pagamento`,
+          });
+          logStep("Payment history recorded");
         }
         break;
       }
@@ -130,7 +162,8 @@ serve(async (req) => {
         if (invoice.subscription) {
           const periodEnd = invoice.lines.data[0]?.period?.end;
           
-          const { error } = await supabase
+          // Update subscription
+          const { data: sub, error } = await supabase
             .from("user_subscriptions")
             .update({
               status: "active",
@@ -139,12 +172,31 @@ serve(async (req) => {
                 : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
               updated_at: new Date().toISOString(),
             })
-            .eq("stripe_subscription_id", invoice.subscription);
+            .eq("stripe_subscription_id", invoice.subscription)
+            .select("id, user_id")
+            .single();
 
           if (error) {
             logStep("Error updating subscription on payment success", { error });
           } else {
             logStep("Subscription renewed", { subscriptionId: invoice.subscription });
+
+            // Record payment in history (for renewals)
+            if (sub && invoice.amount_paid > 0) {
+              await supabase.from("payment_history").insert({
+                user_id: sub.user_id,
+                subscription_id: sub.id,
+                stripe_invoice_id: invoice.id,
+                stripe_payment_intent_id: invoice.payment_intent as string || null,
+                amount: invoice.amount_paid / 100,
+                currency: (invoice.currency || "brl").toUpperCase(),
+                status: "succeeded",
+                description: "Renovação mensal da assinatura",
+                invoice_pdf_url: invoice.invoice_pdf,
+                receipt_url: invoice.hosted_invoice_url,
+              });
+              logStep("Renewal payment recorded in history");
+            }
           }
         }
         break;
@@ -155,18 +207,38 @@ serve(async (req) => {
         logStep("Processing invoice.payment_failed", { invoiceId: invoice.id });
 
         if (invoice.subscription) {
-          const { error } = await supabase
+          // Update subscription status
+          const { data: sub, error } = await supabase
             .from("user_subscriptions")
             .update({
               status: "past_due",
               updated_at: new Date().toISOString(),
             })
-            .eq("stripe_subscription_id", invoice.subscription);
+            .eq("stripe_subscription_id", invoice.subscription)
+            .select("id, user_id")
+            .single();
 
           if (error) {
             logStep("Error updating subscription on payment failure", { error });
           } else {
             logStep("Subscription marked as past_due", { subscriptionId: invoice.subscription });
+
+            // Record failed payment in history
+            if (sub) {
+              const charge = invoice.charge ? await stripe.charges.retrieve(invoice.charge as string) : null;
+              
+              await supabase.from("payment_history").insert({
+                user_id: sub.user_id,
+                subscription_id: sub.id,
+                stripe_invoice_id: invoice.id,
+                amount: invoice.amount_due / 100,
+                currency: (invoice.currency || "brl").toUpperCase(),
+                status: "failed",
+                description: "Falha no pagamento da assinatura",
+                failure_reason: charge?.failure_message || "Pagamento recusado",
+              });
+              logStep("Failed payment recorded in history");
+            }
           }
         }
         break;
@@ -186,6 +258,7 @@ serve(async (req) => {
         const updateData: Record<string, any> = {
           status: "cancelled",
           cancelled_at: new Date().toISOString(),
+          cancel_at_period_end: false,
           updated_at: new Date().toISOString(),
         };
 
@@ -201,7 +274,7 @@ serve(async (req) => {
         if (error) {
           logStep("Error cancelling subscription", { error });
         } else {
-          logStep("Subscription cancelled", { subscriptionId: subscription.id });
+          logStep("Subscription cancelled and downgraded to free", { subscriptionId: subscription.id });
         }
         break;
       }
@@ -228,6 +301,7 @@ serve(async (req) => {
                 stripe_price_id: priceId,
                 status: subscription.status === "active" ? "active" : subscription.status,
                 current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                cancel_at_period_end: subscription.cancel_at_period_end,
                 updated_at: new Date().toISOString(),
               })
               .eq("stripe_subscription_id", subscription.id);
@@ -235,9 +309,51 @@ serve(async (req) => {
             if (error) {
               logStep("Error updating subscription", { error });
             } else {
-              logStep("Subscription updated to new plan", { planType });
+              logStep("Subscription updated to new plan", { planType, cancelAtPeriodEnd: subscription.cancel_at_period_end });
             }
           }
+        } else {
+          // Just update status and period
+          const { error } = await supabase
+            .from("user_subscriptions")
+            .update({
+              status: subscription.status === "active" ? "active" : subscription.status,
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              cancel_at_period_end: subscription.cancel_at_period_end,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("stripe_subscription_id", subscription.id);
+
+          if (error) {
+            logStep("Error updating subscription status", { error });
+          }
+        }
+        break;
+      }
+
+      case "charge.refunded": {
+        const charge = event.data.object as Stripe.Charge;
+        logStep("Processing charge.refunded", { chargeId: charge.id });
+
+        // Find the user by customer ID
+        const { data: sub } = await supabase
+          .from("user_subscriptions")
+          .select("id, user_id")
+          .eq("stripe_customer_id", charge.customer as string)
+          .single();
+
+        if (sub) {
+          await supabase.from("payment_history").insert({
+            user_id: sub.user_id,
+            subscription_id: sub.id,
+            stripe_charge_id: charge.id,
+            amount: -(charge.amount_refunded / 100), // Negative for refund
+            currency: (charge.currency || "brl").toUpperCase(),
+            status: "refunded",
+            description: "Reembolso processado",
+            receipt_url: charge.receipt_url,
+          });
+          logStep("Refund recorded in history");
         }
         break;
       }

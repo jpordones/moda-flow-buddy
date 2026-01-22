@@ -221,12 +221,74 @@ export type Database = {
           },
         ]
       }
+      payment_history: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string | null
+          description: string | null
+          failure_reason: string | null
+          id: string
+          invoice_pdf_url: string | null
+          receipt_url: string | null
+          status: string
+          stripe_charge_id: string | null
+          stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          failure_reason?: string | null
+          id?: string
+          invoice_pdf_url?: string | null
+          receipt_url?: string | null
+          status: string
+          stripe_charge_id?: string | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          failure_reason?: string | null
+          id?: string
+          invoice_pdf_url?: string | null
+          receipt_url?: string | null
+          status?: string
+          stripe_charge_id?: string | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_history_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "user_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plans: {
         Row: {
           created_at: string
+          has_ai_features: boolean | null
+          has_api_access: boolean | null
           has_cash_flow: boolean
           has_export_excel: boolean
           has_export_pdf: boolean
+          has_integrations: boolean | null
           has_multi_users: boolean
           has_priority_support: boolean
           has_reports: boolean
@@ -237,13 +299,18 @@ export type Database = {
           max_users: number
           name: string
           price: number
+          stripe_price_id: string | null
+          stripe_product_id: string | null
           type: Database["public"]["Enums"]["plan_type"]
         }
         Insert: {
           created_at?: string
+          has_ai_features?: boolean | null
+          has_api_access?: boolean | null
           has_cash_flow?: boolean
           has_export_excel?: boolean
           has_export_pdf?: boolean
+          has_integrations?: boolean | null
           has_multi_users?: boolean
           has_priority_support?: boolean
           has_reports?: boolean
@@ -254,13 +321,18 @@ export type Database = {
           max_users?: number
           name: string
           price?: number
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
           type: Database["public"]["Enums"]["plan_type"]
         }
         Update: {
           created_at?: string
+          has_ai_features?: boolean | null
+          has_api_access?: boolean | null
           has_cash_flow?: boolean
           has_export_excel?: boolean
           has_export_pdf?: boolean
+          has_integrations?: boolean | null
           has_multi_users?: boolean
           has_priority_support?: boolean
           has_reports?: boolean
@@ -271,6 +343,8 @@ export type Database = {
           max_users?: number
           name?: string
           price?: number
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
           type?: Database["public"]["Enums"]["plan_type"]
         }
         Relationships: []
@@ -795,6 +869,7 @@ export type Database = {
       }
       user_subscriptions: {
         Row: {
+          cancel_at_period_end: boolean | null
           cancelled_at: string | null
           created_at: string
           current_period_end: string | null
@@ -805,10 +880,12 @@ export type Database = {
           stripe_customer_id: string | null
           stripe_price_id: string | null
           stripe_subscription_id: string | null
+          trial_end: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          cancel_at_period_end?: boolean | null
           cancelled_at?: string | null
           created_at?: string
           current_period_end?: string | null
@@ -819,10 +896,12 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_price_id?: string | null
           stripe_subscription_id?: string | null
+          trial_end?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          cancel_at_period_end?: boolean | null
           cancelled_at?: string | null
           created_at?: string
           current_period_end?: string | null
@@ -833,6 +912,7 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_price_id?: string | null
           stripe_subscription_id?: string | null
+          trial_end?: string | null
           updated_at?: string
           user_id?: string
         }
