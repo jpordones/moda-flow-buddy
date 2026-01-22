@@ -142,7 +142,7 @@ export function Header() {
           <Badge 
             variant="outline" 
             className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 cursor-pointer hover:bg-muted/50 transition-colors border-amber-500/50 text-amber-600"
-            onClick={() => navigate("/planos")}
+            onClick={() => navigate("/app/planos")}
           >
             <Crown className="h-3.5 w-3.5" />
             <span className="text-xs font-medium">Plano {getPlanDisplayName()}</span>
@@ -189,7 +189,7 @@ export function Header() {
                 </div>
                 <div 
                   className="flex justify-between items-center cursor-pointer"
-                  onClick={() => navigate("/planos")}
+                  onClick={() => navigate("/app/planos")}
                 >
                   <span className="text-sm text-muted-foreground">Seu plano</span>
                   <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-600">
@@ -199,11 +199,11 @@ export function Header() {
                 </div>
               </div>
 
-              <DropdownMenuItem onClick={() => navigate("/configuracoes")} className="gap-3 p-3 cursor-pointer">
+              <DropdownMenuItem onClick={() => navigate("/app/configuracoes")} className="gap-3 p-3 cursor-pointer">
                 <User className="h-4 w-4" />
                 <span>Meu Perfil</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/configuracoes")} className="gap-3 p-3 cursor-pointer">
+              <DropdownMenuItem onClick={() => navigate("/app/configuracoes")} className="gap-3 p-3 cursor-pointer">
                 <Settings className="h-4 w-4" />
                 <span>Configurações</span>
               </DropdownMenuItem>
