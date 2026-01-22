@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { DemandForecast } from "@/components/DemandForecast";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useProducts } from "@/hooks/useProducts";
 import {
   HealthScoreCard,
   RevenueGoalCard,
@@ -11,6 +12,7 @@ import {
   FinancialChart,
   ProductAnalysisCards,
   AIInsightsCard,
+  ActionCenter,
 } from "@/components/dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -30,6 +32,8 @@ export default function Dashboard() {
     predictedRevenue,
     stats,
   } = useDashboardData();
+  
+  const { products, isLoading: productsLoading } = useProducts();
 
   if (isLoading) {
     return (
@@ -58,6 +62,11 @@ export default function Dashboard() {
           Painel analítico completo do seu negócio
         </p>
       </div>
+
+      {/* Central de Ações - Prioridade máxima */}
+      {!productsLoading && products && products.length > 0 && (
+        <ActionCenter products={products} />
+      )}
 
       {/* Seção 1: KPIs Acionáveis */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
