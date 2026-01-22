@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, Minus, MoreVertical, History, Bell, Package } from 'lucide-react';
+import { Plus, Minus, MoreVertical, History, Bell, Package, TrendingUp } from 'lucide-react';
 import { ProductWithInventory, InventoryItem } from '@/types/inventory';
 import { formatarMoeda } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,7 @@ interface ProductInventoryCardProps {
   onExit: (item: InventoryItem) => void;
   onViewHistory: (productId: string) => void;
   onConfigureAlerts: (item: InventoryItem) => void;
+  onForecast: (productId: string) => void;
   getItemStockStatus: (item: InventoryItem) => { status: string; label: string; variant: string };
 }
 
@@ -22,6 +23,7 @@ export function ProductInventoryCard({
   onExit,
   onViewHistory,
   onConfigureAlerts,
+  onForecast,
   getItemStockStatus,
 }: ProductInventoryCardProps) {
   const getStockBadgeVariant = (status: string) => {
@@ -115,6 +117,10 @@ export function ProductInventoryCard({
                       <DropdownMenuItem onClick={() => onConfigureAlerts(item)}>
                         <Bell className="h-4 w-4 mr-2" />
                         Configurar Alertas
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onForecast(product.id)}>
+                        <TrendingUp className="h-4 w-4 mr-2" />
+                        Previsão de demanda
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
