@@ -1,7 +1,8 @@
 import { LayoutDashboard, TrendingUp, Package, ShoppingBag, Calculator, Settings, X, Crown, Users } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useNavigate } from "react-router-dom";
-import fedcomLogo from "@/assets/FEDCOM.svg";
+import fedcomLogoDark from "@/assets/FEDCOM.svg";
+import fedcomLogoLight from "@/assets/FEDCOM_WHITE.svg";
 import {
   Sidebar,
   SidebarContent,
@@ -80,11 +81,22 @@ export function AppSidebar() {
               className="rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40"
               title="Ir para o Dashboard"
             >
+              {/* Dark mode: show white logo */}
               <img 
-                src={fedcomLogo} 
-                alt="FECOM" 
+                src={fedcomLogoLight} 
+                alt="FEDCOM" 
                 className={cn(
-                  "transition-all duration-300",
+                  "hidden dark:block transition-all duration-300",
+                  open ? "w-28 h-28" : "w-8 h-8",
+                  isMobile && "w-20 h-20"
+                )}
+              />
+              {/* Light mode: show dark logo */}
+              <img 
+                src={fedcomLogoDark} 
+                alt="FEDCOM" 
+                className={cn(
+                  "block dark:hidden transition-all duration-300",
                   open ? "w-28 h-28" : "w-8 h-8",
                   isMobile && "w-20 h-20"
                 )}

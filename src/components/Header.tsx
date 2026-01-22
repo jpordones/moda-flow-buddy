@@ -16,7 +16,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
-import fedcomLogo from "@/assets/FEDCOM.svg";
+import fedcomLogoDark from "@/assets/FEDCOM.svg";
+import fedcomLogoLight from "@/assets/FEDCOM_WHITE.svg";
 
 export function Header() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -95,11 +96,20 @@ export function Header() {
           
           {/* Logo - visible on mobile when sidebar is closed */}
           {isMobile && (
-            <img 
-              src={fedcomLogo} 
-              alt="FEDCOM" 
-              className="h-8 w-auto"
-            />
+            <>
+              {/* Dark mode: show white logo */}
+              <img 
+                src={fedcomLogoLight} 
+                alt="FEDCOM" 
+                className="hidden dark:block h-8 w-auto"
+              />
+              {/* Light mode: show dark logo */}
+              <img 
+                src={fedcomLogoDark} 
+                alt="FEDCOM" 
+                className="block dark:hidden h-8 w-auto"
+              />
+            </>
           )}
         </div>
 
