@@ -12,8 +12,9 @@ import { ProductInventoryCard } from "@/components/inventory/ProductInventoryCar
 import { StockEntryDialog } from "@/components/inventory/StockEntryDialog";
 import { StockExitDialog } from "@/components/inventory/StockExitDialog";
 import { StockHistoryDialog } from "@/components/inventory/StockHistoryDialog";
+import { DemandForecastDialog } from "@/components/inventory/DemandForecastDialog";
 import { InventoryItem } from "@/types/inventory";
-import { defaultCategories } from "@/types/products";
+import { defaultCategories, Product } from "@/types/products";
 
 export default function Inventory() {
   const { 
@@ -36,8 +37,10 @@ export default function Inventory() {
   const [showEntryDialog, setShowEntryDialog] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [showForecastDialog, setShowForecastDialog] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | undefined>();
   const [selectedItem, setSelectedItem] = useState<InventoryItem | undefined>();
+  const [forecastProduct, setForecastProduct] = useState<Product | null>(null);
 
   // Filter products
   const filteredProducts = productsWithInventory.filter(p => {
@@ -129,6 +132,35 @@ export default function Inventory() {
     toast.info("Em breve", {
       description: "Configuração de alertas será implementada em breve"
     });
+  };
+
+  const openForecastForProduct = (productId: string) => {
+    const p = productsWithInventory.find(x => x.id === productId);
+    if (!p) return;
+
+    // Converter ProductWithInventory -> Product (tipo usado no módulo de forecast)
+    const productAsProductType: Product = {
+      id: p.id,
+      name: p.name,
+      sku: p.sku,
+      category: p.category,
+      status: (p.status as any) ?? "ativo",
+      variableCosts: [],
+      fixedCostAllocation: 0,
+      customMargin: undefined,
+      salePrice: p.salePrice,
+      costPrice: p.costPrice,
+      priceHistory: [],
+      quantity: p.totalStock,
+      minStock: 0,
+      maxStock: 0,
+      unit: "un",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    setForecastProduct(productAsProductType);
+    setShowForecastDialog(true);
   };
 
   const selectedProductName = selectedProductId 
@@ -258,6 +290,7 @@ export default function Inventory() {
               onExit={handleOpenExit}
               onViewHistory={handleViewHistory}
               onConfigureAlerts={handleConfigureAlerts}
+              onForecast={openForecastForProduct}
               getItemStockStatus={getItemStockStatus}
             />
           ))}
@@ -286,6 +319,12 @@ export default function Inventory() {
         onOpenChange={setShowHistoryDialog}
         movements={movements}
         productName={selectedProductName}
+      />
+
+      <DemandForecastDialog
+        open={showForecastDialog}
+        onOpenChange={setShowForecastDialog}
+        product={forecastProduct}
       />
     </div>
   );
