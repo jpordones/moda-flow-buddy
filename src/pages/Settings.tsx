@@ -8,12 +8,17 @@ import { AlertSettingsSection } from "@/components/settings/AlertSettingsSection
 import { UnitSettingsSection } from "@/components/settings/UnitSettingsSection";
 import { ExportSettingsSection } from "@/components/settings/ExportSettingsSection";
 import { BackupSettingsSection } from "@/components/settings/BackupSettingsSection";
-import { Settings as SettingsIcon, Building2, Calculator, Database } from "lucide-react";
+import { Settings as SettingsIcon, Building2, Calculator, Database, Save, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function Settings() {
   const {
     settings,
+    hasChanges,
+    isSaving,
     updateSettings,
+    saveSettings,
     resetSettings,
     exportSettings,
     importSettings,
@@ -22,10 +27,43 @@ export default function Settings() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Configurações</h1>
-        <p className="text-sm sm:text-base text-muted-foreground">Personalize o sistema de acordo com suas necessidades</p>
+      {/* Header with Save Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Configurações</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Personalize o sistema de acordo com suas necessidades</p>
+        </div>
+        
+        <Button 
+          onClick={saveSettings} 
+          disabled={!hasChanges || isSaving}
+          className="gap-2"
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Salvando...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              Salvar Alterações
+            </>
+          )}
+        </Button>
       </div>
+
+      {/* Unsaved Changes Warning */}
+      {hasChanges && (
+        <Card className="border-warning bg-warning/10">
+          <CardContent className="py-3 px-4">
+            <p className="text-sm text-warning-foreground flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-warning animate-pulse" />
+              Você tem alterações não salvas. Clique em "Salvar Alterações" para persistir.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="general" className="space-y-4 sm:space-y-6">
         <TabsList className="grid w-full grid-cols-4 h-auto p-1">
