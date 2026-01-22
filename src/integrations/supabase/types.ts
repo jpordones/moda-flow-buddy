@@ -348,52 +348,151 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
+          below_cost_alert: boolean | null
+          below_cost_buffer: number | null
+          city: string | null
           company_document: string | null
           company_name: string | null
           company_segment: string | null
           created_at: string | null
+          critical_stock_threshold: number | null
+          currency_symbol: string | null
           current_team_id: string | null
+          custom_unit_label: string | null
+          decimal_places: number | null
+          decimal_separator: string | null
           default_currency: string | null
           default_margin: number | null
+          default_markup_rate: number | null
+          default_monthly_sales: number | null
+          default_premium_margin: number | null
+          default_unit: string | null
+          enable_stock_alerts: boolean | null
+          export_filename_pattern: string | null
+          export_include_charts: boolean | null
+          export_include_company_info: boolean | null
+          export_include_cost_breakdown: boolean | null
+          export_include_logo: boolean | null
+          export_pdf_color_scheme: string | null
           full_name: string | null
           id: string
+          include_taxes: boolean | null
           logo_url: string | null
+          low_margin_alert: boolean | null
+          low_margin_threshold: number | null
+          low_stock_threshold: number | null
+          monthly_review_reminder: boolean | null
           monthly_sales_goal: number | null
+          municipal_tax: number | null
           onboarding_completed: boolean | null
+          phone: string | null
           public_email: string | null
+          state: string | null
+          state_tax: number | null
+          tax_breakdown: Json | null
+          tax_regime: string | null
+          thousand_separator: string | null
           updated_at: string | null
+          zip_code: string | null
         }
         Insert: {
+          address?: string | null
+          below_cost_alert?: boolean | null
+          below_cost_buffer?: number | null
+          city?: string | null
           company_document?: string | null
           company_name?: string | null
           company_segment?: string | null
           created_at?: string | null
+          critical_stock_threshold?: number | null
+          currency_symbol?: string | null
           current_team_id?: string | null
+          custom_unit_label?: string | null
+          decimal_places?: number | null
+          decimal_separator?: string | null
           default_currency?: string | null
           default_margin?: number | null
+          default_markup_rate?: number | null
+          default_monthly_sales?: number | null
+          default_premium_margin?: number | null
+          default_unit?: string | null
+          enable_stock_alerts?: boolean | null
+          export_filename_pattern?: string | null
+          export_include_charts?: boolean | null
+          export_include_company_info?: boolean | null
+          export_include_cost_breakdown?: boolean | null
+          export_include_logo?: boolean | null
+          export_pdf_color_scheme?: string | null
           full_name?: string | null
           id: string
+          include_taxes?: boolean | null
           logo_url?: string | null
+          low_margin_alert?: boolean | null
+          low_margin_threshold?: number | null
+          low_stock_threshold?: number | null
+          monthly_review_reminder?: boolean | null
           monthly_sales_goal?: number | null
+          municipal_tax?: number | null
           onboarding_completed?: boolean | null
+          phone?: string | null
           public_email?: string | null
+          state?: string | null
+          state_tax?: number | null
+          tax_breakdown?: Json | null
+          tax_regime?: string | null
+          thousand_separator?: string | null
           updated_at?: string | null
+          zip_code?: string | null
         }
         Update: {
+          address?: string | null
+          below_cost_alert?: boolean | null
+          below_cost_buffer?: number | null
+          city?: string | null
           company_document?: string | null
           company_name?: string | null
           company_segment?: string | null
           created_at?: string | null
+          critical_stock_threshold?: number | null
+          currency_symbol?: string | null
           current_team_id?: string | null
+          custom_unit_label?: string | null
+          decimal_places?: number | null
+          decimal_separator?: string | null
           default_currency?: string | null
           default_margin?: number | null
+          default_markup_rate?: number | null
+          default_monthly_sales?: number | null
+          default_premium_margin?: number | null
+          default_unit?: string | null
+          enable_stock_alerts?: boolean | null
+          export_filename_pattern?: string | null
+          export_include_charts?: boolean | null
+          export_include_company_info?: boolean | null
+          export_include_cost_breakdown?: boolean | null
+          export_include_logo?: boolean | null
+          export_pdf_color_scheme?: string | null
           full_name?: string | null
           id?: string
+          include_taxes?: boolean | null
           logo_url?: string | null
+          low_margin_alert?: boolean | null
+          low_margin_threshold?: number | null
+          low_stock_threshold?: number | null
+          monthly_review_reminder?: boolean | null
           monthly_sales_goal?: number | null
+          municipal_tax?: number | null
           onboarding_completed?: boolean | null
+          phone?: string | null
           public_email?: string | null
+          state?: string | null
+          state_tax?: number | null
+          tax_breakdown?: Json | null
+          tax_regime?: string | null
+          thousand_separator?: string | null
           updated_at?: string | null
+          zip_code?: string | null
         }
         Relationships: [
           {

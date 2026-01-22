@@ -15,6 +15,52 @@ interface Profile {
   monthly_sales_goal: number;
   onboarding_completed: boolean;
   current_team_id: string | null;
+  
+  // Contact & Address
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  zip_code: string | null;
+  
+  // Tax settings
+  tax_regime: string | null;
+  state_tax: number | null;
+  municipal_tax: number | null;
+  include_taxes: boolean | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tax_breakdown: any;
+  
+  // Calculation defaults
+  default_unit: string | null;
+  custom_unit_label: string | null;
+  default_premium_margin: number | null;
+  default_monthly_sales: number | null;
+  default_markup_rate: number | null;
+  
+  // Alert settings
+  enable_stock_alerts: boolean | null;
+  low_stock_threshold: number | null;
+  critical_stock_threshold: number | null;
+  low_margin_alert: boolean | null;
+  low_margin_threshold: number | null;
+  below_cost_alert: boolean | null;
+  below_cost_buffer: number | null;
+  monthly_review_reminder: boolean | null;
+  
+  // Export settings
+  export_include_logo: boolean | null;
+  export_include_company_info: boolean | null;
+  export_include_cost_breakdown: boolean | null;
+  export_include_charts: boolean | null;
+  export_filename_pattern: string | null;
+  export_pdf_color_scheme: string | null;
+  
+  // Currency formatting
+  currency_symbol: string | null;
+  decimal_separator: string | null;
+  thousand_separator: string | null;
+  decimal_places: number | null;
 }
 
 interface AuthContextType {
