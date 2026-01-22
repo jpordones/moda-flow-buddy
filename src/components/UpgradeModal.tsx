@@ -38,7 +38,7 @@ export function UpgradeModal({ isOpen, onClose, feature, requiredPlan = "profess
 
   const handleViewPlans = () => {
     onClose();
-    navigate("/planos");
+    navigate("/app/planos");
   };
 
   const benefits = planBenefits[requiredPlan] || planBenefits.professional;
