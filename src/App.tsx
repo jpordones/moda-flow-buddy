@@ -14,6 +14,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import CashFlow from "./pages/CashFlow";
 import Products from "./pages/Products";
+import ProductEditor from "./pages/ProductEditor";
 import Inventory from "./pages/Inventory";
 import Costs from "./pages/Costs";
 import Settings from "./pages/Settings";
@@ -116,6 +117,18 @@ const App = () => (
                 <AppLayout>
                   <Products />
                 </AppLayout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/app/produtos/novo" element={
+              <ProtectedRoute>
+                <ProductEditor />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/app/produtos/:productId/editar" element={
+              <ProtectedRoute>
+                <ProductEditor />
               </ProtectedRoute>
             } />
 

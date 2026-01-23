@@ -107,6 +107,7 @@ export type Database = {
       }
       inventory_items: {
         Row: {
+          barcode: string | null
           color: string | null
           created_at: string
           critical_stock: number
@@ -118,8 +119,11 @@ export type Database = {
           size: string | null
           team_id: string
           updated_at: string
+          variant_price: number | null
+          variant_sku: string | null
         }
         Insert: {
+          barcode?: string | null
           color?: string | null
           created_at?: string
           critical_stock?: number
@@ -131,8 +135,11 @@ export type Database = {
           size?: string | null
           team_id: string
           updated_at?: string
+          variant_price?: number | null
+          variant_sku?: string | null
         }
         Update: {
+          barcode?: string | null
           color?: string | null
           created_at?: string
           critical_stock?: number
@@ -144,6 +151,8 @@ export type Database = {
           size?: string | null
           team_id?: string
           updated_at?: string
+          variant_price?: number | null
+          variant_sku?: string | null
         }
         Relationships: [
           {
@@ -356,8 +365,10 @@ export type Database = {
           cost_price: number
           created_at: string
           description: string | null
+          has_variations: boolean | null
           id: string
           image_url: string | null
+          is_infinite_stock: boolean | null
           min_stock: number
           name: string
           quantity: number
@@ -376,8 +387,10 @@ export type Database = {
           cost_price?: number
           created_at?: string
           description?: string | null
+          has_variations?: boolean | null
           id?: string
           image_url?: string | null
+          is_infinite_stock?: boolean | null
           min_stock?: number
           name: string
           quantity?: number
@@ -396,8 +409,10 @@ export type Database = {
           cost_price?: number
           created_at?: string
           description?: string | null
+          has_variations?: boolean | null
           id?: string
           image_url?: string | null
+          is_infinite_stock?: boolean | null
           min_stock?: number
           name?: string
           quantity?: number
