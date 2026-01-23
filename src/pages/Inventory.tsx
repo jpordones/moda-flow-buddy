@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Minus, Search, History, Loader2, Package } from "lucide-react";
+import { Plus, Minus, Search, History, Loader2, Package, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { useInventory } from "@/hooks/useInventory";
 import { useProducts } from "@/hooks/useProducts";
 import { InventoryStats } from "@/components/inventory/InventoryStats";
-import { ProductInventoryCard } from "@/components/inventory/ProductInventoryCard";
+import { ExpandableProductCard } from "@/components/inventory/ExpandableProductCard";
 import { StockEntryDialog } from "@/components/inventory/StockEntryDialog";
 import { StockExitDialog } from "@/components/inventory/StockExitDialog";
 import { StockHistoryDialog } from "@/components/inventory/StockHistoryDialog";
@@ -22,6 +22,7 @@ export default function Inventory() {
   const [searchParams, setSearchParams] = useSearchParams();
   const focusRef = useRef<HTMLDivElement>(null);
   const [focusedProductId, setFocusedProductId] = useState<string | null>(null);
+  const [expandAll, setExpandAll] = useState(false);
 
   const { 
     productsWithInventory, 
@@ -32,11 +33,12 @@ export default function Inventory() {
     addStockExit,
     getItemStockStatus,
     fetchMovements,
+    fetchInventory,
   } = useInventory();
   
   const { products } = useProducts();
 
-  // Auto-focus product from query params (e.g., from ActionCenter)
+  // Auto-focus product from query params
   useEffect(() => {
     const focusId = searchParams.get("focus");
     if (!focusId || !productsWithInventory?.length) return;
@@ -45,16 +47,11 @@ export default function Inventory() {
     if (!exists) return;
 
     setFocusedProductId(focusId);
-
-    // Clear params
     searchParams.delete("focus");
     setSearchParams(searchParams, { replace: true });
-
-    // Remove highlight after 3 seconds
     setTimeout(() => setFocusedProductId(null), 3000);
   }, [productsWithInventory, searchParams, setSearchParams]);
 
-  // Scroll to focused product
   useEffect(() => {
     if (focusedProductId && focusRef.current) {
       focusRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -73,7 +70,6 @@ export default function Inventory() {
   const [selectedItem, setSelectedItem] = useState<InventoryItem | undefined>();
   const [forecastProduct, setForecastProduct] = useState<Product | null>(null);
 
-  // Filter products
   const filteredProducts = productsWithInventory.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          p.sku.toLowerCase().includes(searchTerm.toLowerCase());
@@ -107,9 +103,7 @@ export default function Inventory() {
         description: `+${data.quantity} un de ${product?.name || 'produto'} (${data.size}/${data.color})`
       });
     } else {
-      toast.error("Erro ao registrar entrada", {
-        description: "Não foi possível adicionar ao estoque"
-      });
+      toast.error("Erro ao registrar entrada");
     }
     return success;
   };
@@ -136,8 +130,36 @@ export default function Inventory() {
     return success;
   };
 
-  const handleOpenEntry = (productId?: string) => {
+  // Quick entry/exit handlers (no dialog)
+  const handleQuickEntry = async (item: InventoryItem, quantity: number) => {
+    const success = await addStockEntry({
+      productId: item.productId,
+      size: item.size,
+      color: item.color,
+      quantity,
+      reason: 'Entrada rápida',
+    });
+    if (success) {
+      toast.success(`+${quantity} unidade(s) adicionada(s)`);
+    }
+  };
+
+  const handleQuickExit = async (item: InventoryItem, quantity: number) => {
+    const success = await addStockExit({
+      productId: item.productId,
+      size: item.size,
+      color: item.color,
+      quantity,
+      reason: 'Saída rápida',
+    });
+    if (success) {
+      toast.success(`-${quantity} unidade(s) removida(s)`);
+    }
+  };
+
+  const handleOpenEntry = (productId?: string, item?: InventoryItem) => {
     setSelectedProductId(productId);
+    if (item) setSelectedItem(item);
     setShowEntryDialog(true);
   };
 
@@ -159,7 +181,6 @@ export default function Inventory() {
   };
 
   const handleConfigureAlerts = (item: InventoryItem) => {
-    // TODO: Implement alerts configuration dialog
     toast.info("Em breve", {
       description: "Configuração de alertas será implementada em breve"
     });
@@ -169,7 +190,6 @@ export default function Inventory() {
     const p = productsWithInventory.find(x => x.id === productId);
     if (!p) return;
 
-    // Converter ProductWithInventory -> Product (tipo usado no módulo de forecast)
     const productAsProductType: Product = {
       id: p.id,
       name: p.name,
@@ -205,7 +225,7 @@ export default function Inventory() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Estoque</h1>
           <p className="text-sm md:text-base text-muted-foreground">
-            Gerencie quantidades e movimentações de estoque
+            Gerencie quantidades e movimentações por variação
           </p>
         </div>
         
@@ -243,10 +263,32 @@ export default function Inventory() {
       {/* Filters */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle>Produtos em Estoque</CardTitle>
-          <CardDescription>
-            Visualize e gerencie o estoque por produto e variação
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Produtos em Estoque</CardTitle>
+              <CardDescription>
+                {filteredProducts.length} produto(s) • Clique para expandir variações
+              </CardDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setExpandAll(!expandAll)}
+              className="gap-1 text-muted-foreground"
+            >
+              {expandAll ? (
+                <>
+                  <ChevronUp className="h-4 w-4" />
+                  Recolher
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4" />
+                  Expandir
+                </>
+              )}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-3">
@@ -312,7 +354,7 @@ export default function Inventory() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {filteredProducts.map(product => {
             const isFocused = product.id === focusedProductId;
             return (
@@ -324,14 +366,17 @@ export default function Inventory() {
                   isFocused && "ring-2 ring-primary/50 rounded-lg"
                 )}
               >
-                <ProductInventoryCard
+                <ExpandableProductCard
                   product={product}
                   onEntry={handleOpenEntry}
                   onExit={handleOpenExit}
+                  onQuickEntry={handleQuickEntry}
+                  onQuickExit={handleQuickExit}
                   onViewHistory={handleViewHistory}
                   onConfigureAlerts={handleConfigureAlerts}
                   onForecast={openForecastForProduct}
                   getItemStockStatus={getItemStockStatus}
+                  defaultExpanded={expandAll || isFocused}
                 />
               </div>
             );
