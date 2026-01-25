@@ -1,9 +1,14 @@
+import { VariantOptions } from './productEditor';
+
 export interface InventoryItem {
   id: string;
   productId: string;
   teamId: string;
+  // Legacy fields for backward compatibility
   size: string;
   color: string;
+  // Flexible N-attribute variations via JSONB
+  variantOptions: VariantOptions;
   quantity: number;
   minStock: number;
   criticalStock: number;

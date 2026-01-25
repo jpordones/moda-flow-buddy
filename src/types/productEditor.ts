@@ -1,14 +1,18 @@
 // Types for the Nuvemshop-style product editor
+// Supports N-attribute variations via variant_options JSONB
 
 export interface VariantProperty {
   id: string;
-  name: string; // e.g., "Cor", "Tamanho"
+  name: string; // e.g., "Cor", "Tamanho", "Estampa"
   values: string[]; // e.g., ["Preto", "Branco"]
 }
 
+// variant_options is a flexible JSONB structure: { "Cor": "Preto", "Tamanho": "M", "Estampa": "Logo X" }
+export type VariantOptions = Record<string, string>;
+
 export interface ProductVariant {
   id: string;
-  properties: Record<string, string>; // e.g., { "Cor": "Preto", "Tamanho": "M" }
+  properties: VariantOptions; // Flexible N-attribute variations
   sku: string;
   barcode: string;
   price: number | null; // null means use base product price
@@ -69,9 +73,11 @@ export const defaultProductEditorData: ProductEditorData = {
   location: '',
 };
 
+// Default properties include Cor, Tamanho, and Estampa for 3-attribute support
 export const defaultVariantProperties: VariantProperty[] = [
   { id: 'color', name: 'Cor', values: [] },
   { id: 'size', name: 'Tamanho', values: [] },
+  { id: 'print', name: 'Estampa', values: [] },
 ];
 
 export const suggestedColors = [
@@ -84,6 +90,11 @@ export const suggestedSizes = [
   'PP', 'P', 'M', 'G', 'GG', 'XG', 'XXG',
   '34', '36', '38', '40', '42', '44', '46', '48',
   'Único'
+];
+
+export const suggestedPrints = [
+  'Liso', 'Estampado', 'Listrado', 'Xadrez', 'Floral',
+  'Geométrico', 'Animal Print', 'Tie-Dye', 'Bordado', 'Logo'
 ];
 
 // Generate all combinations of variants
@@ -143,9 +154,30 @@ export function createVariantsFromCombinations(
   });
 }
 
-// Get variant display name
+// Get variant display name from properties
 export function getVariantDisplayName(variant: ProductVariant): string {
   return Object.entries(variant.properties)
     .map(([, value]) => value)
     .join(' / ');
+}
+
+// Get variant display name from variant_options JSONB
+export function getVariantDisplayNameFromOptions(options: VariantOptions): string {
+  return Object.values(options).filter(Boolean).join(' / ');
+}
+
+// Convert legacy size/color fields to variant_options
+export function legacyToVariantOptions(size?: string | null, color?: string | null): VariantOptions {
+  const options: VariantOptions = {};
+  if (color && color !== 'Padrão') options['Cor'] = color;
+  if (size && size !== 'Único') options['Tamanho'] = size;
+  return options;
+}
+
+// Extract legacy size/color from variant_options for backward compatibility
+export function variantOptionsToLegacy(options: VariantOptions): { size: string; color: string } {
+  return {
+    size: options['Tamanho'] || 'Único',
+    color: options['Cor'] || 'Padrão',
+  };
 }

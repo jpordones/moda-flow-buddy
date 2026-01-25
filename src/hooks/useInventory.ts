@@ -9,6 +9,7 @@ import {
   StockExitData,
   InventoryStats 
 } from '@/types/inventory';
+import { VariantOptions, legacyToVariantOptions } from '@/types/productEditor';
 
 interface DbInventoryItem {
   id: string;
@@ -16,6 +17,7 @@ interface DbInventoryItem {
   team_id: string;
   size: string | null;
   color: string | null;
+  variant_options: Record<string, string> | null;
   quantity: number;
   min_stock: number;
   critical_stock: number;
@@ -53,12 +55,23 @@ interface DbStockMovement {
 }
 
 function mapDbToInventoryItem(db: DbInventoryItem): InventoryItem {
+  // Build variant_options: prefer JSONB, fallback to legacy size/color
+  let variantOptions: VariantOptions = {};
+  
+  if (db.variant_options && Object.keys(db.variant_options).length > 0) {
+    variantOptions = db.variant_options;
+  } else {
+    // Backward compatibility: build from legacy fields
+    variantOptions = legacyToVariantOptions(db.size, db.color);
+  }
+
   return {
     id: db.id,
     productId: db.product_id,
     teamId: db.team_id,
     size: db.size || 'Único',
     color: db.color || 'Padrão',
+    variantOptions,
     quantity: db.quantity,
     minStock: db.min_stock,
     criticalStock: db.critical_stock,

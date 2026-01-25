@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Plus, Minus, MoreVertical, History, Bell, Package, TrendingUp } from 'lucide-react';
 import { ProductWithInventory, InventoryItem } from '@/types/inventory';
+import { getVariantDisplayNameFromOptions } from '@/types/productEditor';
 import { formatarMoeda } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 
@@ -82,7 +83,11 @@ export function ProductInventoryCard({
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">
-                      {item.size} / {item.color}
+                      {/* Use variant_options for display, fallback to legacy size/color */}
+                      {Object.keys(item.variantOptions).length > 0 
+                        ? getVariantDisplayNameFromOptions(item.variantOptions)
+                        : `${item.size} / ${item.color}`
+                      }
                     </div>
                     <div className={cn(
                       "text-xl font-bold mt-1",

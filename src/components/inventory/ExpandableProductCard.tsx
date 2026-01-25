@@ -24,6 +24,7 @@ import {
   Barcode
 } from "lucide-react";
 import { ProductWithInventory, InventoryItem } from "@/types/inventory";
+import { getVariantDisplayNameFromOptions } from "@/types/productEditor";
 import { formatarMoeda } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -84,6 +85,7 @@ export function ExpandableProductCard({
 
   const hasVariations = product.inventoryItems.length > 1 || 
     product.inventoryItems.some(i => 
+      Object.keys(i.variantOptions).length > 0 ||
       (i.size && i.size !== 'Único') || (i.color && i.color !== 'Padrão')
     );
 
@@ -206,21 +208,34 @@ export function ExpandableProductCard({
                 <tbody>
                   {product.inventoryItems.map(item => {
                     const stockStatus = getItemStockStatus(item);
-                    const variantLabel = hasVariations 
-                      ? `${item.size !== 'Único' ? item.size : ''} ${item.color !== 'Padrão' ? item.color : ''}`.trim() || 'Padrão'
-                      : 'Produto único';
+                    // Use variant_options for display, fallback to legacy
+                    const displayLabel = Object.keys(item.variantOptions).length > 0
+                      ? getVariantDisplayNameFromOptions(item.variantOptions)
+                      : hasVariations 
+                        ? `${item.size !== 'Único' ? item.size : ''} ${item.color !== 'Padrão' ? item.color : ''}`.trim() || 'Padrão'
+                        : 'Produto único';
                     
                     return (
                       <tr key={item.id} className="border-b last:border-0">
                         <td className="py-3">
                           <div className="flex items-center gap-2">
                             {hasVariations && (
-                              <div className="flex gap-1">
-                                {item.size !== 'Único' && (
-                                  <Badge variant="secondary" className="text-xs">{item.size}</Badge>
-                                )}
-                                {item.color !== 'Padrão' && (
-                                  <Badge variant="outline" className="text-xs">{item.color}</Badge>
+                              <div className="flex flex-wrap gap-1">
+                                {Object.keys(item.variantOptions).length > 0 ? (
+                                  Object.entries(item.variantOptions).map(([key, value]) => (
+                                    <Badge key={key} variant="secondary" className="text-xs">
+                                      {value}
+                                    </Badge>
+                                  ))
+                                ) : (
+                                  <>
+                                    {item.size !== 'Único' && (
+                                      <Badge variant="secondary" className="text-xs">{item.size}</Badge>
+                                    )}
+                                    {item.color !== 'Padrão' && (
+                                      <Badge variant="outline" className="text-xs">{item.color}</Badge>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             )}
@@ -331,15 +346,25 @@ export function ExpandableProductCard({
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          {item.size !== 'Único' && (
-                            <Badge variant="secondary" className="text-xs">{item.size}</Badge>
-                          )}
-                          {item.color !== 'Padrão' && (
-                            <Badge variant="outline" className="text-xs">{item.color}</Badge>
-                          )}
-                          {item.size === 'Único' && item.color === 'Padrão' && (
-                            <span className="text-sm text-muted-foreground">Produto único</span>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          {Object.keys(item.variantOptions).length > 0 ? (
+                            Object.entries(item.variantOptions).map(([key, value]) => (
+                              <Badge key={key} variant="secondary" className="text-xs">
+                                {value}
+                              </Badge>
+                            ))
+                          ) : (
+                            <>
+                              {item.size !== 'Único' && (
+                                <Badge variant="secondary" className="text-xs">{item.size}</Badge>
+                              )}
+                              {item.color !== 'Padrão' && (
+                                <Badge variant="outline" className="text-xs">{item.color}</Badge>
+                              )}
+                              {item.size === 'Único' && item.color === 'Padrão' && (
+                                <span className="text-sm text-muted-foreground">Produto único</span>
+                              )}
+                            </>
                           )}
                         </div>
                         {(item as any).variant_sku && (

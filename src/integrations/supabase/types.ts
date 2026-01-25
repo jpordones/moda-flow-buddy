@@ -119,6 +119,7 @@ export type Database = {
           size: string | null
           team_id: string
           updated_at: string
+          variant_options: Json
           variant_price: number | null
           variant_sku: string | null
         }
@@ -135,6 +136,7 @@ export type Database = {
           size?: string | null
           team_id: string
           updated_at?: string
+          variant_options?: Json
           variant_price?: number | null
           variant_sku?: string | null
         }
@@ -151,6 +153,7 @@ export type Database = {
           size?: string | null
           team_id?: string
           updated_at?: string
+          variant_options?: Json
           variant_price?: number | null
           variant_sku?: string | null
         }
