@@ -17,6 +17,7 @@ import {
   ProductVariant,
   suggestedColors,
   suggestedSizes,
+  suggestedPrints,
   generateVariantCombinations,
   createVariantsFromCombinations
 } from "@/types/productEditor";
@@ -138,6 +139,9 @@ export function VariationsSection({
     }
     if (name.includes('tamanho') || name.includes('size')) {
       return suggestedSizes;
+    }
+    if (name.includes('estampa') || name.includes('print') || name.includes('padrão')) {
+      return suggestedPrints;
     }
     return [];
   };

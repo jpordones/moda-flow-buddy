@@ -13,7 +13,8 @@ import {
   ProductEditorData, 
   defaultProductEditorData,
   defaultVariantProperties,
-  ProductVariant 
+  ProductVariant,
+  variantOptionsToLegacy
 } from "@/types/productEditor";
 import { useProducts } from "@/hooks/useProducts";
 import { useInventory } from "@/hooks/useInventory";
@@ -76,42 +77,75 @@ export default function ProductEditor() {
     
     if (error || !items || items.length === 0) return;
     
-    // Check if product has meaningful variations
-    const hasSize = items.some(i => i.size && i.size !== 'Único');
-    const hasColor = items.some(i => i.color && i.color !== 'Padrão');
+    // Build variant properties from existing items
+    const propertyValues: Record<string, Set<string>> = {};
     
-    if (hasSize || hasColor) {
-      // Build variant properties from existing items
-      const sizes = [...new Set(items.map(i => i.size).filter(Boolean))] as string[];
-      const colors = [...new Set(items.map(i => i.color).filter(Boolean))] as string[];
+    items.forEach((item: any) => {
+      // Prioritize variant_options JSONB
+      const variantOptions = item.variant_options || {};
       
-      const props = [];
-      if (colors.length > 0 && !(colors.length === 1 && colors[0] === 'Padrão')) {
-        props.push({ id: 'color', name: 'Cor', values: colors.filter(c => c !== 'Padrão') });
+      // If variant_options is empty, use legacy fields
+      if (Object.keys(variantOptions).length === 0) {
+        if (item.size && item.size !== 'Único') {
+          if (!propertyValues['Tamanho']) propertyValues['Tamanho'] = new Set();
+          propertyValues['Tamanho'].add(item.size);
+        }
+        if (item.color && item.color !== 'Padrão') {
+          if (!propertyValues['Cor']) propertyValues['Cor'] = new Set();
+          propertyValues['Cor'].add(item.color);
+        }
+      } else {
+        // Use variant_options for N-attribute support
+        Object.entries(variantOptions).forEach(([key, value]) => {
+          if (value && typeof value === 'string') {
+            if (!propertyValues[key]) propertyValues[key] = new Set();
+            propertyValues[key].add(value);
+          }
+        });
       }
-      if (sizes.length > 0 && !(sizes.length === 1 && sizes[0] === 'Único')) {
-        props.push({ id: 'size', name: 'Tamanho', values: sizes.filter(s => s !== 'Único') });
-      }
+    });
+    
+    // Check if product has meaningful variations
+    const hasVariations = Object.keys(propertyValues).length > 0;
+    
+    if (hasVariations) {
+      // Build variant properties from collected values
+      const props = Object.entries(propertyValues).map(([name, values], index) => ({
+        id: `prop_${index}`,
+        name,
+        values: Array.from(values),
+      }));
       
       // Build variants from items
       const variants: ProductVariant[] = items
-        .filter(item => {
+        .filter((item: any) => {
+          const variantOptions = item.variant_options || {};
+          const hasValidOptions = Object.keys(variantOptions).length > 0;
           const hasValidSize = item.size && item.size !== 'Único';
           const hasValidColor = item.color && item.color !== 'Padrão';
-          return hasValidSize || hasValidColor;
+          return hasValidOptions || hasValidSize || hasValidColor;
         })
-        .map(item => ({
-          id: item.id,
-          inventoryItemId: item.id,
-          properties: {
-            ...(item.color && item.color !== 'Padrão' ? { 'Cor': item.color } : {}),
-            ...(item.size && item.size !== 'Único' ? { 'Tamanho': item.size } : {}),
-          },
-          sku: (item as any).variant_sku || '',
-          barcode: (item as any).barcode || '',
-          price: (item as any).variant_price || null,
-          quantity: item.quantity,
-        }));
+        .map((item: any) => {
+          // Build properties from variant_options or legacy fields
+          let properties: Record<string, string> = {};
+          
+          if (item.variant_options && Object.keys(item.variant_options).length > 0) {
+            properties = item.variant_options;
+          } else {
+            if (item.color && item.color !== 'Padrão') properties['Cor'] = item.color;
+            if (item.size && item.size !== 'Único') properties['Tamanho'] = item.size;
+          }
+          
+          return {
+            id: item.id,
+            inventoryItemId: item.id,
+            properties,
+            sku: item.variant_sku || '',
+            barcode: item.barcode || '',
+            price: item.variant_price || null,
+            quantity: item.quantity,
+          };
+        });
       
       if (variants.length > 0) {
         setData(prev => ({
@@ -253,14 +287,17 @@ export default function ProductEditor() {
     
     // Upsert variants
     for (const variant of data.variants) {
-      const size = variant.properties['Tamanho'] || 'Único';
-      const color = variant.properties['Cor'] || 'Padrão';
+      // Extract legacy fields for backward compatibility
+      const legacy = variantOptionsToLegacy(variant.properties);
       
       const itemData = {
         product_id: productId,
         team_id: teamId,
-        size,
-        color,
+        // Legacy fields for backward compatibility
+        size: legacy.size,
+        color: legacy.color,
+        // New JSONB field for N-attribute variations
+        variant_options: variant.properties,
         quantity: variant.quantity,
         min_stock: data.minStock,
         critical_stock: Math.floor(data.minStock / 2),
