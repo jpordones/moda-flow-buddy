@@ -116,7 +116,7 @@ export default function Landing() {
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => navigate("/planos")}
+                  onClick={() => navigate("/precos")}
                 >
                   Ver planos
                 </Button>
