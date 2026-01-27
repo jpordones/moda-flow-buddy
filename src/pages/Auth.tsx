@@ -38,7 +38,7 @@ export default function Auth() {
 
   useEffect(() => {
     if (!loading && user) {
-      navigate('/');
+      navigate('/app');
     }
   }, [user, loading, navigate]);
 
@@ -104,7 +104,7 @@ export default function Auth() {
           toast.success(`Bem-vindo de volta!`, {
             description: `Login realizado com sucesso`
           });
-          navigate('/');
+          navigate('/app');
         }
       } else if (mode === 'register') {
         const { error } = await signUp(email, password, fullName);
