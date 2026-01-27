@@ -45,6 +45,8 @@ export interface Product {
   maxStock: number;
   unit: string;
   location?: string;
+  hasVariations?: boolean;
+  isInfiniteStock?: boolean;
   
   // Production
   productionTime?: number;
