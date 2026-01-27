@@ -15,7 +15,7 @@ import Dashboard from "./pages/Dashboard";
 import CashFlow from "./pages/CashFlow";
 import Products from "./pages/Products";
 import ProductEditor from "./pages/ProductEditor";
-import Inventory from "./pages/Inventory";
+// Inventory consolidado em Products
 import Costs from "./pages/Costs";
 import Settings from "./pages/Settings";
 import Plans from "./pages/Plans";
@@ -132,13 +132,8 @@ const App = () => (
               </ProtectedRoute>
             } />
 
-            <Route path="/app/estoque" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Inventory />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
+            {/* Redirecionar /app/estoque para /app/produtos */}
+            <Route path="/app/estoque" element={<Navigate to="/app/produtos" replace />} />
 
             <Route path="/app/custos" element={
               <ProtectedRoute>

@@ -7,16 +7,21 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Grid, List, Package, Edit, Copy, Trash2, AlertTriangle, Loader2, Crown, Sparkles } from "lucide-react";
+import { Plus, Search, Grid, List, Package, Edit, Copy, Trash2, Loader2, Crown, Sparkles, History, Minus, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useProducts } from "@/hooks/useProducts";
+import { useInventory } from "@/hooks/useInventory";
 import { useSubscription } from "@/hooks/useSubscription";
 import { ProductCard } from "@/components/products/ProductCard";
 import { ProductStats } from "@/components/products/ProductStats";
 import { StockMovementDialog } from "@/components/products/StockMovementDialog";
 import { SmartPricingDialog } from "@/components/pricing/SmartPricingDialog";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { StockEntryDialog } from "@/components/inventory/StockEntryDialog";
+import { StockExitDialog } from "@/components/inventory/StockExitDialog";
+import { StockHistoryDialog } from "@/components/inventory/StockHistoryDialog";
+import { DemandForecastDialog } from "@/components/inventory/DemandForecastDialog";
 import { Product, defaultCategories } from "@/types/products";
 
 type ViewMode = 'grid' | 'table';
@@ -37,6 +42,14 @@ export default function Products() {
     updateProduct
   } = useProducts();
   
+  const {
+    productsWithInventory,
+    movements,
+    addStockEntry,
+    addStockExit,
+    fetchMovements,
+  } = useInventory();
+  
   const { currentPlan, getRemainingLimit } = useSubscription();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
@@ -52,6 +65,14 @@ export default function Products() {
   const [stockMovementProduct, setStockMovementProduct] = useState<Product | null>(null);
   const [smartPricingProduct, setSmartPricingProduct] = useState<Product | null>(null);
   const [showSmartPricing, setShowSmartPricing] = useState(false);
+
+  // Inventory dialogs
+  const [showEntryDialog, setShowEntryDialog] = useState(false);
+  const [showExitDialog, setShowExitDialog] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [showForecastDialog, setShowForecastDialog] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string | undefined>();
+  const [forecastProduct, setForecastProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     const id = searchParams.get("smartPricing");
@@ -136,6 +157,70 @@ export default function Products() {
     if (result) toast.success("Preço aplicado");
   };
 
+  // Inventory handlers
+  const handleStockEntry = async (data: {
+    productId: string;
+    size: string;
+    color: string;
+    quantity: number;
+    reason: string;
+    notes?: string;
+  }) => {
+    const product = products.find(p => p.id === data.productId);
+    const success = await addStockEntry(data);
+    if (success) {
+      toast.success("Entrada registrada", {
+        description: `+${data.quantity} un de ${product?.name || 'produto'}`
+      });
+    } else {
+      toast.error("Erro ao registrar entrada");
+    }
+    return success;
+  };
+
+  const handleStockExit = async (data: {
+    productId: string;
+    size: string;
+    color: string;
+    quantity: number;
+    reason: string;
+    notes?: string;
+  }) => {
+    const product = products.find(p => p.id === data.productId);
+    const success = await addStockExit(data);
+    if (success) {
+      toast.success("Saída registrada", {
+        description: `-${data.quantity} un de ${product?.name || 'produto'}`
+      });
+    } else {
+      toast.error("Erro ao registrar saída", {
+        description: "Verifique se há estoque suficiente"
+      });
+    }
+    return success;
+  };
+
+  const handleOpenEntry = (productId?: string) => {
+    setSelectedProductId(productId);
+    setShowEntryDialog(true);
+  };
+
+  const handleOpenExit = (productId?: string) => {
+    setSelectedProductId(productId);
+    setShowExitDialog(true);
+  };
+
+  const handleViewHistory = async (productId?: string) => {
+    await fetchMovements(productId, 100);
+    setSelectedProductId(productId);
+    setShowHistoryDialog(true);
+  };
+
+  const handleOpenForecast = (product: Product) => {
+    setForecastProduct(product);
+    setShowForecastDialog(true);
+  };
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'ativo': return 'success';
@@ -154,6 +239,10 @@ export default function Products() {
     }
   };
 
+  const selectedProductName = selectedProductId 
+    ? products.find(p => p.id === selectedProductId)?.name 
+    : undefined;
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
@@ -166,12 +255,26 @@ export default function Products() {
               </Badge>
             )}
           </div>
-          <p className="text-sm text-muted-foreground">Gerencie seu catálogo de produtos</p>
+          <p className="text-sm text-muted-foreground">Gerencie seu catálogo e estoque de produtos</p>
         </div>
-        <Button onClick={handleOpenAddForm} className="gap-2 h-11" variant="action">
-          {isAtLimit ? <Crown className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-          {isAtLimit ? "Fazer Upgrade" : "Novo Produto"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={handleOpenAddForm} className="gap-2 h-11" variant="action">
+            {isAtLimit ? <Crown className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {isAtLimit ? "Fazer Upgrade" : "Novo Produto"}
+          </Button>
+          <Button onClick={() => handleOpenEntry()} variant="outline" className="gap-2 h-11">
+            <Plus className="h-4 w-4" />
+            Entrada
+          </Button>
+          <Button onClick={() => handleOpenExit()} variant="outline" className="gap-2 h-11">
+            <Minus className="h-4 w-4" />
+            Saída
+          </Button>
+          <Button onClick={() => handleViewHistory()} variant="ghost" className="gap-2 h-11">
+            <History className="h-4 w-4" />
+            <span className="hidden sm:inline">Histórico</span>
+          </Button>
+        </div>
       </div>
 
       <ProductStats stats={stats} />
@@ -198,6 +301,15 @@ export default function Products() {
                     <SelectItem value="all">Todos</SelectItem>
                     <SelectItem value="ativo">Ativos</SelectItem>
                     <SelectItem value="inativo">Inativos</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filterStock} onValueChange={setFilterStock}>
+                  <SelectTrigger className="w-[120px] h-11"><SelectValue placeholder="Estoque" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="critico">Crítico</SelectItem>
+                    <SelectItem value="baixo">Baixo</SelectItem>
+                    <SelectItem value="normal">Normal</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -233,6 +345,10 @@ export default function Products() {
                   onDelete={() => setDeleteProductId(product.id)}
                   onCalculatePrice={() => navigate('/custos', { state: { product } })}
                   onSmartPricing={() => { setSmartPricingProduct(product); setShowSmartPricing(true); }}
+                  onStockEntry={() => handleOpenEntry(product.id)}
+                  onStockExit={() => handleOpenExit(product.id)}
+                  onViewHistory={() => handleViewHistory(product.id)}
+                  onForecast={() => handleOpenForecast(product)}
                 />
               ))}
             </div>
@@ -265,10 +381,12 @@ export default function Products() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditProduct(product)}><Edit className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSmartPricingProduct(product); setShowSmartPricing(true); }}><Sparkles className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDuplicateProduct(product.id)}><Copy className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-danger" onClick={() => setDeleteProductId(product.id)}><Trash2 className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditProduct(product)} title="Editar"><Edit className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEntry(product.id)} title="Entrada"><Plus className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenExit(product.id)} title="Saída"><Minus className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSmartPricingProduct(product); setShowSmartPricing(true); }} title="Preço inteligente"><Sparkles className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDuplicateProduct(product.id)} title="Duplicar"><Copy className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-danger" onClick={() => setDeleteProductId(product.id)} title="Excluir"><Trash2 className="h-4 w-4" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -297,6 +415,35 @@ export default function Products() {
       <StockMovementDialog product={stockMovementProduct} open={!!stockMovementProduct} onOpenChange={(open) => !open && setStockMovementProduct(null)} onSubmit={handleStockMovement} />
       <SmartPricingDialog open={showSmartPricing} onOpenChange={setShowSmartPricing} product={smartPricingProduct} onApplyPrice={handleApplySmartPrice} />
       <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} feature={`Limite de ${productLimit} produtos`} requiredPlan={currentPlan?.plan_type === 'free' ? 'starter' : 'professional'} currentPlan={currentPlan?.plan_type} />
+      
+      {/* Inventory Dialogs */}
+      <StockEntryDialog
+        open={showEntryDialog}
+        onOpenChange={setShowEntryDialog}
+        products={products}
+        onSubmit={handleStockEntry}
+        preselectedProductId={selectedProductId}
+      />
+
+      <StockExitDialog
+        open={showExitDialog}
+        onOpenChange={setShowExitDialog}
+        productsWithInventory={productsWithInventory}
+        onSubmit={handleStockExit}
+      />
+
+      <StockHistoryDialog
+        open={showHistoryDialog}
+        onOpenChange={setShowHistoryDialog}
+        movements={movements}
+        productName={selectedProductName}
+      />
+
+      <DemandForecastDialog
+        open={showForecastDialog}
+        onOpenChange={setShowForecastDialog}
+        product={forecastProduct}
+      />
     </div>
   );
 }
