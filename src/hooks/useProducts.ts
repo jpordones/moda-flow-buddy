@@ -19,11 +19,24 @@ interface DbProduct {
   size: string | null;
   color: string | null;
   image_url: string | null;
+  has_variations: boolean | null;
+  is_infinite_stock: boolean | null;
   created_at: string;
   updated_at: string;
 }
 
-function mapDbToProduct(db: DbProduct): Product {
+interface DbInventoryItem {
+  id: string;
+  product_id: string;
+  quantity: number;
+}
+
+function mapDbToProduct(db: DbProduct, inventoryTotal?: number): Product {
+  // For products with variations, use inventory total; otherwise use product quantity
+  const effectiveQuantity = db.has_variations && inventoryTotal !== undefined 
+    ? inventoryTotal 
+    : db.quantity;
+
   return {
     id: db.id,
     name: db.name,
@@ -38,13 +51,15 @@ function mapDbToProduct(db: DbProduct): Product {
     salePrice: db.sale_price,
     costPrice: db.cost_price,
     priceHistory: [],
-    quantity: db.quantity,
+    quantity: effectiveQuantity,
     minStock: db.min_stock,
     maxStock: 200,
     unit: db.unit,
     location: undefined,
     size: db.size || undefined,
     color: db.color || undefined,
+    hasVariations: db.has_variations || false,
+    isInfiniteStock: db.is_infinite_stock || false,
     createdAt: db.created_at,
     updatedAt: db.updated_at,
   };
@@ -66,18 +81,40 @@ export function useProducts() {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // Fetch products
+      const { data: productsData, error: productsError } = await supabase
         .from('products')
         .select('*')
         .eq('team_id', teamId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching products:', error);
+      if (productsError) {
+        console.error('Error fetching products:', productsError);
         setProducts([]);
-      } else {
-        setProducts((data as DbProduct[]).map(mapDbToProduct));
+        return;
       }
+
+      // Fetch inventory totals for products with variations
+      const { data: inventoryData, error: inventoryError } = await supabase
+        .from('inventory_items')
+        .select('product_id, quantity')
+        .eq('team_id', teamId);
+
+      // Build inventory totals map
+      const inventoryTotals = new Map<string, number>();
+      if (!inventoryError && inventoryData) {
+        (inventoryData as DbInventoryItem[]).forEach(item => {
+          const current = inventoryTotals.get(item.product_id) || 0;
+          inventoryTotals.set(item.product_id, current + item.quantity);
+        });
+      }
+
+      // Map products with integrated stock
+      const mappedProducts = (productsData as DbProduct[]).map(db => 
+        mapDbToProduct(db, inventoryTotals.get(db.id))
+      );
+
+      setProducts(mappedProducts);
     } catch (error) {
       console.error('Error fetching products:', error);
       setProducts([]);
