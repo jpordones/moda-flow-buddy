@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Edit, Copy, Trash2, Calculator, Package, Sparkles } from "lucide-react";
+import { MoreHorizontal, Edit, Copy, Trash2, Calculator, Package, Sparkles, Plus, Minus, History, TrendingUp } from "lucide-react";
 import { Product } from "@/types/products";
 import { formatarMoeda, formatarPorcentagem } from "@/lib/formatters";
 
@@ -14,6 +14,10 @@ interface ProductCardProps {
   onDelete: () => void;
   onCalculatePrice: () => void;
   onSmartPricing: () => void;
+  onStockEntry?: () => void;
+  onStockExit?: () => void;
+  onViewHistory?: () => void;
+  onForecast?: () => void;
 }
 
 export function ProductCard({ 
@@ -23,7 +27,11 @@ export function ProductCard({
   onDuplicate, 
   onDelete,
   onCalculatePrice,
-  onSmartPricing
+  onSmartPricing,
+  onStockEntry,
+  onStockExit,
+  onViewHistory,
+  onForecast
 }: ProductCardProps) {
   const getStatusBadgeVariant = () => {
     switch (product.status) {
@@ -71,6 +79,32 @@ export function ProductCard({
                 <Edit className="h-4 w-4 mr-2" />
                 Editar
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {onStockEntry && (
+                <DropdownMenuItem onClick={onStockEntry}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Entrada de estoque
+                </DropdownMenuItem>
+              )}
+              {onStockExit && (
+                <DropdownMenuItem onClick={onStockExit}>
+                  <Minus className="h-4 w-4 mr-2" />
+                  Saída de estoque
+                </DropdownMenuItem>
+              )}
+              {onViewHistory && (
+                <DropdownMenuItem onClick={onViewHistory}>
+                  <History className="h-4 w-4 mr-2" />
+                  Histórico de movimentações
+                </DropdownMenuItem>
+              )}
+              {onForecast && (
+                <DropdownMenuItem onClick={onForecast}>
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Previsão de demanda
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onCalculatePrice}>
                 <Calculator className="h-4 w-4 mr-2" />
                 Calcular Preço
@@ -79,11 +113,11 @@ export function ProductCard({
                 <Sparkles className="h-4 w-4 mr-2" />
                 Preço inteligente
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onDuplicate}>
                 <Copy className="h-4 w-4 mr-2" />
                 Duplicar
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onDelete} className="text-danger">
                 <Trash2 className="h-4 w-4 mr-2" />
                 Excluir
