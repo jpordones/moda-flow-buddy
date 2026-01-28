@@ -112,29 +112,25 @@ export function PricingResultsCards({ result }: PricingResultsCardsProps) {
         </CardContent>
       </Card>
 
-      {/* Competitividade */}
-      <Card>
-        <CardContent className="p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-muted-foreground">vs. Mercado</span>
-            <div className="p-2 rounded-lg bg-muted">
-              <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
-            </div>
-          </div>
-          {result.competitiveness !== null ? (
-            <>
-              <div className={`text-2xl sm:text-3xl font-bold ${result.competitiveness <= 0 ? 'text-success' : 'text-warning'}`}>
-                {result.competitiveness > 0 ? '+' : ''}{result.competitiveness.toFixed(1)}%
+      {/* Competitividade - só mostra se tem preço de mercado */}
+      {result.competitiveness !== null && (
+        <Card>
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-muted-foreground">vs. Mercado</span>
+              <div className="p-2 rounded-lg bg-muted">
+                <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {result.competitiveness <= 0 ? '✓ Competitivo' : '⚠️ Acima do mercado'}
-              </p>
-            </>
-          ) : (
-            <p className="text-sm text-muted-foreground">Configure o preço de mercado</p>
-          )}
-        </CardContent>
-      </Card>
+            </div>
+            <div className={`text-2xl sm:text-3xl font-bold ${result.competitiveness <= 0 ? 'text-success' : 'text-warning'}`}>
+              {result.competitiveness > 0 ? '+' : ''}{result.competitiveness.toFixed(1)}%
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {result.competitiveness <= 0 ? '✓ Competitivo' : '⚠️ Acima do mercado'}
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
