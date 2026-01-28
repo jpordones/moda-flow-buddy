@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { DemandForecast } from "@/components/DemandForecast";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useProducts } from "@/hooks/useProducts";
 import {
@@ -18,6 +17,7 @@ import {
   CashFlowSummaryCard,
   EmptyStateCard,
   GetStartedSection,
+  DemandForecastShortcut,
 } from "@/components/dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShoppingBag, TrendingUp, BarChart3 } from "lucide-react";
@@ -211,8 +211,8 @@ export default function Dashboard() {
         />
       )}
 
-      {/* Previsão de Demanda com IA - Só útil quando há produtos */}
-      {hasProducts && <DemandForecast />}
+      {/* Card de atalho para Previsão de Demanda */}
+      {hasProducts && <DemandForecastShortcut />}
     </div>
   );
 }
