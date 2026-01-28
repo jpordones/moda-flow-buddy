@@ -13,6 +13,9 @@ import {
   ProductAnalysisCards,
   AIInsightsCard,
   ActionCenter,
+  CostsOverviewCard,
+  PricingOverviewCard,
+  CashFlowSummaryCard,
 } from "@/components/dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -31,6 +34,8 @@ export default function Dashboard() {
     revenueGoal,
     predictedRevenue,
     stats,
+    costsMetrics,
+    pricingMetrics,
   } = useDashboardData();
   
   const { products, isLoading: productsLoading } = useProducts();
@@ -43,7 +48,7 @@ export default function Dashboard() {
           <Skeleton className="h-5 w-64" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
+          {[...Array(9)].map((_, i) => (
             <Skeleton key={i} className="h-64" />
           ))}
         </div>
@@ -68,14 +73,14 @@ export default function Dashboard() {
         <ActionCenter products={products} />
       )}
 
-      {/* Seção 1: KPIs Acionáveis */}
+      {/* Seção 1: KPIs Principais - Saúde Financeira e Metas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         <HealthScoreCard
           healthScore={healthMetrics.healthScore}
           liquidityScore={healthMetrics.liquidityScore}
           marginScore={healthMetrics.marginScore}
           stockScore={healthMetrics.stockScore}
-          onViewProblems={() => navigate('/produtos')}
+          onViewProblems={() => navigate('/app/produtos')}
         />
 
         <RevenueGoalCard
@@ -84,15 +89,44 @@ export default function Dashboard() {
           projectedRevenue={monthlyMetrics.projectedRevenue}
         />
 
+        <CashFlowSummaryCard
+          totalIncome={monthlyMetrics.totalIncome}
+          totalExpenses={monthlyMetrics.totalExpense}
+          balance={monthlyMetrics.balance}
+          pendingReceivables={monthlyMetrics.pendingReceivables}
+          pendingPayables={monthlyMetrics.pendingPayables}
+        />
+      </div>
+
+      {/* Seção 2: Custos, Precificação e Margens */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <CostsOverviewCard
+          totalFixedCosts={costsMetrics.totalFixedCosts}
+          totalVariableCosts={costsMetrics.totalVariableCosts}
+          averageCostPerUnit={costsMetrics.averageCostPerUnit}
+          monthlyVolume={costsMetrics.monthlyVolume}
+        />
+
+        <PricingOverviewCard
+          averageMargin={pricingMetrics.averageMargin}
+          averageSalePrice={pricingMetrics.averageSalePrice}
+          averageCostPrice={pricingMetrics.averageCostPrice}
+          productsNeedingReview={pricingMetrics.productsNeedingReview}
+          totalProducts={pricingMetrics.totalProducts}
+        />
+
         <MarginCard
           averageMargin={healthMetrics.averageMargin}
-          marginTrend={2.5} // Would calculate from historical data
+          marginTrend={2.5}
           topMarginProducts={productAnalytics.topMarginProducts.map(p => ({
             name: p.name,
             margin: p.margin,
           }))}
         />
+      </div>
 
+      {/* Seção 3: Estoque e Riscos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         <RiskProductsCard
           totalRiskProducts={productAnalytics.riskProducts.length}
           outOfStockCount={stats.outOfStockCount}
@@ -115,13 +149,13 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Seção 2: Gráfico Principal de Performance */}
+      {/* Seção 4: Gráfico Principal de Performance */}
       <FinancialChart
         data={financialChartData}
         insights={insights}
       />
 
-      {/* Seção 3: Análise de Produtos */}
+      {/* Seção 5: Análise de Produtos */}
       <ProductAnalysisCards
         topProducts={productAnalytics.topProducts}
         lowMarginProducts={productAnalytics.lowMarginProducts}
@@ -129,7 +163,7 @@ export default function Dashboard() {
         slowMovingProducts={productAnalytics.slowMovingProducts}
       />
 
-      {/* Seção 4: Insights com IA */}
+      {/* Seção 6: Insights com IA */}
       <AIInsightsCard
         predictedRevenue={predictedRevenue}
         revenueGoal={revenueGoal}

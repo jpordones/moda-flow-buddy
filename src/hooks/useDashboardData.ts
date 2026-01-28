@@ -10,6 +10,16 @@ interface Transaction {
   category: string;
   reference_date: string;
   product_id: string | null;
+  status?: string;
+}
+
+interface Cost {
+  id: string;
+  name: string;
+  amount: number;
+  type: string;
+  category: string;
+  is_active: boolean;
 }
 
 interface FinancialDataPoint {
@@ -47,38 +57,57 @@ export function useDashboardData() {
   const { profile } = useAuth();
   const { products, stats } = useProducts();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [costs, setCosts] = useState<Cost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const teamId = profile?.current_team_id;
 
-  const fetchTransactions = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     if (!teamId) {
       setTransactions([]);
+      setCosts([]);
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('id, type, amount, category, reference_date, product_id')
-      .eq('team_id', teamId)
-      .order('reference_date', { ascending: false });
+    
+    // Fetch transactions and costs in parallel
+    const [transactionsResult, costsResult] = await Promise.all([
+      supabase
+        .from('transactions')
+        .select('id, type, amount, category, reference_date, product_id, status')
+        .eq('team_id', teamId)
+        .order('reference_date', { ascending: false }),
+      supabase
+        .from('costs')
+        .select('id, name, amount, type, category, is_active')
+        .eq('team_id', teamId)
+        .eq('is_active', true)
+    ]);
 
-    if (error) {
-      console.error('Error fetching transactions:', error);
+    if (transactionsResult.error) {
+      console.error('Error fetching transactions:', transactionsResult.error);
       setTransactions([]);
     } else {
-      setTransactions(data || []);
+      setTransactions(transactionsResult.data || []);
     }
+
+    if (costsResult.error) {
+      console.error('Error fetching costs:', costsResult.error);
+      setCosts([]);
+    } else {
+      setCosts(costsResult.data || []);
+    }
+
     setIsLoading(false);
   }, [teamId]);
 
   useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+    fetchData();
+  }, [fetchData]);
 
-  // Current month calculations
+  // Current month calculations from transactions
   const monthlyMetrics = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
@@ -88,7 +117,9 @@ export function useDashboardData() {
 
     const monthlyTx = transactions.filter(t => {
       const date = new Date(t.reference_date);
-      return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+      return date.getMonth() === currentMonth && 
+             date.getFullYear() === currentYear &&
+             t.status !== 'cancelado';
     });
 
     const totalIncome = monthlyTx
@@ -102,8 +133,17 @@ export function useDashboardData() {
     const balance = totalIncome - totalExpense;
     
     // Project end of month based on current rate
-    const dailyRate = totalIncome / dayOfMonth;
+    const dailyRate = dayOfMonth > 0 ? totalIncome / dayOfMonth : 0;
     const projectedRevenue = dailyRate * daysInMonth;
+
+    // Pending amounts
+    const pendingReceivables = monthlyTx
+      .filter(t => t.type === 'entrada' && t.status === 'pendente')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const pendingPayables = monthlyTx
+      .filter(t => t.type === 'saida' && t.status === 'pendente')
+      .reduce((sum, t) => sum + t.amount, 0);
 
     return {
       totalIncome,
@@ -112,8 +152,74 @@ export function useDashboardData() {
       projectedRevenue,
       dayOfMonth,
       daysInMonth,
+      pendingReceivables,
+      pendingPayables,
     };
   }, [transactions]);
+
+  // Costs metrics from database
+  const costsMetrics = useMemo(() => {
+    const fixedCosts = costs.filter(c => c.type === 'fixed');
+    const variableCosts = costs.filter(c => c.type === 'variable');
+
+    const totalFixedCosts = fixedCosts.reduce((sum, c) => sum + c.amount, 0);
+    const totalVariableCosts = variableCosts.reduce((sum, c) => sum + c.amount, 0);
+
+    // Estimate monthly volume from products or use profile default
+    const monthlyVolume = profile?.default_monthly_sales || stats.totalStock || 100;
+    
+    // Average cost per unit (fixed costs diluted + variable)
+    const fixedCostPerUnit = monthlyVolume > 0 ? totalFixedCosts / monthlyVolume : 0;
+    const averageCostPerUnit = fixedCostPerUnit + totalVariableCosts;
+
+    return {
+      totalFixedCosts,
+      totalVariableCosts,
+      averageCostPerUnit,
+      monthlyVolume,
+    };
+  }, [costs, profile, stats.totalStock]);
+
+  // Pricing metrics from products catalog
+  const pricingMetrics = useMemo(() => {
+    const activeProducts = products.filter(p => p.status === 'ativo' && p.salePrice > 0);
+    
+    if (activeProducts.length === 0) {
+      return {
+        averageMargin: 0,
+        averageSalePrice: 0,
+        averageCostPrice: 0,
+        productsNeedingReview: 0,
+        totalProducts: 0,
+      };
+    }
+
+    const totalSalePrice = activeProducts.reduce((sum, p) => sum + p.salePrice, 0);
+    const totalCostPrice = activeProducts.reduce((sum, p) => sum + p.costPrice, 0);
+    
+    const averageSalePrice = totalSalePrice / activeProducts.length;
+    const averageCostPrice = totalCostPrice / activeProducts.length;
+    
+    // Calculate average margin weighted by product
+    const margins = activeProducts.map(p => 
+      p.salePrice > 0 ? ((p.salePrice - p.costPrice) / p.salePrice) * 100 : 0
+    );
+    const averageMargin = margins.reduce((a, b) => a + b, 0) / margins.length;
+
+    // Products with margin below 15% need review
+    const productsNeedingReview = activeProducts.filter(p => {
+      const margin = p.salePrice > 0 ? ((p.salePrice - p.costPrice) / p.salePrice) * 100 : 0;
+      return margin < 15;
+    }).length;
+
+    return {
+      averageMargin,
+      averageSalePrice,
+      averageCostPrice,
+      productsNeedingReview,
+      totalProducts: activeProducts.length,
+    };
+  }, [products]);
 
   // Financial health score
   const healthMetrics = useMemo(() => {
@@ -127,8 +233,10 @@ export function useDashboardData() {
       liquidityScore = Math.min(100, Math.max(0, ratio * 100 + 50));
     }
 
-    // Margin score (based on average margin)
-    const averageMargin = totalValue > 0 ? ((totalValue - totalCost) / totalValue) * 100 : 0;
+    // Margin score (based on average margin from pricing metrics)
+    const averageMargin = pricingMetrics.averageMargin > 0 
+      ? pricingMetrics.averageMargin 
+      : (totalValue > 0 ? ((totalValue - totalCost) / totalValue) * 100 : 0);
     const marginScore = Math.min(100, Math.max(0, (averageMargin / 40) * 100));
 
     // Stock score (based on low stock items)
@@ -148,7 +256,7 @@ export function useDashboardData() {
       stockScore: Math.round(stockScore),
       averageMargin: averageMargin > 0 ? averageMargin : 30, // Default 30% if no data
     };
-  }, [monthlyMetrics, stats]);
+  }, [monthlyMetrics, stats, pricingMetrics]);
 
   // Product analytics
   const productAnalytics = useMemo(() => {
@@ -382,6 +490,8 @@ export function useDashboardData() {
     predictedRevenue,
     stats,
     products,
-    refetch: fetchTransactions,
+    costsMetrics,
+    pricingMetrics,
+    refetch: fetchData,
   };
 }
