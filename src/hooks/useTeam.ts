@@ -243,33 +243,140 @@ export function useTeam() {
       return false;
     }
 
-    const { error } = await supabase
-      .from('team_invitations')
-      .insert({
-        team_id: currentTeam.id,
-        email: email.toLowerCase().trim(),
-        role,
-        invited_by: user.id,
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    try {
+      // Insert invitation in database
+      const { data: invitation, error } = await supabase
+        .from('team_invitations')
+        .insert({
+          team_id: currentTeam.id,
+          email: email.toLowerCase().trim(),
+          role,
+          invited_by: user.id,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        })
+        .select('*')
+        .single();
+
+      if (error) {
+        if (error.code === '23505') {
+          toast.error('Este email já foi convidado');
+        } else {
+          console.error('Error inviting member:', error);
+          toast.error('Erro ao enviar convite', {
+            description: error.message
+          });
+        }
+        return false;
+      }
+
+      // Get inviter's name for the email
+      const { data: inviterProfile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      // Send real email via edge function
+      const { data: emailResponse, error: emailError } = await supabase.functions.invoke('send-team-invite', {
+        body: {
+          invitationId: invitation.id,
+          email: email.toLowerCase().trim(),
+          teamName: currentTeam.name,
+          inviterName: inviterProfile?.full_name || 'Um administrador',
+          role,
+          token: invitation.token,
+        }
       });
 
-    if (error) {
-      if (error.code === '23505') {
-        toast.error('Este email já foi convidado');
+      if (emailError) {
+        console.error('Error sending invite email:', emailError);
+        toast.warning('Convite criado, mas email não enviado', {
+          description: 'O convite está disponível, mas o email pode não ter sido entregue.'
+        });
       } else {
-        console.error('Error inviting member:', error);
-        toast.error('Erro ao enviar convite', {
-          description: error.message
+        toast.success('Convite enviado!', {
+          description: `Um email foi enviado para ${email}`
         });
       }
+
+      await fetchInvitations();
+      return true;
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast.error('Erro inesperado ao enviar convite');
+      return false;
+    }
+  }, [user, currentTeam, canManageMembers, fetchInvitations]);
+
+  // Resend invitation
+  const resendInvitation = useCallback(async (invitationId: string) => {
+    if (!user || !currentTeam) return false;
+    if (!canManageMembers()) {
+      toast.error('Sem permissão para reenviar convites');
       return false;
     }
 
-    toast.success('Convite enviado!', {
-      description: `Convite para ${email} foi enviado`
-    });
-    await fetchInvitations();
-    return true;
+    try {
+      // Get invitation details
+      const { data: invitation, error: fetchError } = await supabase
+        .from('team_invitations')
+        .select('*')
+        .eq('id', invitationId)
+        .single();
+
+      if (fetchError || !invitation) {
+        toast.error('Convite não encontrado');
+        return false;
+      }
+
+      // Update expiration
+      const { error: updateError } = await supabase
+        .from('team_invitations')
+        .update({
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        })
+        .eq('id', invitationId);
+
+      if (updateError) {
+        console.error('Error updating invitation:', updateError);
+      }
+
+      // Get inviter's name
+      const { data: inviterProfile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      // Resend email
+      const { error: emailError } = await supabase.functions.invoke('send-team-invite', {
+        body: {
+          invitationId: invitation.id,
+          email: invitation.email,
+          teamName: currentTeam.name,
+          inviterName: inviterProfile?.full_name || 'Um administrador',
+          role: invitation.role,
+          token: invitation.token,
+        }
+      });
+
+      if (emailError) {
+        console.error('Error resending email:', emailError);
+        toast.error('Erro ao reenviar email');
+        return false;
+      }
+
+      toast.success('Convite reenviado!', {
+        description: `Email enviado para ${invitation.email}`
+      });
+      
+      await fetchInvitations();
+      return true;
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast.error('Erro ao reenviar convite');
+      return false;
+    }
   }, [user, currentTeam, canManageMembers, fetchInvitations]);
 
   // Cancel invitation
@@ -378,6 +485,7 @@ export function useTeam() {
     updateTeam,
     switchTeam,
     inviteMember,
+    resendInvitation,
     cancelInvitation,
     updateMemberRole,
     removeMember,
