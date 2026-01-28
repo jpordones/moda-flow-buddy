@@ -13,3 +13,4 @@ export { ActionCenter } from './ActionCenter';
 export { CostsOverviewCard } from './CostsOverviewCard';
 export { PricingOverviewCard } from './PricingOverviewCard';
 export { CashFlowSummaryCard } from './CashFlowSummaryCard';
+export { DemandForecastShortcut } from './DemandForecastShortcut';
