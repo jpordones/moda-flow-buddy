@@ -11,9 +11,16 @@ import { MarketComparisonCard } from '@/components/pricing/MarketComparisonCard'
 import { MonthlyImpactCard } from '@/components/pricing/MonthlyImpactCard';
 import { SmartAlertsSection } from '@/components/pricing/SmartAlertsSection';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, FileDown } from 'lucide-react';
+import { RotateCcw, FileDown, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { exportCostsReportPdf } from '@/lib/costsReportPdf';
+import { toast } from 'sonner';
+import { useState } from 'react';
 
 export default function Costs() {
+  const { profile } = useAuth();
+  const [isExporting, setIsExporting] = useState(false);
+  
   const {
     data,
     result,
@@ -29,6 +36,29 @@ export default function Costs() {
   } = usePricingCalculator();
 
   const totalFixedCosts = Object.values(data.fixedCosts).reduce((a, b) => a + b, 0);
+
+  const handleExportPdf = async () => {
+    setIsExporting(true);
+    try {
+      await exportCostsReportPdf({
+        data,
+        result,
+        scenarios,
+        alerts,
+        companyInfo: {
+          companyName: profile?.company_name || null,
+          logoUrl: profile?.logo_url || null,
+          document: profile?.company_document || null,
+        },
+      });
+      toast.success('Relatório PDF exportado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao exportar PDF:', error);
+      toast.error('Erro ao gerar o relatório PDF');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -47,9 +77,19 @@ export default function Costs() {
             <RotateCcw className="h-4 w-4 mr-2" />
             Resetar
           </Button>
-          <Button variant="outline" size="sm" className="h-10">
-            <FileDown className="h-4 w-4 mr-2" />
-            Exportar
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-10"
+            onClick={handleExportPdf}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <FileDown className="h-4 w-4 mr-2" />
+            )}
+            {isExporting ? 'Gerando...' : 'Exportar PDF'}
           </Button>
         </div>
       </div>
