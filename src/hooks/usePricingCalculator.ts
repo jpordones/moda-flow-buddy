@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   PricingData,
   PricingResult,
@@ -12,8 +14,6 @@ import {
   defaultPricingData,
   marketplacePresets,
 } from '@/types/pricing';
-
-const STORAGE_KEY = 'lamar-pricing-pro-data';
 
 // =============================================================================
 // FÓRMULA DE PRECIFICAÇÃO PROFISSIONAL PARA E-COMMERCE
@@ -176,29 +176,124 @@ function calculatePricing(data: PricingData): PricingResult {
 // HOOK PRINCIPAL
 // =============================================================================
 export function usePricingCalculator() {
+  const { profile, user } = useAuth();
+  const teamId = profile?.current_team_id;
+  
   const [data, setData] = useState<PricingData>(defaultPricingData);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [settingsId, setSettingsId] = useState<string | null>(null);
 
-  // Carregar dados do localStorage
+  // Carregar dados do Supabase
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
+    async function loadSettings() {
+      if (!teamId) {
+        setIsLoaded(true);
+        return;
+      }
+
       try {
-        const parsed = JSON.parse(stored);
-        setData({ ...defaultPricingData, ...parsed });
+        const { data: settings, error } = await supabase
+          .from('pricing_settings')
+          .select('*')
+          .eq('team_id', teamId)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Erro ao carregar configurações de precificação:', error);
+        } else if (settings && settings.data) {
+          setSettingsId(settings.id);
+          // Parse the JSON data safely
+          const savedData = (typeof settings.data === 'object' && settings.data !== null) 
+            ? settings.data as Record<string, unknown>
+            : {};
+          
+          // Merge with defaults to ensure all fields exist
+          setData({
+            productCosts: { 
+              ...defaultPricingData.productCosts, 
+              ...(savedData.productCosts as Partial<ProductCosts> || {})
+            },
+            fixedCosts: { 
+              ...defaultPricingData.fixedCosts, 
+              ...(savedData.fixedCosts as Partial<FixedMonthlyCosts> || {})
+            },
+            variableCosts: { 
+              ...defaultPricingData.variableCosts, 
+              ...(savedData.variableCosts as Partial<VariableSalesCosts> || {})
+            },
+            taxes: { 
+              ...defaultPricingData.taxes, 
+              ...(savedData.taxes as Partial<TaxSettings> || {})
+            },
+            config: { 
+              ...defaultPricingData.config, 
+              ...(savedData.config as Partial<PricingConfig> || {})
+            },
+          });
+        }
       } catch (error) {
-        console.error('Erro ao carregar dados:', error);
+        console.error('Erro ao carregar configurações:', error);
+      } finally {
+        setIsLoaded(true);
       }
     }
-    setIsLoaded(true);
-  }, []);
 
-  // Salvar dados no localStorage
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    loadSettings();
+  }, [teamId]);
+
+  // Salvar dados no Supabase quando alterados
+  const saveSettings = useCallback(async (newData: PricingData) => {
+    if (!teamId || !user || !isLoaded) return;
+
+    setIsSaving(true);
+    try {
+      // Convert to JSON-compatible format
+      const jsonData = JSON.parse(JSON.stringify(newData));
+      
+      if (settingsId) {
+        // Update existing
+        const { error } = await supabase
+          .from('pricing_settings')
+          .update({ 
+            data: jsonData,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', settingsId);
+
+        if (error) throw error;
+      } else {
+        // Insert new
+        const { data: inserted, error } = await supabase
+          .from('pricing_settings')
+          .insert([{
+            team_id: teamId,
+            user_id: user.id,
+            data: jsonData,
+          }])
+          .select()
+          .single();
+
+        if (error) throw error;
+        if (inserted) setSettingsId(inserted.id);
+      }
+    } catch (error) {
+      console.error('Erro ao salvar configurações:', error);
+    } finally {
+      setIsSaving(false);
     }
-  }, [data, isLoaded]);
+  }, [teamId, user, isLoaded, settingsId]);
+
+  // Debounced save
+  useEffect(() => {
+    if (!isLoaded) return;
+    
+    const timeoutId = setTimeout(() => {
+      saveSettings(data);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [data, isLoaded, saveSettings]);
 
   // Cálculos principais
   const result = useMemo(() => calculatePricing(data), [data]);
@@ -361,6 +456,7 @@ export function usePricingCalculator() {
     scenarios,
     alerts,
     isLoaded,
+    isSaving,
     updateProductCosts,
     updateFixedCosts,
     updateVariableCosts,

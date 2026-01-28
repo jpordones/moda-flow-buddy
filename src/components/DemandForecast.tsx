@@ -10,11 +10,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { 
   Loader2, TrendingUp, TrendingDown, Minus, Brain, Package, 
   AlertTriangle, Lightbulb, Search, Calendar, Target, 
-  BarChart3, ChevronRight, Sparkles, Info
+  BarChart3, Sparkles, Info, History, Trash2, Eye
 } from "lucide-react";
 import { toast } from "sonner";
 import { useProducts } from "@/hooks/useProducts";
 import { useSalesHistory, generateSyntheticHistory } from "@/hooks/useSalesHistory";
+import { useForecastHistory, ForecastHistoryItem } from "@/hooks/useForecastHistory";
 import { 
   generateForecast, 
   detectTrend, 
@@ -38,10 +39,11 @@ import {
   ResponsiveContainer,
   Area,
   ComposedChart,
-  Legend,
   ReferenceLine,
 } from "recharts";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface DemandForecastProps {
   initialProduct?: Product;
@@ -59,12 +61,14 @@ interface ChartDataPoint {
 export function DemandForecast({ initialProduct }: DemandForecastProps) {
   const { products } = useProducts();
   const { fetchSalesHistory, isLoading: isFetchingHistory } = useSalesHistory();
+  const { history, isLoading: isLoadingHistory, fetchHistory, saveForecast, deleteForecast } = useForecastHistory();
   
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(initialProduct || null);
   const [searchTerm, setSearchTerm] = useState("");
   const [period, setPeriod] = useState<number>(6);
   const [isLoading, setIsLoading] = useState(false);
   const [showProductSearch, setShowProductSearch] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("forecast");
   
   // Forecast state
   const [historical, setHistorical] = useState<HistoricalDataPoint[]>([]);
@@ -73,6 +77,11 @@ export function DemandForecast({ initialProduct }: DemandForecastProps) {
   const [seasonality, setSeasonality] = useState<SeasonalityAnalysis | null>(null);
   const [metrics, setMetrics] = useState<ForecastMetrics | null>(null);
   const [insights, setInsights] = useState<ForecastInsight[]>([]);
+
+  // Load history on mount
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
 
   // Filter products for search
   const filteredProducts = useMemo(() => {
@@ -139,6 +148,30 @@ export function DemandForecast({ initialProduct }: DemandForecastProps) {
       );
       setInsights(forecastInsights);
 
+      // Save to history
+      try {
+        await saveForecast({
+          product_id: selectedProduct.id,
+          product_name: selectedProduct.name,
+          product_sku: selectedProduct.sku,
+          period_months: period,
+          method: method,
+          accuracy: forecastMetrics.accuracy,
+          trend: trendAnalysis,
+          payload: {
+            historical: historicalData,
+            forecasts: forecastData,
+            trend: trendAnalysis,
+            seasonality: seasonalityAnalysis,
+            metrics: forecastMetrics,
+            insights: forecastInsights,
+            currentStock: selectedProduct.quantity,
+          },
+        });
+      } catch (saveError) {
+        console.error('Erro ao salvar no histórico:', saveError);
+      }
+
       toast.success("Previsão gerada!", {
         description: `Método: ${getMethodName(method)} | Precisão: ${forecastMetrics.accuracy}%`
       });
@@ -160,6 +193,58 @@ export function DemandForecast({ initialProduct }: DemandForecastProps) {
       'holt_winters': 'Holt-Winters',
     };
     return names[method] || method;
+  };
+
+  // Load a forecast from history
+  const loadFromHistory = (item: ForecastHistoryItem) => {
+    const payload = item.payload;
+    
+    // Find the product if it still exists
+    const product = products.find(p => p.id === item.product_id);
+    if (product) {
+      setSelectedProduct(product);
+    } else {
+      // Create a placeholder product for display purposes
+      setSelectedProduct({
+        id: item.product_id || '',
+        name: item.product_name,
+        sku: item.product_sku || '',
+        quantity: payload.currentStock || 0,
+        minStock: 10,
+        maxStock: 200,
+        costPrice: 0,
+        salePrice: 0,
+        category: 'outros',
+        status: 'ativo',
+        unit: 'un',
+        variableCosts: [],
+        fixedCostAllocation: 100,
+        priceHistory: [],
+        createdAt: '',
+        updatedAt: '',
+      });
+    }
+
+    setHistorical(payload.historical);
+    setForecasts(payload.forecasts);
+    setTrend(payload.trend);
+    setSeasonality(payload.seasonality);
+    setMetrics(payload.metrics);
+    setInsights(payload.insights);
+    setPeriod(item.period_months);
+    setActiveTab("forecast");
+
+    toast.success("Previsão carregada do histórico");
+  };
+
+  const handleDeleteForecast = async (id: string) => {
+    try {
+      await deleteForecast(id);
+      toast.success("Previsão removida do histórico");
+    } catch (error) {
+      console.error('Erro ao deletar:', error);
+      toast.error("Erro ao remover previsão");
+    }
   };
 
   // Prepare chart data
@@ -311,390 +396,514 @@ export function DemandForecast({ initialProduct }: DemandForecastProps) {
         </CardContent>
       </Card>
 
-      {/* Loading State */}
-      {isLoading && (
-        <div className="flex flex-col items-center justify-center py-16">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-lg font-medium">Analisando dados históricos...</p>
-          <p className="text-muted-foreground">Aplicando algoritmos de previsão</p>
-        </div>
-      )}
+      {/* Tabs: Previsão / Histórico */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
+          <TabsTrigger value="forecast" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Previsão Atual
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-2">
+            <History className="h-4 w-4" />
+            Histórico ({history.length})
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Empty State */}
-      {!selectedProduct && !isLoading && (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <div className="p-4 bg-muted/50 rounded-full mb-4">
-              <Brain className="h-12 w-12 text-muted-foreground" />
+        {/* Tab: Previsão Atual */}
+        <TabsContent value="forecast" className="space-y-6 mt-6">
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+              <p className="text-lg font-medium">Analisando dados históricos...</p>
+              <p className="text-muted-foreground">Aplicando algoritmos de previsão</p>
             </div>
-            <h3 className="text-xl font-semibold mb-2">
-              Previsão Inteligente de Demanda
-            </h3>
-            <p className="text-muted-foreground text-center max-w-md mb-6">
-              Selecione um produto para gerar uma previsão baseada em IA. 
-              Analisamos seu histórico de vendas para prever tendências e recomendar estoque.
-            </p>
-            <div className="flex flex-wrap gap-3 justify-center">
-              <Badge variant="secondary" className="gap-1">
-                <TrendingUp className="h-3 w-3" /> Tendências
-              </Badge>
-              <Badge variant="secondary" className="gap-1">
-                <Calendar className="h-3 w-3" /> Sazonalidade
-              </Badge>
-              <Badge variant="secondary" className="gap-1">
-                <Target className="h-3 w-3" /> Precisão 87%+
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
 
-      {/* Results */}
-      {selectedProduct && forecasts.length > 0 && !isLoading && (
-        <>
-          {/* Metrics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Trend Card */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Tendência</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold">
-                        {trend?.direction === 'crescimento' ? '+' : trend?.direction === 'queda' ? '-' : ''}
-                        {Math.abs(trend?.rate || 0).toFixed(1)}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className={cn(
-                    "p-3 rounded-full",
-                    trend?.direction === 'crescimento' ? "bg-success/10" :
-                    trend?.direction === 'queda' ? "bg-destructive/10" :
-                    "bg-warning/10"
-                  )}>
-                    {trend?.direction === 'crescimento' ? (
-                      <TrendingUp className="h-6 w-6 text-success" />
-                    ) : trend?.direction === 'queda' ? (
-                      <TrendingDown className="h-6 w-6 text-destructive" />
-                    ) : (
-                      <Minus className="h-6 w-6 text-warning" />
-                    )}
-                  </div>
+          {/* Empty State */}
+          {!selectedProduct && !isLoading && (
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <div className="p-4 bg-muted/50 rounded-full mb-4">
+                  <Brain className="h-12 w-12 text-muted-foreground" />
                 </div>
-                <p className="text-xs text-muted-foreground mt-2 capitalize">
-                  {trend?.direction || 'estável'}
+                <h3 className="text-xl font-semibold mb-2">
+                  Previsão Inteligente de Demanda
+                </h3>
+                <p className="text-muted-foreground text-center max-w-md mb-6">
+                  Selecione um produto para gerar uma previsão baseada em IA. 
+                  Analisamos seu histórico de vendas para prever tendências e recomendar estoque.
                 </p>
+                <div className="flex flex-wrap gap-3 justify-center">
+                  <Badge variant="secondary" className="gap-1">
+                    <TrendingUp className="h-3 w-3" /> Tendências
+                  </Badge>
+                  <Badge variant="secondary" className="gap-1">
+                    <Calendar className="h-3 w-3" /> Sazonalidade
+                  </Badge>
+                  <Badge variant="secondary" className="gap-1">
+                    <Target className="h-3 w-3" /> Precisão 87%+
+                  </Badge>
+                </div>
               </CardContent>
             </Card>
+          )}
 
-            {/* Accuracy Card */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Precisão do Modelo</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold">{metrics?.accuracy || 0}%</span>
-                    </div>
-                  </div>
-                  <div className="p-3 rounded-full bg-primary/10">
-                    <Target className="h-6 w-6 text-primary" />
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {getMethodName(metrics?.method || '')}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Next Peak Card */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Próximo Pico</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold">
-                        {nextPeakMonth?.month || '-'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-3 rounded-full bg-warning/10">
-                    <Calendar className="h-6 w-6 text-warning" />
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {nextPeakMonth ? `~${nextPeakMonth.value} unidades` : 'Sem previsão'}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Chart */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
-                    Previsão de Vendas
-                  </CardTitle>
-                  <CardDescription>
-                    Histórico vs. Previsão para {selectedProduct.name}
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-primary" />
-                    <span className="text-muted-foreground">Histórico</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-primary/50 border-2 border-primary border-dashed" />
-                    <span className="text-muted-foreground">Previsão</span>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[350px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
-                    <defs>
-                      <linearGradient id="confidenceGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis 
-                      dataKey="date" 
-                      className="text-xs fill-muted-foreground"
-                      tick={{ fontSize: 11 }}
-                    />
-                    <YAxis 
-                      className="text-xs fill-muted-foreground"
-                      tick={{ fontSize: 11 }}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: "hsl(var(--card))", 
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
-                      }}
-                      labelStyle={{ fontWeight: 600, marginBottom: 4 }}
-                      formatter={(value: number, name: string) => {
-                        const labels: Record<string, string> = {
-                          historical: 'Histórico',
-                          forecast: 'Previsão',
-                          upper: 'Limite Superior',
-                          lower: 'Limite Inferior',
-                        };
-                        return [
-                          `${value} un`,
-                          labels[name] || name
-                        ];
-                      }}
-                    />
-                    
-                    {/* Confidence interval area */}
-                    <Area
-                      type="monotone"
-                      dataKey="upper"
-                      stroke="transparent"
-                      fill="url(#confidenceGradient)"
-                      name="upper"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="lower"
-                      stroke="transparent"
-                      fill="hsl(var(--background))"
-                      name="lower"
-                    />
-                    
-                    {/* Historical line */}
-                    <Line
-                      type="monotone"
-                      dataKey="historical"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={2}
-                      dot={{ fill: "hsl(var(--primary))", strokeWidth: 0, r: 4 }}
-                      activeDot={{ r: 6, strokeWidth: 0 }}
-                      name="historical"
-                    />
-                    
-                    {/* Forecast line */}
-                    <Line
-                      type="monotone"
-                      dataKey="forecast"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={2}
-                      strokeDasharray="8 4"
-                      dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, stroke: "hsl(var(--background))", r: 4 }}
-                      activeDot={{ r: 6, strokeWidth: 0 }}
-                      name="forecast"
-                    />
-
-                    {/* Reference line for current stock */}
-                    <ReferenceLine 
-                      y={selectedProduct.quantity} 
-                      stroke="hsl(var(--warning))" 
-                      strokeDasharray="4 4"
-                      label={{ 
-                        value: `Estoque: ${selectedProduct.quantity}`, 
-                        position: 'right',
-                        fill: 'hsl(var(--warning))',
-                        fontSize: 11
-                      }}
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Insights and Details */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* AI Insights */}
-            <Card className="bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5 text-primary" />
-                  Insights da IA
-                </CardTitle>
-                <CardDescription>
-                  Análise automatizada baseada nos seus dados
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {insights.map((insight, idx) => (
-                  <div 
-                    key={idx}
-                    className={cn(
-                      "p-3 rounded-lg border-l-4",
-                      insight.type === 'warning' || insight.priority === 'high' 
-                        ? "border-warning bg-warning/5" 
-                        : insight.type === 'trend' && trend?.direction === 'crescimento'
-                        ? "border-success bg-success/5"
-                        : insight.type === 'trend' && trend?.direction === 'queda'
-                        ? "border-destructive bg-destructive/5"
-                        : "border-primary bg-primary/5"
-                    )}
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="text-xl">{insight.icon}</span>
+          {/* Results */}
+          {selectedProduct && forecasts.length > 0 && !isLoading && (
+            <>
+              {/* Metrics Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Trend Card */}
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-sm">{insight.title}</p>
-                        <p className="text-sm text-muted-foreground mt-0.5">
-                          {insight.text}
-                        </p>
+                        <p className="text-sm text-muted-foreground mb-1">Tendência</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl font-bold">
+                            {trend?.direction === 'crescimento' ? '+' : trend?.direction === 'queda' ? '-' : ''}
+                            {Math.abs(trend?.rate || 0).toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className={cn(
+                        "p-3 rounded-full",
+                        trend?.direction === 'crescimento' ? "bg-success/10" :
+                        trend?.direction === 'queda' ? "bg-destructive/10" :
+                        "bg-warning/10"
+                      )}>
+                        {trend?.direction === 'crescimento' ? (
+                          <TrendingUp className="h-6 w-6 text-success" />
+                        ) : trend?.direction === 'queda' ? (
+                          <TrendingDown className="h-6 w-6 text-destructive" />
+                        ) : (
+                          <Minus className="h-6 w-6 text-warning" />
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2 capitalize">
+                      {trend?.direction || 'estável'}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Accuracy Card */}
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Precisão do Modelo</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl font-bold">{metrics?.accuracy || 0}%</span>
+                        </div>
+                      </div>
+                      <div className="p-3 rounded-full bg-primary/10">
+                        <Target className="h-6 w-6 text-primary" />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {getMethodName(metrics?.method || '')}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Next Peak Card */}
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Próximo Pico</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl font-bold">
+                            {nextPeakMonth?.month || '-'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-3 rounded-full bg-warning/10">
+                        <Calendar className="h-6 w-6 text-warning" />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {nextPeakMonth ? `~${nextPeakMonth.value} unidades` : 'Sem previsão'}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Chart */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <BarChart3 className="h-5 w-5" />
+                        Previsão de Vendas
+                      </CardTitle>
+                      <CardDescription>
+                        Histórico vs. Previsão para {selectedProduct.name}
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-primary" />
+                        <span className="text-muted-foreground">Histórico</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-primary/50 border-2 border-primary border-dashed" />
+                        <span className="text-muted-foreground">Previsão</span>
                       </div>
                     </div>
                   </div>
-                ))}
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[350px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
+                        <defs>
+                          <linearGradient id="confidenceGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2}/>
+                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis 
+                          dataKey="date" 
+                          className="text-xs fill-muted-foreground"
+                          tick={{ fontSize: 11 }}
+                        />
+                        <YAxis 
+                          className="text-xs fill-muted-foreground"
+                          tick={{ fontSize: 11 }}
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: "hsl(var(--card))", 
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px",
+                            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
+                          }}
+                          labelStyle={{ fontWeight: 600, marginBottom: 4 }}
+                          formatter={(value: number, name: string) => {
+                            const labels: Record<string, string> = {
+                              historical: 'Histórico',
+                              forecast: 'Previsão',
+                              upper: 'Limite Superior',
+                              lower: 'Limite Inferior',
+                            };
+                            return [
+                              `${value} un`,
+                              labels[name] || name
+                            ];
+                          }}
+                        />
+                        
+                        {/* Confidence interval area */}
+                        <Area
+                          type="monotone"
+                          dataKey="upper"
+                          stroke="transparent"
+                          fill="url(#confidenceGradient)"
+                          name="upper"
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="lower"
+                          stroke="transparent"
+                          fill="hsl(var(--background))"
+                          name="lower"
+                        />
+                        
+                        {/* Historical line */}
+                        <Line
+                          type="monotone"
+                          dataKey="historical"
+                          stroke="hsl(var(--primary))"
+                          strokeWidth={2}
+                          dot={{ fill: "hsl(var(--primary))", strokeWidth: 0, r: 4 }}
+                          activeDot={{ r: 6, strokeWidth: 0 }}
+                          name="historical"
+                        />
+                        
+                        {/* Forecast line */}
+                        <Line
+                          type="monotone"
+                          dataKey="forecast"
+                          stroke="hsl(var(--primary))"
+                          strokeWidth={2}
+                          strokeDasharray="8 4"
+                          dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, stroke: "hsl(var(--background))", r: 4 }}
+                          activeDot={{ r: 6, strokeWidth: 0 }}
+                          name="forecast"
+                        />
 
-                {/* Seasonality Info */}
-                {seasonality?.hasSeasonality && (
-                  <div className="p-3 rounded-lg bg-muted/50 mt-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium text-sm">Padrão Sazonal</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {seasonality.pattern}
-                    </p>
+                        {/* Reference line for current stock */}
+                        <ReferenceLine 
+                          y={selectedProduct.quantity} 
+                          stroke="hsl(var(--warning))" 
+                          strokeDasharray="4 4"
+                          label={{ 
+                            value: `Estoque: ${selectedProduct.quantity}`, 
+                            position: 'right',
+                            fill: 'hsl(var(--warning))',
+                            fontSize: 11
+                          }}
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Detailed Forecast Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Previsão Detalhada
-                </CardTitle>
-                <CardDescription>
-                  Próximos {period} meses com intervalo de confiança
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+              {/* Insights and Details */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* AI Insights */}
+                <Card className="bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Lightbulb className="h-5 w-5 text-primary" />
+                      Insights da IA
+                    </CardTitle>
+                    <CardDescription>
+                      Análise automatizada baseada nos seus dados
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {insights.map((insight, idx) => (
+                      <div 
+                        key={idx}
+                        className={cn(
+                          "p-3 rounded-lg border-l-4",
+                          insight.type === 'warning' || insight.priority === 'high' 
+                            ? "border-warning bg-warning/5" 
+                            : insight.type === 'trend' && trend?.direction === 'crescimento'
+                            ? "border-success bg-success/5"
+                            : insight.type === 'trend' && trend?.direction === 'queda'
+                            ? "border-destructive bg-destructive/5"
+                            : "border-primary bg-primary/5"
+                        )}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="text-xl">{insight.icon}</span>
+                          <div>
+                            <p className="font-medium text-sm">{insight.title}</p>
+                            <p className="text-sm text-muted-foreground mt-0.5">
+                              {insight.text}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Seasonality Info */}
+                    {seasonality?.hasSeasonality && (
+                      <div className="p-3 rounded-lg bg-muted/50 mt-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium text-sm">Padrão Sazonal</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {seasonality.pattern}
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Detailed Forecast Table */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5" />
+                      Previsão Detalhada
+                    </CardTitle>
+                    <CardDescription>
+                      Próximos {period} meses com intervalo de confiança
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Mês</TableHead>
+                            <TableHead className="text-right">Previsão</TableHead>
+                            <TableHead className="text-right">Intervalo (95%)</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {forecasts.map((f, idx) => (
+                            <TableRow key={idx}>
+                              <TableCell className="font-medium">
+                                {f.date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <span className="font-semibold">{f.value}</span>
+                                <span className="text-muted-foreground text-sm ml-1">un</span>
+                              </TableCell>
+                              <TableCell className="text-right text-muted-foreground text-sm">
+                                {f.lower} - {f.upper}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Stock Recommendation */}
+                    {forecasts.length > 0 && (
+                      <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Package className="h-4 w-4 text-primary" />
+                          <span className="font-medium text-sm">Recomendação de Estoque</span>
+                        </div>
+                        {(() => {
+                          const totalDemand = forecasts.slice(0, 3).reduce((sum, f) => sum + f.value, 0);
+                          const currentStock = selectedProduct.quantity;
+                          const needed = Math.max(0, totalDemand - currentStock);
+                          
+                          if (needed > 0) {
+                            return (
+                              <p className="text-sm text-muted-foreground">
+                                Para atender a demanda dos próximos 3 meses (~{totalDemand} un), 
+                                recomendamos repor <span className="font-semibold text-primary">+{Math.ceil(needed)} unidades</span>.
+                              </p>
+                            );
+                          }
+                          return (
+                            <p className="text-sm text-muted-foreground">
+                              Estoque atual ({currentStock} un) é suficiente para os próximos 3 meses (~{totalDemand} un previstos).
+                            </p>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Data Insufficient Warning */}
+              {historical.length < 3 && (
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>Precisão limitada</AlertTitle>
+                  <AlertDescription>
+                    Com apenas {historical.length} meses de dados, a previsão pode ser menos precisa. 
+                    Continue registrando vendas para melhorar a acurácia do modelo.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </>
+          )}
+        </TabsContent>
+
+        {/* Tab: Histórico */}
+        <TabsContent value="history" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <History className="h-5 w-5" />
+                Histórico de Previsões
+              </CardTitle>
+              <CardDescription>
+                Suas últimas previsões de demanda salvas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingHistory ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : history.length === 0 ? (
+                <div className="text-center py-12">
+                  <History className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Nenhuma previsão salva ainda</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Gere uma previsão para começar a criar seu histórico
+                  </p>
+                </div>
+              ) : (
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Mês</TableHead>
-                        <TableHead className="text-right">Previsão</TableHead>
-                        <TableHead className="text-right">Intervalo (95%)</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Produto</TableHead>
+                        <TableHead className="text-center">Período</TableHead>
+                        <TableHead className="text-center">Método</TableHead>
+                        <TableHead className="text-center">Precisão</TableHead>
+                        <TableHead className="text-center">Tendência</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {forecasts.map((f, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell className="font-medium">
-                            {f.date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                      {history.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="whitespace-nowrap">
+                            {format(new Date(item.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium truncate max-w-[200px]">{item.product_name}</p>
+                              <p className="text-xs text-muted-foreground">{item.product_sku}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="secondary">{item.period_months} meses</Badge>
+                          </TableCell>
+                          <TableCell className="text-center text-sm">
+                            {getMethodName(item.method)}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant={item.accuracy && item.accuracy >= 80 ? "default" : "secondary"}>
+                              {item.accuracy?.toFixed(0) || '-'}%
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              {item.trend_direction === 'crescimento' ? (
+                                <TrendingUp className="h-4 w-4 text-success" />
+                              ) : item.trend_direction === 'queda' ? (
+                                <TrendingDown className="h-4 w-4 text-destructive" />
+                              ) : (
+                                <Minus className="h-4 w-4 text-muted-foreground" />
+                              )}
+                              <span className="text-sm">
+                                {item.trend_rate ? `${item.trend_rate > 0 ? '+' : ''}${item.trend_rate.toFixed(1)}%` : '-'}
+                              </span>
+                            </div>
                           </TableCell>
                           <TableCell className="text-right">
-                            <span className="font-semibold">{f.value}</span>
-                            <span className="text-muted-foreground text-sm ml-1">un</span>
-                          </TableCell>
-                          <TableCell className="text-right text-muted-foreground text-sm">
-                            {f.lower} - {f.upper}
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => loadFromHistory(item)}
+                                title="Abrir previsão"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteForecast(item.id)}
+                                className="text-destructive hover:text-destructive"
+                                title="Excluir"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
-
-                {/* Stock Recommendation */}
-                {forecasts.length > 0 && (
-                  <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Package className="h-4 w-4 text-primary" />
-                      <span className="font-medium text-sm">Recomendação de Estoque</span>
-                    </div>
-                    {(() => {
-                      const totalDemand = forecasts.slice(0, 3).reduce((sum, f) => sum + f.value, 0);
-                      const currentStock = selectedProduct.quantity;
-                      const needed = Math.max(0, totalDemand - currentStock);
-                      
-                      if (needed > 0) {
-                        return (
-                          <p className="text-sm text-muted-foreground">
-                            Para atender a demanda dos próximos 3 meses (~{totalDemand} un), 
-                            recomendamos repor <span className="font-semibold text-primary">+{Math.ceil(needed)} unidades</span>.
-                          </p>
-                        );
-                      }
-                      return (
-                        <p className="text-sm text-muted-foreground">
-                          Estoque atual ({currentStock} un) é suficiente para os próximos 3 meses (~{totalDemand} un previstos).
-                        </p>
-                      );
-                    })()}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Data Insufficient Warning */}
-          {historical.length < 3 && (
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertTitle>Precisão limitada</AlertTitle>
-              <AlertDescription>
-                Com apenas {historical.length} meses de dados, a previsão pode ser menos precisa. 
-                Continue registrando vendas para melhorar a acurácia do modelo.
-              </AlertDescription>
-            </Alert>
-          )}
-        </>
-      )}
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

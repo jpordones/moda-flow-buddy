@@ -105,6 +105,69 @@ export type Database = {
           },
         ]
       }
+      demand_forecast_history: {
+        Row: {
+          accuracy: number | null
+          created_at: string
+          id: string
+          method: string
+          payload: Json
+          period_months: number
+          product_id: string | null
+          product_name: string
+          product_sku: string | null
+          team_id: string
+          trend_direction: string | null
+          trend_rate: number | null
+          user_id: string
+        }
+        Insert: {
+          accuracy?: number | null
+          created_at?: string
+          id?: string
+          method: string
+          payload: Json
+          period_months?: number
+          product_id?: string | null
+          product_name: string
+          product_sku?: string | null
+          team_id: string
+          trend_direction?: string | null
+          trend_rate?: number | null
+          user_id: string
+        }
+        Update: {
+          accuracy?: number | null
+          created_at?: string
+          id?: string
+          method?: string
+          payload?: Json
+          period_months?: number
+          product_id?: string | null
+          product_name?: string
+          product_sku?: string | null
+          team_id?: string
+          trend_direction?: string | null
+          trend_rate?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_forecast_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_forecast_history_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_items: {
         Row: {
           barcode: string | null
@@ -360,6 +423,41 @@ export type Database = {
           type?: Database["public"]["Enums"]["plan_type"]
         }
         Relationships: []
+      }
+      pricing_settings: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          team_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: string
+          team_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          team_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_settings_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
