@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Scale, Lightbulb, ArrowUp, TrendingUp, Target, Settings2 } from 'lucide-react';
+import { Scale, Lightbulb, ArrowUp, TrendingUp, Target, Plus } from 'lucide-react';
 import { PricingResult, PricingData } from '@/types/pricing';
 import { formatarMoeda } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
@@ -22,23 +22,40 @@ export function MarketComparisonCard({ result, data, onScrollToConfig }: MarketC
   const netProfit = result.netProfit;
   const monthlyVolume = data.config.monthlyVolume;
 
-  // Se não tem preço de mercado, não mostrar o card grande - apenas um hint pequeno
+  // Se não tem preço de mercado, mostrar CTA compacto
   if (!marketPrice || marketPrice <= 0) {
-    return null;
+    return (
+      <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border border-dashed">
+        <Scale className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+        <div className="flex-1">
+          <p className="text-sm font-medium">Compare com a concorrência</p>
+          <p className="text-xs text-muted-foreground">Preencha o preço de mercado nas configurações abaixo</p>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={onScrollToConfig}
+          className="gap-1"
+        >
+          <Plus className="h-4 w-4" />
+          Adicionar
+        </Button>
+      </div>
+    );
   }
 
   // Preço ideal = entre calculado e mercado (se competitivo)
-  const idealPrice = marketPrice > 0 && marketPrice > calculatedPrice
-    ? Math.min(marketPrice * 0.95, suggestedPrice * 1.1) // 5% abaixo do mercado ou 10% acima do sugerido
+  const idealPrice = marketPrice > calculatedPrice
+    ? Math.min(marketPrice * 0.95, suggestedPrice * 1.1)
     : suggestedPrice;
 
-  const hasOpportunity = marketPrice > 0 && idealPrice > calculatedPrice;
+  const hasOpportunity = idealPrice > calculatedPrice;
   const extraProfitPerUnit = hasOpportunity ? idealPrice - calculatedPrice : 0;
 
   return (
-    <Card className="mt-6">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <Card>
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2 text-lg">
           <Scale className="h-5 w-5" />
           Comparação com Mercado
         </CardTitle>
@@ -47,109 +64,60 @@ export function MarketComparisonCard({ result, data, onScrollToConfig }: MarketC
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* Preço Calculado */}
-          <div className="p-6 bg-primary/5 border-2 border-primary rounded-xl text-center">
-            <p className="text-sm text-muted-foreground mb-2">Seu Preço Calculado</p>
-            <p className="text-4xl font-bold text-primary mb-2">
+          <div className="p-4 bg-primary/5 border border-primary/30 rounded-lg text-center">
+            <p className="text-xs text-muted-foreground mb-1">Seu Preço</p>
+            <p className="text-2xl font-bold text-primary">
               {formatarMoeda(calculatedPrice)}
             </p>
-            <Badge variant="outline" className="border-primary">
-              Baseado em dados reais
-            </Badge>
-            <p className="text-xs text-muted-foreground mt-3">
-              Cobre todos os custos + {desiredMargin}% de lucro
+            <p className="text-xs text-muted-foreground mt-1">
+              {desiredMargin}% margem
             </p>
           </div>
 
           {/* Preço de Mercado */}
-          <div className="p-6 bg-muted border-2 border-muted-foreground/20 rounded-xl text-center">
-            <p className="text-sm text-muted-foreground mb-2">Preço no Mercado</p>
-            <p className="text-4xl font-bold mb-2">
+          <div className="p-4 bg-muted border border-muted-foreground/20 rounded-lg text-center">
+            <p className="text-xs text-muted-foreground mb-1">Mercado</p>
+            <p className="text-2xl font-bold">
               {formatarMoeda(marketPrice)}
             </p>
-            <Badge variant={calculatedPrice < marketPrice ? "default" : "secondary"} className={cn(
-              calculatedPrice < marketPrice 
-                ? "bg-success text-success-foreground" 
-                : "bg-warning text-warning-foreground"
-            )}>
+            <Badge 
+              variant="secondary" 
+              className={cn(
+                "mt-1 text-xs",
+                calculatedPrice < marketPrice 
+                  ? "bg-success/20 text-success" 
+                  : "bg-warning/20 text-warning"
+              )}
+            >
               {calculatedPrice < marketPrice 
-                ? `Você está ${(((marketPrice - calculatedPrice) / marketPrice) * 100).toFixed(0)}% mais barato`
-                : `Você está ${(((calculatedPrice - marketPrice) / marketPrice) * 100).toFixed(0)}% mais caro`
+                ? `${(((marketPrice - calculatedPrice) / marketPrice) * 100).toFixed(0)}% mais barato`
+                : `${(((calculatedPrice - marketPrice) / marketPrice) * 100).toFixed(0)}% mais caro`
               }
             </Badge>
-            <p className="text-xs text-muted-foreground mt-3">
-              {calculatedPrice < marketPrice 
-                ? "✓ Preço competitivo!"
-                : "⚠️ Pode ter dificuldade para vender"
-              }
-            </p>
           </div>
 
-          {/* Preço Ideal Sugerido */}
-          <div className="p-6 bg-success/5 border-2 border-success rounded-xl text-center">
-            <p className="text-sm text-muted-foreground mb-2">Preço Ideal</p>
-            <p className="text-4xl font-bold text-success mb-2">
+          {/* Preço Ideal */}
+          <div className="p-4 bg-success/5 border border-success/30 rounded-lg text-center">
+            <p className="text-xs text-muted-foreground mb-1">Recomendado</p>
+            <p className="text-2xl font-bold text-success">
               {formatarMoeda(idealPrice)}
             </p>
-            <Badge className="bg-success text-success-foreground">
-              ✓ Recomendado
-            </Badge>
-            <p className="text-xs text-success mt-3">
-              Máximo competitivo com boa margem
+            <p className="text-xs text-success mt-1">
+              ✓ Máx. competitivo
             </p>
           </div>
         </div>
 
-        {/* Oportunidade de Lucro */}
+        {/* Oportunidade de Lucro - compacto */}
         {hasOpportunity && extraProfitPerUnit > 1 && (
-          <div className="mt-6 p-4 bg-gradient-to-r from-success/10 via-success/5 to-transparent rounded-lg border border-success/20">
-            <div className="flex items-start gap-3">
-              <Lightbulb className="h-6 w-6 text-success mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="font-semibold text-success mb-2 flex items-center gap-2">
-                  💡 Oportunidade de Lucro Detectada!
-                  <Badge className="bg-success text-success-foreground font-normal">
-                    +{(((idealPrice - calculatedPrice) / calculatedPrice) * 100).toFixed(0)}% de lucro
-                  </Badge>
-                </p>
-                <p className="text-sm mb-3">
-                  O mercado aceita até <strong>{formatarMoeda(marketPrice)}</strong>.
-                  Vendendo por <strong>{formatarMoeda(idealPrice)}</strong>, você:
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <ArrowUp className="h-4 w-4 text-success flex-shrink-0" />
-                    <div>
-                      <p className="font-medium">Lucro/peça</p>
-                      <p className="text-success">
-                        {formatarMoeda(netProfit + extraProfitPerUnit)}
-                        <span className="text-xs text-muted-foreground ml-1">
-                          (era {formatarMoeda(netProfit)})
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <TrendingUp className="h-4 w-4 text-success flex-shrink-0" />
-                    <div>
-                      <p className="font-medium">Lucro/mês</p>
-                      <p className="text-success">
-                        +{formatarMoeda(extraProfitPerUnit * monthlyVolume)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Target className="h-4 w-4 text-success flex-shrink-0" />
-                    <div>
-                      <p className="font-medium">Competitividade</p>
-                      <p className="text-success">
-                        {(((marketPrice - idealPrice) / marketPrice) * 100).toFixed(0)}% mais barato
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          <div className="mt-4 p-3 bg-success/5 rounded-lg border border-success/20 flex items-center gap-3">
+            <Lightbulb className="h-5 w-5 text-success flex-shrink-0" />
+            <div className="flex-1 text-sm">
+              <span className="font-medium text-success">Oportunidade:</span>
+              {' '}vendendo por {formatarMoeda(idealPrice)}, ganhe{' '}
+              <strong className="text-success">+{formatarMoeda(extraProfitPerUnit * monthlyVolume)}/mês</strong>
             </div>
           </div>
         )}
