@@ -11,11 +11,12 @@ import { MarketComparisonCard } from '@/components/pricing/MarketComparisonCard'
 import { MonthlyImpactCard } from '@/components/pricing/MonthlyImpactCard';
 import { SmartAlertsSection } from '@/components/pricing/SmartAlertsSection';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, FileDown, Loader2 } from 'lucide-react';
+import { RotateCcw, FileDown, Loader2, Cloud, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { exportCostsReportPdf } from '@/lib/costsReportPdf';
 import { toast } from 'sonner';
 import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 
 export default function Costs() {
   const { profile } = useAuth();
@@ -26,6 +27,8 @@ export default function Costs() {
     result,
     scenarios,
     alerts,
+    isLoaded,
+    isSaving,
     updateProductCosts,
     updateFixedCosts,
     updateVariableCosts,
@@ -65,9 +68,26 @@ export default function Costs() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Custos & Precificação
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+              Custos & Precificação
+            </h1>
+            {isLoaded && (
+              <Badge variant="outline" className="gap-1 text-xs">
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-3 w-3 text-success" />
+                    Salvo na nuvem
+                  </>
+                )}
+              </Badge>
+            )}
+          </div>
           <p className="text-muted-foreground mt-1">
             Sistema de Precificação Profissional LAMAR Pro
           </p>
