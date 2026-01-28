@@ -6,32 +6,21 @@ import { toast } from "sonner";
 import { useSubscription } from "@/hooks/useSubscription";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { useCashFlow, CashFlowTransaction, PeriodType } from "@/hooks/useCashFlow";
-import {
-  CashFlowStats,
-  CashFlowChart,
-  CashFlowInsights,
-  CategoryBreakdown,
-  TransactionList,
-  TransactionDialog,
-  DREReport,
-} from "@/components/cashflow";
+import { CashFlowStats, CashFlowChart, CashFlowInsights, CategoryBreakdown, TransactionList, TransactionDialog, DREReport } from "@/components/cashflow";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, FileText, ArrowLeftRight } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-
 export default function CashFlow() {
-  const { canUseFeature, currentPlan, loading: subscriptionLoading } = useSubscription();
+  const {
+    canUseFeature,
+    currentPlan,
+    loading: subscriptionLoading
+  } = useSubscription();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [period, setPeriod] = useState<PeriodType>('month');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<CashFlowTransaction | null>(null);
-
   const {
     transactions,
     stats,
@@ -41,11 +30,9 @@ export default function CashFlow() {
     isLoading,
     addTransaction,
     updateTransaction,
-    deleteTransaction,
+    deleteTransaction
   } = useCashFlow(period);
-
   const hasAccess = canUseFeature('has_cash_flow');
-
   const handleAddTransaction = async (data: Parameters<typeof addTransaction>[0]) => {
     try {
       await addTransaction(data);
@@ -55,7 +42,6 @@ export default function CashFlow() {
       throw error;
     }
   };
-
   const handleEditTransaction = async (data: Parameters<typeof addTransaction>[0]) => {
     if (!editingTransaction) return;
     try {
@@ -66,7 +52,6 @@ export default function CashFlow() {
       throw error;
     }
   };
-
   const handleDeleteTransaction = async (id: string) => {
     try {
       await deleteTransaction(id);
@@ -76,17 +61,14 @@ export default function CashFlow() {
       toast.error('Erro ao excluir transação');
     }
   };
-
   const openEditDialog = (transaction: CashFlowTransaction) => {
     setEditingTransaction(transaction);
     setIsDialogOpen(true);
   };
-
   const closeDialog = () => {
     setIsDialogOpen(false);
     setEditingTransaction(null);
   };
-
   const handleExport = (format: 'pdf' | 'csv') => {
     toast.info(`Exportando em ${format.toUpperCase()}...`);
     // TODO: Implement PDF export
@@ -94,8 +76,7 @@ export default function CashFlow() {
 
   // Show blocked state if no access
   if (!subscriptionLoading && !hasAccess) {
-    return (
-      <div className="space-y-6">
+    return <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
@@ -129,12 +110,10 @@ export default function CashFlow() {
           {/* Preview content */}
           <div className="opacity-50 pointer-events-none space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[...Array(4)].map((_, i) => (
-                <Card key={i} className="p-6">
+              {[...Array(4)].map((_, i) => <Card key={i} className="p-6">
                   <Skeleton className="h-4 w-24 mb-4" />
                   <Skeleton className="h-8 w-32" />
-                </Card>
-              ))}
+                </Card>)}
             </div>
             <Card className="p-6">
               <Skeleton className="h-[300px] w-full" />
@@ -142,25 +121,14 @@ export default function CashFlow() {
           </div>
         </div>
 
-        <UpgradeModal
-          isOpen={showUpgradeModal}
-          onClose={() => setShowUpgradeModal(false)}
-          feature="Fluxo de Caixa"
-          requiredPlan="professional"
-          currentPlan={currentPlan?.plan_type}
-        />
-      </div>
-    );
+        <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} feature="Fluxo de Caixa" requiredPlan="professional" currentPlan={currentPlan?.plan_type} />
+      </div>;
   }
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            💰 Fluxo de Caixa
-          </h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Fluxo de Caixa</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
             Controle financeiro completo do seu negócio
           </p>
@@ -184,10 +152,7 @@ export default function CashFlow() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button 
-            onClick={() => setIsDialogOpen(true)} 
-            className="gap-2 flex-1 sm:flex-none"
-          >
+          <Button onClick={() => setIsDialogOpen(true)} className="gap-2 flex-1 sm:flex-none">
             <Plus className="h-4 w-4" />
             Nova Transação
           </Button>
@@ -217,58 +182,29 @@ export default function CashFlow() {
           <CashFlowStats stats={stats} isLoading={isLoading} />
 
           {/* Chart */}
-          <CashFlowChart 
-            data={chartData} 
-            period={period} 
-            onPeriodChange={setPeriod} 
-          />
+          <CashFlowChart data={chartData} period={period} onPeriodChange={setPeriod} />
 
           {/* Insights */}
           <CashFlowInsights insights={insights} />
 
           {/* Category Breakdown */}
-          <CategoryBreakdown 
-            income={categoryBreakdown.income}
-            expenses={categoryBreakdown.expenses}
-            totalIncome={stats.totalIncome}
-            totalExpenses={stats.totalExpenses}
-          />
+          <CategoryBreakdown income={categoryBreakdown.income} expenses={categoryBreakdown.expenses} totalIncome={stats.totalIncome} totalExpenses={stats.totalExpenses} />
         </TabsContent>
 
         {/* DRE Tab */}
         <TabsContent value="dre">
-          <DREReport 
-            transactions={transactions}
-            period={period === 'month' ? 'Este Mês' : period === 'week' ? 'Esta Semana' : period === 'quarter' ? 'Este Trimestre' : 'Este Ano'}
-          />
+          <DREReport transactions={transactions} period={period === 'month' ? 'Este Mês' : period === 'week' ? 'Esta Semana' : period === 'quarter' ? 'Este Trimestre' : 'Este Ano'} />
         </TabsContent>
 
         {/* Transactions Tab */}
         <TabsContent value="transactions">
-          <TransactionList
-            transactions={transactions}
-            onEdit={openEditDialog}
-            onDelete={handleDeleteTransaction}
-            isLoading={isLoading}
-          />
+          <TransactionList transactions={transactions} onEdit={openEditDialog} onDelete={handleDeleteTransaction} isLoading={isLoading} />
         </TabsContent>
       </Tabs>
 
       {/* Add/Edit Dialog */}
-      <TransactionDialog
-        isOpen={isDialogOpen}
-        onClose={closeDialog}
-        onSubmit={editingTransaction ? handleEditTransaction : handleAddTransaction}
-        editingTransaction={editingTransaction}
-      />
+      <TransactionDialog isOpen={isDialogOpen} onClose={closeDialog} onSubmit={editingTransaction ? handleEditTransaction : handleAddTransaction} editingTransaction={editingTransaction} />
 
-      <UpgradeModal
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        feature="Fluxo de Caixa"
-        requiredPlan="professional"
-        currentPlan={currentPlan?.plan_type}
-      />
-    </div>
-  );
+      <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} feature="Fluxo de Caixa" requiredPlan="professional" currentPlan={currentPlan?.plan_type} />
+    </div>;
 }

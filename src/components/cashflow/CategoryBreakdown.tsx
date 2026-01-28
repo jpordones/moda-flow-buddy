@@ -4,21 +4,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryBreakdown as CategoryData } from "@/hooks/useCashFlow";
 import { formatarMoeda } from "@/lib/formatters";
 import { TrendingUp, TrendingDown } from "lucide-react";
-
 interface CategoryBreakdownProps {
   income: CategoryData[];
   expenses: CategoryData[];
   totalIncome: number;
   totalExpenses: number;
 }
-
-export function CategoryBreakdown({ income, expenses, totalIncome, totalExpenses }: CategoryBreakdownProps) {
-  return (
-    <Card>
+export function CategoryBreakdown({
+  income,
+  expenses,
+  totalIncome,
+  totalExpenses
+}: CategoryBreakdownProps) {
+  return <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          📊 Resumo por Categoria
-        </CardTitle>
+        <CardTitle className="flex items-center gap-2">Resumo por Categoria</CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="expenses" className="w-full">
@@ -39,17 +39,11 @@ export function CategoryBreakdown({ income, expenses, totalIncome, totalExpenses
               <span className="text-success">{formatarMoeda(totalIncome)}</span>
             </div>
             
-            {income.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
+            {income.length === 0 ? <p className="text-sm text-muted-foreground text-center py-8">
                 Nenhuma receita registrada neste período
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {income.map((cat, idx) => (
-                  <CategoryItem key={idx} category={cat} type="income" />
-                ))}
-              </div>
-            )}
+              </p> : <div className="space-y-3">
+                {income.map((cat, idx) => <CategoryItem key={idx} category={cat} type="income" />)}
+              </div>}
           </TabsContent>
 
           <TabsContent value="expenses" className="space-y-4">
@@ -58,27 +52,24 @@ export function CategoryBreakdown({ income, expenses, totalIncome, totalExpenses
               <span className="text-destructive">{formatarMoeda(totalExpenses)}</span>
             </div>
             
-            {expenses.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
+            {expenses.length === 0 ? <p className="text-sm text-muted-foreground text-center py-8">
                 Nenhuma despesa registrada neste período
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {expenses.map((cat, idx) => (
-                  <CategoryItem key={idx} category={cat} type="expense" />
-                ))}
-              </div>
-            )}
+              </p> : <div className="space-y-3">
+                {expenses.map((cat, idx) => <CategoryItem key={idx} category={cat} type="expense" />)}
+              </div>}
           </TabsContent>
         </Tabs>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 }
-
-function CategoryItem({ category, type }: { category: CategoryData; type: 'income' | 'expense' }) {
-  return (
-    <div className="space-y-1">
+function CategoryItem({
+  category,
+  type
+}: {
+  category: CategoryData;
+  type: 'income' | 'expense';
+}) {
+  return <div className="space-y-1">
       <div className="flex items-center justify-between text-sm">
         <div className="flex items-center gap-2">
           <span>{category.icon}</span>
@@ -93,14 +84,9 @@ function CategoryItem({ category, type }: { category: CategoryData; type: 'incom
           </span>
         </div>
       </div>
-      <Progress 
-        value={category.percentage} 
-        className="h-2"
-        style={{
-          // Custom color for the progress indicator
-          ['--progress-background' as any]: category.color,
-        }}
-      />
-    </div>
-  );
+      <Progress value={category.percentage} className="h-2" style={{
+      // Custom color for the progress indicator
+      ['--progress-background' as any]: category.color
+    }} />
+    </div>;
 }
