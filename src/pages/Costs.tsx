@@ -114,56 +114,59 @@ export default function Costs() {
         </div>
       </div>
 
-      {/* Alertas Inteligentes */}
-      <SmartAlertsSection result={result} data={data} />
+      {/* ===== BLOCO A: Resultado Final (sempre no topo) ===== */}
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold text-muted-foreground">Resultado Final</h2>
+        <PricingResultsCards result={result} />
+        <SmartAlertsSection result={result} data={data} />
+      </section>
 
-      {/* Resultados */}
-      <PricingResultsCards result={result} />
+      {/* ===== BLOCO B: Análise Detalhada ===== */}
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold text-muted-foreground">Análise Detalhada</h2>
+        <PriceAnatomyCard result={result} data={data} />
+        <MarketComparisonCard result={result} data={data} />
+        <MonthlyImpactCard result={result} data={data} />
+      </section>
 
-      {/* Anatomia do Preço */}
-      <PriceAnatomyCard result={result} data={data} />
-
-      {/* Comparação com Mercado */}
-      <MarketComparisonCard result={result} data={data} />
-
-      {/* Impacto Financeiro Mensal */}
-      <MonthlyImpactCard result={result} data={data} />
-
-      {/* Análise de Cenários */}
+      {/* ===== BLOCO C: Cenários ===== */}
       <PricingAnalysisSection result={result} scenarios={scenarios} alerts={alerts} />
 
-      {/* Grid Principal */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* Coluna Esquerda - Volume, Margem e Produto */}
-        <div className="space-y-6">
-          <VolumeAndMarginSection
-            config={data.config}
-            totalFixedCosts={totalFixedCosts}
-            onUpdate={updateConfig}
-          />
-          <ProductCostsSection
-            costs={data.productCosts}
-            onUpdate={updateProductCosts}
-          />
-        </div>
+      {/* ===== BLOCO D: Configurações ===== */}
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold text-muted-foreground">Configurações</h2>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {/* Coluna Esquerda - Volume, Margem e Produto */}
+          <div className="space-y-6">
+            <VolumeAndMarginSection
+              config={data.config}
+              totalFixedCosts={totalFixedCosts}
+              onUpdate={updateConfig}
+            />
+            <ProductCostsSection
+              costs={data.productCosts}
+              onUpdate={updateProductCosts}
+            />
+          </div>
 
-        {/* Coluna Direita - Custos Fixos, Variáveis e Impostos */}
-        <div className="space-y-6">
-          <FixedMonthlyCostsSection
-            costs={data.fixedCosts}
-            onUpdate={updateFixedCosts}
-          />
-          <VariableSalesCostsSection
-            costs={data.variableCosts}
-            onUpdate={updateVariableCosts}
-            onSetMarketplace={setMarketplacePreset}
-          />
-          <TaxSettingsSection
-            taxes={data.taxes}
-            onUpdate={updateTaxes}
-          />
+          {/* Coluna Direita - Custos Fixos, Variáveis e Impostos */}
+          <div className="space-y-6">
+            <FixedMonthlyCostsSection
+              costs={data.fixedCosts}
+              onUpdate={updateFixedCosts}
+            />
+            <VariableSalesCostsSection
+              costs={data.variableCosts}
+              onUpdate={updateVariableCosts}
+              onSetMarketplace={setMarketplacePreset}
+            />
+            <TaxSettingsSection
+              taxes={data.taxes}
+              onUpdate={updateTaxes}
+            />
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
