@@ -375,44 +375,58 @@ export function useDashboardData() {
     return Math.min(10, Math.max(0.5, turnover)) || 4;
   }, [monthlyMetrics, stats]);
 
-  // Generate financial chart data
+  // Generate financial chart data - REAL DATA ONLY, no fake values
   const financialChartData = useMemo((): FinancialDataPoint[] => {
-    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+    const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     const now = new Date();
     const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
     
-    // Group transactions by month
-    const monthlyData = months.map((month, idx) => {
-      const targetMonth = (currentMonth - 5 + idx + 12) % 12;
-      const targetYear = now.getFullYear() - (currentMonth - 5 + idx < 0 ? 1 : 0);
+    // Generate last 6 months of data based on REAL transactions only
+    const monthlyData: FinancialDataPoint[] = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const targetDate = new Date(currentYear, currentMonth - i, 1);
+      const targetMonth = targetDate.getMonth();
+      const targetYear = targetDate.getFullYear();
+      const monthLabel = monthNames[targetMonth];
       
+      // Filter transactions for this specific month
       const monthTx = transactions.filter(t => {
         const date = new Date(t.reference_date);
-        return date.getMonth() === targetMonth && date.getFullYear() === targetYear;
+        return date.getMonth() === targetMonth && 
+               date.getFullYear() === targetYear &&
+               t.status !== 'cancelado';
       });
 
+      // Calculate revenue (entradas)
       const revenue = monthTx
         .filter(t => t.type === 'entrada')
         .reduce((sum, t) => sum + t.amount, 0);
 
+      // Calculate expenses (saídas)
       const expenses = monthTx
         .filter(t => t.type === 'saida')
         .reduce((sum, t) => sum + t.amount, 0);
 
+      // Calculate profit and margin - NO FALLBACKS, real zeros
       const profit = revenue - expenses;
       const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
 
-      return {
-        month,
-        revenue: revenue || (15000 + Math.random() * 15000), // Fallback for demo
-        profit: profit || (5000 + Math.random() * 5000),
-        margin: margin || (25 + Math.random() * 15),
-        goal: 25000,
-      };
-    });
+      // Use profile goal or default
+      const monthlyGoal = profile?.monthly_sales_goal || 0;
+
+      monthlyData.push({
+        month: monthLabel,
+        revenue, // Real value, can be 0
+        profit, // Real value, can be 0 or negative
+        margin, // Real value, 0 if no revenue
+        goal: monthlyGoal,
+      });
+    }
 
     return monthlyData;
-  }, [transactions]);
+  }, [transactions, profile?.monthly_sales_goal]);
 
   // AI Insights
   const insights = useMemo((): Insight[] => {

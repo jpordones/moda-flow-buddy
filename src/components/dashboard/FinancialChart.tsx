@@ -85,7 +85,16 @@ export function FinancialChart({ data, insights }: FinancialChartProps) {
               }} 
               formatter={(value: number, name: string) => {
                 if (name === "Margem (%)") return [`${value.toFixed(1)}%`, name];
-                return [`R$ ${value.toLocaleString('pt-BR')}`, name];
+                // Formato brasileiro correto: R$ 1.234,56
+                return [
+                  new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  }).format(value),
+                  name
+                ];
               }}
             />
             <Legend />
