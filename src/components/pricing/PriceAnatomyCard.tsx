@@ -30,66 +30,74 @@ interface AnatomyItem {
 export function PriceAnatomyCard({ result, data }: PriceAnatomyCardProps) {
   if (!result.viable) return null;
 
-  const totalPrice = result.suggestedPrice;
+  const precoSugerido = result.suggestedPrice;
   const monthlyVolume = data.config.monthlyVolume;
   const totalFixedCosts = result.totalFixedCostsMonthly;
 
-  // Calcular componentes exatos que somam ao preço final
-  const directCosts = result.directCost;
-  const fixedCostPerUnit = result.fixedCostPerUnit;
-  const variableCosts = result.variableFixedCosts + (result.suggestedPrice * result.variableFeesPercent);
-  const taxes = result.suggestedPrice * result.taxPercent;
-  const netProfit = result.netProfit;
+  // ============================================================
+  // CÁLCULOS EXATOS - mesma fórmula do PricingResultsCards
+  // ============================================================
+  const custosDiretos = result.directCost;
+  const custosFixosDiluidos = result.fixedCostPerUnit;
+  const custosVariaveisFixos = result.variableFixedCosts; // R$ frete, embalagem
+  const taxasVenda = precoSugerido * result.variableFeesPercent;
+  const impostos = precoSugerido * result.taxPercent;
+  
+  // Total de custos (antes do lucro)
+  const custoTotalPeca = custosDiretos + custosFixosDiluidos + custosVariaveisFixos + taxasVenda + impostos;
+  
+  // Lucro Líquido = Preço Sugerido - Custo Total
+  const lucroLiquido = precoSugerido - custoTotalPeca;
 
   // Validação: soma deve bater com preço
-  const totalCalculated = directCosts + fixedCostPerUnit + variableCosts + taxes + netProfit;
-  const isBalanced = Math.abs(totalCalculated - totalPrice) < 0.02;
+  const totalCalculated = custoTotalPeca + lucroLiquido;
+  const isBalanced = Math.abs(totalCalculated - precoSugerido) < 0.02;
 
   const items: AnatomyItem[] = [
     {
       icon: <Box className="h-5 w-5" />,
-      label: 'Custos Diretos',
-      value: directCosts,
+      label: 'Custos Diretos do Produto',
+      value: custosDiretos,
       color: 'text-blue-600',
       bgColor: 'bg-blue-500',
       details: [
-        `Tecido: ${formatarMoeda(data.productCosts.fabric)}`,
-        `Aviamentos: ${formatarMoeda(data.productCosts.accessories)}`,
-        `Embalagem: ${formatarMoeda(data.productCosts.packaging)}`,
-        `Mão de obra: ${formatarMoeda(data.productCosts.laborCost)}`,
-      ].filter(d => !d.includes('R$ 0,00')),
+        data.productCosts.fabric > 0 ? `Material: ${formatarMoeda(data.productCosts.fabric)}` : '',
+        data.productCosts.accessories > 0 ? `Aviamentos: ${formatarMoeda(data.productCosts.accessories)}` : '',
+        data.productCosts.packaging > 0 ? `Embalagem: ${formatarMoeda(data.productCosts.packaging)}` : '',
+        data.productCosts.laborCost > 0 ? `Mão de obra: ${formatarMoeda(data.productCosts.laborCost)}` : '',
+      ].filter(Boolean),
     },
     {
       icon: <Building2 className="h-5 w-5" />,
       label: 'Custos Fixos Diluídos',
-      value: fixedCostPerUnit,
+      value: custosFixosDiluidos,
       color: 'text-amber-600',
       bgColor: 'bg-amber-500',
-      details: [`${formatarMoeda(totalFixedCosts)}/mês ÷ ${monthlyVolume} peças`],
+      details: [`${formatarMoeda(totalFixedCosts)}/mês ÷ ${monthlyVolume.toLocaleString('pt-BR')} peças`],
     },
     {
       icon: <ShoppingCart className="h-5 w-5" />,
       label: 'Custos de Venda',
-      value: variableCosts,
+      value: custosVariaveisFixos + taxasVenda,
       color: 'text-orange-600',
       bgColor: 'bg-orange-500',
       details: [
-        data.variableCosts.marketplaceFee > 0 ? `Marketplace: ${data.variableCosts.marketplaceFee}%` : '',
-        `Gateway: ${data.variableCosts.paymentGateway}%`,
+        data.variableCosts.marketplaceFee > 0 ? `Marketplace: ${formatarPorcentagem(data.variableCosts.marketplaceFee)}` : '',
+        data.variableCosts.paymentGateway > 0 ? `Gateway: ${formatarPorcentagem(data.variableCosts.paymentGateway)}` : '',
         data.variableCosts.shippingCost > 0 ? `Frete: ${formatarMoeda(data.variableCosts.shippingCost)}` : '',
-        data.variableCosts.adsCost > 0 ? `Marketing: ${data.variableCosts.adsCost}%` : '',
+        data.variableCosts.adsCost > 0 ? `Marketing: ${formatarPorcentagem(data.variableCosts.adsCost)}` : '',
       ].filter(Boolean),
     },
     {
       icon: <Receipt className="h-5 w-5" />,
       label: 'Impostos',
-      value: taxes,
+      value: impostos,
       color: 'text-red-600',
       bgColor: 'bg-red-500',
       details: [
         data.taxes.taxRegime === 'simples' 
-          ? `Simples Nacional: ${(result.taxPercent * 100).toFixed(1)}%`
-          : `ICMS + PIS + COFINS: ${(result.taxPercent * 100).toFixed(1)}%`
+          ? `Simples Nacional: ${formatarPorcentagem(result.taxPercent * 100)}`
+          : `ICMS + PIS + COFINS: ${formatarPorcentagem(result.taxPercent * 100)}`
       ],
     },
   ];
@@ -102,39 +110,42 @@ export function PriceAnatomyCard({ result, data }: PriceAnatomyCardProps) {
           Anatomia do Preço
         </CardTitle>
         <CardDescription>
-          De onde vem cada centavo do preço de {formatarMoeda(totalPrice)}
+          De onde vem cada centavo do preço de {formatarMoeda(precoSugerido)}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Breakdown visual compacto */}
         <div className="space-y-3">
-          {items.map((item, index) => (
-            <div key={index} className="space-y-1.5">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <span className={item.color}>{item.icon}</span>
-                  <span className="font-medium">{item.label}</span>
+          {items.map((item, index) => {
+            const percent = precoSugerido > 0 ? (item.value / precoSugerido) * 100 : 0;
+            return (
+              <div key={index} className="space-y-1.5">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className={item.color}>{item.icon}</span>
+                    <span className="font-medium">{item.label}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-muted-foreground text-xs">
+                      {formatarPorcentagem(percent)}
+                    </span>
+                    <span className="font-semibold w-24 text-right">
+                      {formatarMoeda(item.value)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-muted-foreground text-xs">
-                    {formatarPorcentagem((item.value / totalPrice) * 100)}
-                  </span>
-                  <span className="font-semibold w-20 text-right">
-                    {formatarMoeda(item.value)}
-                  </span>
-                </div>
+                <Progress 
+                  value={percent} 
+                  className={`h-2 [&>div]:${item.bgColor}`}
+                />
+                {item.details && item.details.length > 0 && (
+                  <p className="text-xs text-muted-foreground pl-7">
+                    {item.details.join(' • ')}
+                  </p>
+                )}
               </div>
-              <Progress 
-                value={(item.value / totalPrice) * 100} 
-                className={`h-2 [&>div]:${item.bgColor}`}
-              />
-              {item.details && item.details.length > 0 && (
-                <p className="text-xs text-muted-foreground pl-7">
-                  {item.details.join(' • ')}
-                </p>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <Separator />
@@ -148,15 +159,15 @@ export function PriceAnatomyCard({ result, data }: PriceAnatomyCardProps) {
             </div>
             <div className="flex items-center gap-3">
               <span className="text-success text-sm font-medium">
-                {formatarPorcentagem((netProfit / totalPrice) * 100)}
+                {formatarPorcentagem((lucroLiquido / precoSugerido) * 100)}
               </span>
               <span className="text-2xl font-bold text-success">
-                {formatarMoeda(netProfit)}
+                {formatarMoeda(lucroLiquido)}
               </span>
             </div>
           </div>
           <Progress 
-            value={(netProfit / totalPrice) * 100} 
+            value={(lucroLiquido / precoSugerido) * 100} 
             className="h-2 mt-2 [&>div]:bg-success"
           />
         </div>
@@ -170,7 +181,7 @@ export function PriceAnatomyCard({ result, data }: PriceAnatomyCardProps) {
           <div className="flex items-center gap-2">
             <span className="font-mono font-semibold">{formatarMoeda(totalCalculated)}</span>
             <span className="text-muted-foreground">=</span>
-            <span className="font-mono font-semibold text-success">{formatarMoeda(totalPrice)}</span>
+            <span className="font-mono font-semibold text-success">{formatarMoeda(precoSugerido)}</span>
           </div>
         </div>
       </CardContent>
