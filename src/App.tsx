@@ -24,6 +24,7 @@ import Team from "./pages/Team";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import InviteAccept from "./pages/InviteAccept";
 import NotFound from "./pages/NotFound";
 
 // Public pages
@@ -76,6 +77,7 @@ const App = () => (
             {/* Public routes */}
             <Route path="/" element={<PublicLayout><Landing /></PublicLayout>} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/convite" element={<InviteAccept />} />
             <Route path="/precos" element={<PublicLayout><Pricing /></PublicLayout>} />
 
             {/* Public institutional pages */}

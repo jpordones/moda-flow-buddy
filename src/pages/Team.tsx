@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, UserPlus, Mail, Shield, Crown, Trash2, MoreVertical, Building2 } from 'lucide-react';
+import { Users, UserPlus, Mail, Shield, Crown, Trash2, MoreVertical, Building2, RefreshCw, Loader2 } from 'lucide-react';
 import { useTeam } from '@/hooks/useTeam';
 import { AppRole, roleLabels, roleDescriptions, roleColors } from '@/types/team';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +31,8 @@ export default function Team() {
     createTeam,
     updateTeam,
     switchTeam,
-    inviteMember, 
+    inviteMember,
+    resendInvitation,
     cancelInvitation,
     updateMemberRole,
     removeMember,
@@ -46,6 +47,7 @@ export default function Team() {
   const [isCreatingTeam, setIsCreatingTeam] = useState(false);
   const [editTeamName, setEditTeamName] = useState('');
   const [isEditingTeam, setIsEditingTeam] = useState(false);
+  const [resendingId, setResendingId] = useState<string | null>(null);
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return;
@@ -77,6 +79,12 @@ export default function Team() {
     setIsEditingTeam(true);
     await updateTeam(currentTeam.id, editTeamName.trim());
     setIsEditingTeam(false);
+  };
+
+  const handleResendInvitation = async (invitationId: string) => {
+    setResendingId(invitationId);
+    await resendInvitation(invitationId);
+    setResendingId(null);
   };
 
   if (loading) {
@@ -355,14 +363,14 @@ export default function Team() {
                 {invitations.map(invitation => (
                   <div 
                     key={invitation.id} 
-                    className="flex items-center justify-between p-4 rounded-lg border bg-card"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border bg-card"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                         <Mail className="h-5 w-5 text-muted-foreground" />
                       </div>
-                      <div>
-                        <span className="font-medium">{invitation.email}</span>
+                      <div className="min-w-0">
+                        <span className="font-medium block truncate">{invitation.email}</span>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <span>
                             Expira em {format(new Date(invitation.expires_at), "dd 'de' MMM", { locale: ptBR })}
@@ -371,36 +379,55 @@ export default function Team() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-3">
-                      <Badge className={cn(roleColors[invitation.role])}>
+                    <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 ml-14 sm:ml-0">
+                      <Badge className={cn(roleColors[invitation.role], "text-xs")}>
                         {roleLabels[invitation.role]}
                       </Badge>
                       
                       {canManageMembers() && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Cancelar convite?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                O convite para {invitation.email} será cancelado e o link não funcionará mais.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Manter</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => cancelInvitation(invitation.id)}
-                                className="bg-destructive text-destructive-foreground"
-                              >
-                                Cancelar Convite
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <div className="flex items-center gap-1">
+                          {/* Resend Button */}
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            className="h-9 w-9"
+                            onClick={() => handleResendInvitation(invitation.id)}
+                            disabled={resendingId === invitation.id}
+                            title="Reenviar convite"
+                          >
+                            {resendingId === invitation.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <RefreshCw className="h-4 w-4" />
+                            )}
+                          </Button>
+                          
+                          {/* Cancel Button */}
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="max-w-[95vw] sm:max-w-lg">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Cancelar convite?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  O convite para {invitation.email} será cancelado e o link não funcionará mais.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                                <AlertDialogCancel className="w-full sm:w-auto">Manter</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => cancelInvitation(invitation.id)}
+                                  className="w-full sm:w-auto bg-destructive text-destructive-foreground"
+                                >
+                                  Cancelar Convite
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       )}
                     </div>
                   </div>

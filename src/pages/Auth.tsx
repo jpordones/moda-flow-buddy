@@ -36,11 +36,28 @@ export default function Auth() {
   // Get password validation result for registration
   const passwordValidation = validatePassword(password);
 
+  // Handle redirect after auth (for invite flow)
+  const redirectTo = searchParams.get('redirect');
+  const initialMode = searchParams.get('mode');
+
+  useEffect(() => {
+    if (initialMode === 'login') {
+      setMode('login');
+    } else if (initialMode === 'signup') {
+      setMode('register');
+    }
+  }, [initialMode]);
+
   useEffect(() => {
     if (!loading && user) {
-      navigate('/app');
+      // If there's a redirect URL, go there instead of /app
+      if (redirectTo) {
+        navigate(redirectTo);
+      } else {
+        navigate('/app');
+      }
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, redirectTo]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
