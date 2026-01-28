@@ -11,7 +11,7 @@ import { MarketComparisonCard } from '@/components/pricing/MarketComparisonCard'
 import { MonthlyImpactCard } from '@/components/pricing/MonthlyImpactCard';
 import { SmartAlertsSection } from '@/components/pricing/SmartAlertsSection';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, FileDown, Loader2, CheckCircle2, ChevronDown } from 'lucide-react';
+import { RotateCcw, FileDown, Loader2, CheckCircle2, ChevronDown, Cloud } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { exportCostsReportPdf } from '@/lib/costsReportPdf';
 import { toast } from 'sonner';
@@ -22,6 +22,17 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function Costs() {
   const { profile } = useAuth();
@@ -76,6 +87,11 @@ export default function Costs() {
     }
   };
 
+  const handleReset = () => {
+    resetToDefaults();
+    toast.success('Configurações resetadas para os valores padrão');
+  };
+
   const scrollToConfig = () => {
     configRef.current?.scrollIntoView({ behavior: 'smooth' });
     setOpenSections(prev => ({ ...prev, volume: true }));
@@ -86,11 +102,11 @@ export default function Costs() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
               Custos & Precificação
             </h1>
@@ -103,8 +119,8 @@ export default function Costs() {
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="h-3 w-3 text-success" />
-                    Salvo
+                    <Cloud className="h-3 w-3 text-success" />
+                    Salvo na nuvem
                   </>
                 )}
               </Badge>
@@ -115,10 +131,31 @@ export default function Costs() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={resetToDefaults} className="h-9">
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Resetar
-          </Button>
+          {/* Reset com confirmação */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9">
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Resetar
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Isso vai limpar todos os valores e voltar às configurações padrão. 
+                  Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleReset}>
+                  Sim, resetar tudo
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          
           <Button 
             variant="outline" 
             size="sm" 
