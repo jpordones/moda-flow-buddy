@@ -4,6 +4,7 @@ import { TrendingUp, AlertTriangle, Lightbulb } from "lucide-react";
 import { ComposedChart, Bar, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { formatarMoeda } from "@/lib/formatters";
 
 interface FinancialDataPoint {
   month: string;
@@ -73,8 +74,19 @@ export function FinancialChart({ data, insights }: FinancialChartProps) {
           <ComposedChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-            <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" />
-            <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" />
+            <YAxis 
+              yAxisId="left" 
+              stroke="hsl(var(--muted-foreground))" 
+              tickFormatter={(value) => formatarMoeda(value)}
+              width={100}
+            />
+            <YAxis 
+              yAxisId="right" 
+              orientation="right" 
+              stroke="hsl(var(--muted-foreground))"
+              tickFormatter={(value) => `${value.toFixed(0)}%`}
+              width={50}
+            />
             
             <Tooltip 
               contentStyle={{ 
@@ -85,16 +97,7 @@ export function FinancialChart({ data, insights }: FinancialChartProps) {
               }} 
               formatter={(value: number, name: string) => {
                 if (name === "Margem (%)") return [`${value.toFixed(1)}%`, name];
-                // Formato brasileiro correto: R$ 1.234,56
-                return [
-                  new Intl.NumberFormat('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  }).format(value),
-                  name
-                ];
+                return [formatarMoeda(value), name];
               }}
             />
             <Legend />
