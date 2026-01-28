@@ -1,4 +1,6 @@
 export { HealthScoreCard } from './HealthScoreCard';
+export { EmptyStateCard } from './EmptyStateCard';
+export { GetStartedSection } from './GetStartedSection';
 export { RevenueGoalCard } from './RevenueGoalCard';
 export { MarginCard } from './MarginCard';
 export { RiskProductsCard } from './RiskProductsCard';

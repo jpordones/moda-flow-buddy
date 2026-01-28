@@ -16,13 +16,17 @@ import {
   CostsOverviewCard,
   PricingOverviewCard,
   CashFlowSummaryCard,
+  EmptyStateCard,
+  GetStartedSection,
 } from "@/components/dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ShoppingBag, TrendingUp, BarChart3 } from "lucide-react";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const {
     isLoading,
+    transactions,
     monthlyMetrics,
     healthMetrics,
     productAnalytics,
@@ -40,6 +44,15 @@ export default function Dashboard() {
   
   const { products, isLoading: productsLoading } = useProducts();
 
+  // Derived states for conditional rendering
+  const hasProducts = products && products.length > 0;
+  const hasTransactions = transactions && transactions.length > 0;
+  const hasCosts = costsMetrics.totalFixedCosts > 0 || costsMetrics.totalVariableCosts > 0;
+  const hasActiveProducts = products?.filter(p => p.status === 'ativo').length > 0;
+  
+  // Check if chart has any real data
+  const chartHasData = financialChartData.some(d => d.revenue > 0 || d.profit !== 0);
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -48,8 +61,8 @@ export default function Dashboard() {
           <Skeleton className="h-5 w-64" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(9)].map((_, i) => (
-            <Skeleton key={i} className="h-64" />
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="h-48" />
           ))}
         </div>
       </div>
@@ -68,12 +81,21 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Central de Ações - Prioridade máxima */}
-      {!productsLoading && products && products.length > 0 && (
+      {/* Get Started Section - Mostrar quando falta configuração básica */}
+      {(!hasProducts || !hasTransactions || !hasCosts) && (
+        <GetStartedSection 
+          hasProducts={hasProducts} 
+          hasTransactions={hasTransactions} 
+          hasCosts={hasCosts} 
+        />
+      )}
+
+      {/* Central de Ações - Só mostrar quando há produtos para analisar */}
+      {!productsLoading && hasProducts && (
         <ActionCenter products={products} />
       )}
 
-      {/* Seção 1: KPIs Principais - Saúde Financeira e Metas */}
+      {/* Seção 1: KPIs Principais - Sempre visíveis com estados amigáveis */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         <HealthScoreCard
           healthScore={healthMetrics.healthScore}
@@ -98,81 +120,99 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Seção 2: Custos, Precificação e Margens */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        <CostsOverviewCard
-          totalFixedCosts={costsMetrics.totalFixedCosts}
-          totalVariableCosts={costsMetrics.totalVariableCosts}
-          averageCostPerUnit={costsMetrics.averageCostPerUnit}
-          monthlyVolume={costsMetrics.monthlyVolume}
-        />
+      {/* Seção 2: Custos, Precificação e Margens - Mostrar quando há produtos OU custos */}
+      {(hasProducts || hasCosts) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          <CostsOverviewCard
+            totalFixedCosts={costsMetrics.totalFixedCosts}
+            totalVariableCosts={costsMetrics.totalVariableCosts}
+            averageCostPerUnit={costsMetrics.averageCostPerUnit}
+            monthlyVolume={costsMetrics.monthlyVolume}
+          />
 
-        <PricingOverviewCard
-          averageMargin={pricingMetrics.averageMargin}
-          averageSalePrice={pricingMetrics.averageSalePrice}
-          averageCostPrice={pricingMetrics.averageCostPrice}
-          productsNeedingReview={pricingMetrics.productsNeedingReview}
-          totalProducts={pricingMetrics.totalProducts}
-        />
+          <PricingOverviewCard
+            averageMargin={pricingMetrics.averageMargin}
+            averageSalePrice={pricingMetrics.averageSalePrice}
+            averageCostPrice={pricingMetrics.averageCostPrice}
+            productsNeedingReview={pricingMetrics.productsNeedingReview}
+            totalProducts={pricingMetrics.totalProducts}
+          />
 
-        <MarginCard
-          averageMargin={healthMetrics.averageMargin}
-          marginTrend={2.5}
-          topMarginProducts={productAnalytics.topMarginProducts.map(p => ({
-            name: p.name,
-            margin: p.margin,
-          }))}
-        />
-      </div>
+          <MarginCard
+            averageMargin={healthMetrics.averageMargin}
+            marginTrend={2.5}
+            topMarginProducts={productAnalytics.topMarginProducts.map(p => ({
+              name: p.name,
+              margin: p.margin,
+            }))}
+          />
+        </div>
+      )}
 
-      {/* Seção 3: Estoque e Riscos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        <RiskProductsCard
-          totalRiskProducts={productAnalytics.riskProducts.length}
-          outOfStockCount={stats.outOfStockCount}
-          lowStockCount={stats.lowStockCount}
-          lowMarginCount={productAnalytics.lowMarginProducts.length}
-        />
+      {/* Seção 3: Estoque e Riscos - Só mostrar quando há produtos */}
+      {hasProducts && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          <RiskProductsCard
+            totalRiskProducts={productAnalytics.riskProducts.length}
+            outOfStockCount={stats.outOfStockCount}
+            lowStockCount={stats.lowStockCount}
+            lowMarginCount={productAnalytics.lowMarginProducts.length}
+          />
 
-        <StockTurnoverCard
-          stockTurnover={stockTurnover}
-          slowMovingProducts={productAnalytics.slowMovingProducts.slice(0, 2).map(p => ({
-            name: p.name,
-            daysInStock: p.daysInStock,
-          }))}
-        />
+          <StockTurnoverCard
+            stockTurnover={stockTurnover}
+            slowMovingProducts={productAnalytics.slowMovingProducts.slice(0, 2).map(p => ({
+              name: p.name,
+              daysInStock: p.daysInStock,
+            }))}
+          />
 
-        <InventoryValueCard
-          inventoryValue={inventoryBreakdown.totalCost}
-          fastMovingValue={inventoryBreakdown.fastMovingValue}
-          slowMovingValue={inventoryBreakdown.slowMovingValue}
-        />
-      </div>
+          <InventoryValueCard
+            inventoryValue={inventoryBreakdown.totalCost}
+            fastMovingValue={inventoryBreakdown.fastMovingValue}
+            slowMovingValue={inventoryBreakdown.slowMovingValue}
+          />
+        </div>
+      )}
 
       {/* Seção 4: Gráfico Principal de Performance */}
-      <FinancialChart
-        data={financialChartData}
-        insights={insights}
-      />
+      {chartHasData ? (
+        <FinancialChart
+          data={financialChartData}
+          insights={insights}
+        />
+      ) : (
+        <EmptyStateCard
+          icon={BarChart3}
+          title="Sem dados de performance ainda"
+          description="O gráfico será preenchido automaticamente quando você registrar transações no Fluxo de Caixa."
+          actionLabel="Adicionar Transação"
+          actionUrl="/app/fluxo-caixa"
+        />
+      )}
 
-      {/* Seção 5: Análise de Produtos */}
-      <ProductAnalysisCards
-        topProducts={productAnalytics.topProducts}
-        lowMarginProducts={productAnalytics.lowMarginProducts}
-        outOfStockProducts={productAnalytics.outOfStockProducts}
-        slowMovingProducts={productAnalytics.slowMovingProducts}
-      />
+      {/* Seção 5: Análise de Produtos - Só mostrar quando há produtos */}
+      {hasProducts && (
+        <ProductAnalysisCards
+          topProducts={productAnalytics.topProducts}
+          lowMarginProducts={productAnalytics.lowMarginProducts}
+          outOfStockProducts={productAnalytics.outOfStockProducts}
+          slowMovingProducts={productAnalytics.slowMovingProducts}
+        />
+      )}
 
-      {/* Seção 6: Insights com IA */}
-      <AIInsightsCard
-        predictedRevenue={predictedRevenue}
-        revenueGoal={revenueGoal}
-        restockSuggestions={restockSuggestions}
-        slowMovingValue={inventoryBreakdown.slowMovingValue}
-      />
+      {/* Seção 6: Insights com IA - Mostrar quando há dados suficientes */}
+      {(hasProducts || hasTransactions) && (
+        <AIInsightsCard
+          predictedRevenue={predictedRevenue}
+          revenueGoal={revenueGoal}
+          restockSuggestions={restockSuggestions}
+          slowMovingValue={inventoryBreakdown.slowMovingValue}
+        />
+      )}
 
-      {/* Previsão de Demanda com IA */}
-      <DemandForecast />
+      {/* Previsão de Demanda com IA - Só útil quando há produtos */}
+      {hasProducts && <DemandForecast />}
     </div>
   );
 }
