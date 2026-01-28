@@ -54,53 +54,62 @@ interface ProductAnalysis {
 }
 
 export function useDashboardData() {
-  const { profile } = useAuth();
-  const { products, stats } = useProducts();
+  const { profile, loading: authLoading } = useAuth();
+  const { products, stats, isLoading: productsLoading } = useProducts();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [costs, setCosts] = useState<Cost[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   const teamId = profile?.current_team_id;
+  
+  // Combined loading state
+  const isLoading = authLoading || productsLoading || isLoadingData;
 
   const fetchData = useCallback(async () => {
     if (!teamId) {
       setTransactions([]);
       setCosts([]);
-      setIsLoading(false);
+      setIsLoadingData(false);
       return;
     }
 
-    setIsLoading(true);
+    setIsLoadingData(true);
     
-    // Fetch transactions and costs in parallel
-    const [transactionsResult, costsResult] = await Promise.all([
-      supabase
-        .from('transactions')
-        .select('id, type, amount, category, reference_date, product_id, status')
-        .eq('team_id', teamId)
-        .order('reference_date', { ascending: false }),
-      supabase
-        .from('costs')
-        .select('id, name, amount, type, category, is_active')
-        .eq('team_id', teamId)
-        .eq('is_active', true)
-    ]);
+    try {
+      // Fetch transactions and costs in parallel
+      const [transactionsResult, costsResult] = await Promise.all([
+        supabase
+          .from('transactions')
+          .select('id, type, amount, category, reference_date, product_id, status')
+          .eq('team_id', teamId)
+          .order('reference_date', { ascending: false }),
+        supabase
+          .from('costs')
+          .select('id, name, amount, type, category, is_active')
+          .eq('team_id', teamId)
+          .eq('is_active', true)
+      ]);
 
-    if (transactionsResult.error) {
-      console.error('Error fetching transactions:', transactionsResult.error);
+      if (transactionsResult.error) {
+        console.error('Error fetching transactions:', transactionsResult.error);
+        setTransactions([]);
+      } else {
+        setTransactions(transactionsResult.data || []);
+      }
+
+      if (costsResult.error) {
+        console.error('Error fetching costs:', costsResult.error);
+        setCosts([]);
+      } else {
+        setCosts(costsResult.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
       setTransactions([]);
-    } else {
-      setTransactions(transactionsResult.data || []);
-    }
-
-    if (costsResult.error) {
-      console.error('Error fetching costs:', costsResult.error);
       setCosts([]);
-    } else {
-      setCosts(costsResult.data || []);
+    } finally {
+      setIsLoadingData(false);
     }
-
-    setIsLoading(false);
   }, [teamId]);
 
   useEffect(() => {
@@ -166,7 +175,7 @@ export function useDashboardData() {
     const totalVariableCosts = variableCosts.reduce((sum, c) => sum + c.amount, 0);
 
     // Estimate monthly volume from products or use profile default
-    const monthlyVolume = profile?.default_monthly_sales || stats.totalStock || 100;
+    const monthlyVolume = profile?.default_monthly_sales || stats?.totalStock || 100;
     
     // Average cost per unit (fixed costs diluted + variable)
     const fixedCostPerUnit = monthlyVolume > 0 ? totalFixedCosts / monthlyVolume : 0;
@@ -224,7 +233,11 @@ export function useDashboardData() {
   // Financial health score
   const healthMetrics = useMemo(() => {
     const { totalIncome, totalExpense } = monthlyMetrics;
-    const { totalValue, totalCost, lowStockCount, outOfStockCount, totalProducts } = stats;
+    const totalValue = stats?.totalValue ?? 0;
+    const totalCost = stats?.totalCost ?? 0;
+    const lowStockCount = stats?.lowStockCount ?? 0;
+    const outOfStockCount = stats?.outOfStockCount ?? 0;
+    const totalProducts = stats?.totalProducts ?? 0;
 
     // Liquidity score (based on income vs expense ratio)
     let liquidityScore = 50;
@@ -341,8 +354,8 @@ export function useDashboardData() {
       .reduce((sum, p) => sum + (p.quantity * p.costPrice), 0);
 
     return {
-      totalValue: stats.totalValue,
-      totalCost: stats.totalCost,
+      totalValue: stats?.totalValue ?? 0,
+      totalCost: stats?.totalCost ?? 0,
       fastMovingValue,
       slowMovingValue,
     };
@@ -353,7 +366,7 @@ export function useDashboardData() {
     // Simplified: assume average of 4-5x per month for fashion
     // In real app, this would be calculated from actual sales data
     const { totalIncome } = monthlyMetrics;
-    const { totalCost } = stats;
+    const totalCost = stats?.totalCost ?? 0;
     
     if (totalCost <= 0) return 4; // Default
     
@@ -405,7 +418,8 @@ export function useDashboardData() {
   const insights = useMemo((): Insight[] => {
     const results: Insight[] = [];
     const { totalIncome, projectedRevenue } = monthlyMetrics;
-    const { lowStockCount, outOfStockCount } = stats;
+    const lowStockCount = stats?.lowStockCount ?? 0;
+    const outOfStockCount = stats?.outOfStockCount ?? 0;
     const { averageMargin } = healthMetrics;
 
     // Revenue insight
@@ -461,7 +475,7 @@ export function useDashboardData() {
 
   // Restock suggestions
   const restockSuggestions = useMemo(() => {
-    return stats.lowStockProducts?.slice(0, 5).map(p => ({
+    return (stats?.lowStockProducts ?? []).slice(0, 5).map(p => ({
       productId: p.id,
       productName: p.name,
       currentStock: p.quantity,
