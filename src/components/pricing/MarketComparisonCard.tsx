@@ -1,16 +1,18 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Scale, Lightbulb, ArrowUp, TrendingUp, Target } from 'lucide-react';
+import { Scale, Lightbulb, ArrowUp, TrendingUp, Target, Settings2 } from 'lucide-react';
 import { PricingResult, PricingData } from '@/types/pricing';
 import { formatarMoeda } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface MarketComparisonCardProps {
   result: PricingResult;
   data: PricingData;
+  onScrollToConfig?: () => void;
 }
 
-export function MarketComparisonCard({ result, data }: MarketComparisonCardProps) {
+export function MarketComparisonCard({ result, data, onScrollToConfig }: MarketComparisonCardProps) {
   if (!result.viable) return null;
 
   const calculatedPrice = result.calculatedPrice;
@@ -19,6 +21,11 @@ export function MarketComparisonCard({ result, data }: MarketComparisonCardProps
   const desiredMargin = data.config.desiredMargin;
   const netProfit = result.netProfit;
   const monthlyVolume = data.config.monthlyVolume;
+
+  // Se não tem preço de mercado, não mostrar o card grande - apenas um hint pequeno
+  if (!marketPrice || marketPrice <= 0) {
+    return null;
+  }
 
   // Preço ideal = entre calculado e mercado (se competitivo)
   const idealPrice = marketPrice > 0 && marketPrice > calculatedPrice
@@ -56,43 +63,27 @@ export function MarketComparisonCard({ result, data }: MarketComparisonCardProps
           </div>
 
           {/* Preço de Mercado */}
-          <div className={cn(
-            "p-6 rounded-xl text-center transition-all",
-            marketPrice > 0 
-              ? "bg-muted border-2 border-muted-foreground/20" 
-              : "bg-muted/50 border border-dashed border-muted-foreground/20"
-          )}>
+          <div className="p-6 bg-muted border-2 border-muted-foreground/20 rounded-xl text-center">
             <p className="text-sm text-muted-foreground mb-2">Preço no Mercado</p>
-            {marketPrice > 0 ? (
-              <>
-                <p className="text-4xl font-bold mb-2">
-                  {formatarMoeda(marketPrice)}
-                </p>
-                <Badge variant={calculatedPrice < marketPrice ? "default" : "secondary"} className={cn(
-                  calculatedPrice < marketPrice 
-                    ? "bg-success text-success-foreground" 
-                    : "bg-warning text-warning-foreground"
-                )}>
-                  {calculatedPrice < marketPrice 
-                    ? `Você está ${(((marketPrice - calculatedPrice) / marketPrice) * 100).toFixed(0)}% mais barato`
-                    : `Você está ${(((calculatedPrice - marketPrice) / marketPrice) * 100).toFixed(0)}% mais caro`
-                  }
-                </Badge>
-                <p className="text-xs text-muted-foreground mt-3">
-                  {calculatedPrice < marketPrice 
-                    ? "✓ Preço competitivo!"
-                    : "⚠️ Pode ter dificuldade para vender"
-                  }
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="text-2xl font-bold text-muted-foreground mb-2">--</p>
-                <p className="text-xs text-muted-foreground">
-                  Configure o preço de mercado para comparar
-                </p>
-              </>
-            )}
+            <p className="text-4xl font-bold mb-2">
+              {formatarMoeda(marketPrice)}
+            </p>
+            <Badge variant={calculatedPrice < marketPrice ? "default" : "secondary"} className={cn(
+              calculatedPrice < marketPrice 
+                ? "bg-success text-success-foreground" 
+                : "bg-warning text-warning-foreground"
+            )}>
+              {calculatedPrice < marketPrice 
+                ? `Você está ${(((marketPrice - calculatedPrice) / marketPrice) * 100).toFixed(0)}% mais barato`
+                : `Você está ${(((calculatedPrice - marketPrice) / marketPrice) * 100).toFixed(0)}% mais caro`
+              }
+            </Badge>
+            <p className="text-xs text-muted-foreground mt-3">
+              {calculatedPrice < marketPrice 
+                ? "✓ Preço competitivo!"
+                : "⚠️ Pode ter dificuldade para vender"
+              }
+            </p>
           </div>
 
           {/* Preço Ideal Sugerido */}
