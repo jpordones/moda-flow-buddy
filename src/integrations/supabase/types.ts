@@ -296,6 +296,141 @@ export type Database = {
           },
         ]
       }
+      order_items: {
+        Row: {
+          base_color: string | null
+          created_at: string
+          id: string
+          line_total: number
+          notes: string | null
+          order_id: string
+          print_variant: string | null
+          product_id: string | null
+          product_name_snapshot: string
+          quantity: number
+          size: string | null
+          team_id: string
+          unit_price: number
+        }
+        Insert: {
+          base_color?: string | null
+          created_at?: string
+          id?: string
+          line_total?: number
+          notes?: string | null
+          order_id: string
+          print_variant?: string | null
+          product_id?: string | null
+          product_name_snapshot: string
+          quantity?: number
+          size?: string | null
+          team_id: string
+          unit_price?: number
+        }
+        Update: {
+          base_color?: string | null
+          created_at?: string
+          id?: string
+          line_total?: number
+          notes?: string | null
+          order_id?: string
+          print_variant?: string | null
+          product_id?: string | null
+          product_name_snapshot?: string
+          quantity?: number
+          size?: string | null
+          team_id?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          created_by_user_id: string
+          currency: string
+          customer_contact: string | null
+          customer_name: string
+          id: string
+          installments_count: number
+          notes: string | null
+          order_date: string
+          order_status: Database["public"]["Enums"]["order_status"]
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          source: string
+          team_id: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_user_id: string
+          currency?: string
+          customer_contact?: string | null
+          customer_name: string
+          id?: string
+          installments_count?: number
+          notes?: string | null
+          order_date?: string
+          order_status?: Database["public"]["Enums"]["order_status"]
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          source?: string
+          team_id: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_user_id?: string
+          currency?: string
+          customer_contact?: string | null
+          customer_name?: string
+          id?: string
+          installments_count?: number
+          notes?: string | null
+          order_date?: string
+          order_status?: Database["public"]["Enums"]["order_status"]
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          source?: string
+          team_id?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_history: {
         Row: {
           amount: number
@@ -1098,6 +1233,33 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "seller" | "viewer"
+      order_status:
+        | "novo"
+        | "aguardando_pagamento"
+        | "pago"
+        | "em_producao"
+        | "personalizacao_pendente"
+        | "separando"
+        | "pronto_envio"
+        | "enviado"
+        | "entregue"
+        | "cancelado"
+        | "devolvido"
+        | "em_estoque"
+        | "problema"
+      payment_method:
+        | "pix"
+        | "cartao"
+        | "dinheiro"
+        | "boleto"
+        | "transferencia"
+        | "outro"
+      payment_status:
+        | "pendente"
+        | "pago"
+        | "parcial"
+        | "estornado"
+        | "cancelado"
       plan_type: "free" | "starter" | "professional" | "enterprise"
     }
     CompositeTypes: {
@@ -1227,6 +1389,30 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "seller", "viewer"],
+      order_status: [
+        "novo",
+        "aguardando_pagamento",
+        "pago",
+        "em_producao",
+        "personalizacao_pendente",
+        "separando",
+        "pronto_envio",
+        "enviado",
+        "entregue",
+        "cancelado",
+        "devolvido",
+        "em_estoque",
+        "problema",
+      ],
+      payment_method: [
+        "pix",
+        "cartao",
+        "dinheiro",
+        "boleto",
+        "transferencia",
+        "outro",
+      ],
+      payment_status: ["pendente", "pago", "parcial", "estornado", "cancelado"],
       plan_type: ["free", "starter", "professional", "enterprise"],
     },
   },

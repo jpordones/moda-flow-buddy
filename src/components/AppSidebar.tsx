@@ -1,4 +1,4 @@
-import { LayoutDashboard, TrendingUp, ShoppingBag, Calculator, Settings, X, Crown, Users, BrainCircuit } from "lucide-react";
+import { LayoutDashboard, TrendingUp, ShoppingBag, Calculator, Settings, X, Crown, Users, BrainCircuit, ClipboardList } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useNavigate } from "react-router-dom";
 import fedcomLogoDark from "@/assets/FEDCOM.svg";
@@ -21,6 +21,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 
 const menuItems = [
   { title: "Dashboard", url: "/app", icon: LayoutDashboard },
+  { title: "Pedidos", url: "/app/pedidos", icon: ClipboardList },
   { title: "Fluxo de Caixa", url: "/app/fluxo-caixa", icon: TrendingUp },
   { title: "Produtos", url: "/app/produtos", icon: ShoppingBag },
   { title: "Previsão de Demanda", url: "/app/previsao-demanda", icon: BrainCircuit },
