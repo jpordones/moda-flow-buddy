@@ -16,6 +16,7 @@ import CashFlow from "./pages/CashFlow";
 import Products from "./pages/Products";
 import ProductEditor from "./pages/ProductEditor";
 import DemandForecastPage from "./pages/DemandForecastPage";
+import Orders from "./pages/Orders";
 // Inventory consolidado em Products
 import Costs from "./pages/Costs";
 import Settings from "./pages/Settings";
@@ -103,6 +104,14 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <Dashboard />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/app/pedidos" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Orders />
                 </AppLayout>
               </ProtectedRoute>
             } />
