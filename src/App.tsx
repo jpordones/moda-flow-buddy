@@ -17,7 +17,7 @@ import Products from "./pages/Products";
 import ProductEditor from "./pages/ProductEditor";
 import DemandForecastPage from "./pages/DemandForecastPage";
 import Orders from "./pages/Orders";
-// Inventory consolidado em Products
+import Inventory from "./pages/Inventory";
 import Costs from "./pages/Costs";
 import Settings from "./pages/Settings";
 import Plans from "./pages/Plans";
@@ -144,8 +144,13 @@ const App = () => (
               </ProtectedRoute>
             } />
 
-            {/* Redirecionar /app/estoque para /app/produtos */}
-            <Route path="/app/estoque" element={<Navigate to="/app/produtos" replace />} />
+            <Route path="/app/inventario" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Inventory />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
 
             <Route path="/app/previsao-demanda" element={
               <ProtectedRoute>
