@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -335,22 +335,34 @@ export default function Products() {
             </div>
           ) : viewMode === 'grid' ? (
             <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  stockStatus={getStockStatus(product)}
-                  onEdit={() => handleEditProduct(product)}
-                  onDuplicate={() => handleDuplicateProduct(product.id)}
-                  onDelete={() => setDeleteProductId(product.id)}
-                  onCalculatePrice={() => navigate('/custos', { state: { product } })}
-                  onSmartPricing={() => { setSmartPricingProduct(product); setShowSmartPricing(true); }}
-                  onStockEntry={() => handleOpenEntry(product.id)}
-                  onStockExit={() => handleOpenExit(product.id)}
-                  onViewHistory={() => handleViewHistory(product.id)}
-                  onForecast={() => handleOpenForecast(product)}
-                />
-              ))}
+              {filteredProducts.map((product) => {
+                // Get inventory summary for this product
+                const inventoryData = productsWithInventory.find(p => p.id === product.id);
+                const inventorySummary = inventoryData ? {
+                  totalStock: inventoryData.totalStock,
+                  variationCount: inventoryData.inventoryItems.length,
+                  outOfStockCount: inventoryData.inventoryItems.filter(i => i.quantity === 0).length,
+                  lowStockCount: inventoryData.inventoryItems.filter(i => i.quantity > 0 && i.quantity <= i.minStock).length,
+                } : undefined;
+
+                return (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    stockStatus={getStockStatus(product)}
+                    inventorySummary={inventorySummary}
+                    onEdit={() => handleEditProduct(product)}
+                    onDuplicate={() => handleDuplicateProduct(product.id)}
+                    onDelete={() => setDeleteProductId(product.id)}
+                    onCalculatePrice={() => navigate('/custos', { state: { product } })}
+                    onSmartPricing={() => { setSmartPricingProduct(product); setShowSmartPricing(true); }}
+                    onStockEntry={() => handleOpenEntry(product.id)}
+                    onStockExit={() => handleOpenExit(product.id)}
+                    onViewHistory={() => handleViewHistory(product.id)}
+                    onForecast={() => handleOpenForecast(product)}
+                  />
+                );
+              })}
             </div>
           ) : (
             <div className="hidden md:block rounded-xl border overflow-hidden">

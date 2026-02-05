@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -13,7 +13,9 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { useProducts } from "@/hooks/useProducts";
-import type { OrderItemFormData, emptyOrderItemFormData } from "@/types/orders";
+import { useInventory } from "@/hooks/useInventory";
+import type { OrderItemFormData } from "@/types/orders";
+import { normalizeVariationValue } from "@/lib/variationUtils";
 
 interface OrderFormItemsProps {
   items: OrderItemFormData[];
@@ -22,6 +24,7 @@ interface OrderFormItemsProps {
 
 export function OrderFormItems({ items, onChange }: OrderFormItemsProps) {
   const { products, isLoading: loadingProducts } = useProducts();
+  const { inventoryItems } = useInventory();
 
   const addItem = () => {
     onChange([
@@ -63,18 +66,81 @@ export function OrderFormItems({ items, onChange }: OrderFormItemsProps) {
     }
   };
 
-  const getProductVariations = (productId: string) => {
-    const product = products.find((p) => p.id === productId);
-    if (!product) return { sizes: [], colors: [], prints: [] };
+  // Get available variations from inventory for a product
+  const getProductVariations = (productId: string): {
+    sizes: string[];
+    colors: string[];
+    prints: string[];
+  } => {
+    if (!productId) return { sizes: [], colors: [], prints: [] };
 
-    // Check if product has size/color or use defaults
-    const sizes = product.size ? [product.size] : [];
-    const colors = product.color ? [product.color] : [];
-    
+    // Get inventory items for this product
+    const productItems = inventoryItems.filter(i => i.productId === productId);
+
+    const sizes = new Set<string>();
+    const colors = new Set<string>();
+    const prints = new Set<string>();
+
+    productItems.forEach(item => {
+      // Use variantOptions if available, otherwise use legacy fields
+      if (item.variantOptions && Object.keys(item.variantOptions).length > 0) {
+        const opts = item.variantOptions;
+        if (opts['Tamanho']) sizes.add(opts['Tamanho']);
+        if (opts['Cor']) colors.add(opts['Cor']);
+        if (opts['Estampa']) prints.add(opts['Estampa']);
+      } else {
+        if (item.size && item.size !== 'Único') sizes.add(item.size);
+        if (item.color && item.color !== 'Padrão') colors.add(item.color);
+      }
+    });
+
     return {
-      sizes,
-      colors,
-      prints: [], // Add print variants if available
+      sizes: Array.from(sizes).sort(),
+      colors: Array.from(colors).sort(),
+      prints: Array.from(prints).sort(),
+    };
+  };
+
+  // Check stock availability for an order item
+  const getStockAvailability = (item: OrderItemFormData): {
+    available: number;
+    hasStock: boolean;
+    message?: string;
+  } => {
+    if (!item.product_id) return { available: 0, hasStock: true };
+
+    const normSize = normalizeVariationValue(item.size) || 'Único';
+    const normColor = normalizeVariationValue(item.base_color) || 'Padrão';
+
+    const inventoryItem = inventoryItems.find(i => {
+      const itemSize = normalizeVariationValue(i.size) || 'Único';
+      const itemColor = normalizeVariationValue(i.color) || 'Padrão';
+      return i.productId === item.product_id && 
+             itemSize === normSize && 
+             itemColor === normColor;
+    });
+
+    if (!inventoryItem) {
+      // Check if product has any inventory at all
+      const hasAnyInventory = inventoryItems.some(i => i.productId === item.product_id);
+      if (hasAnyInventory && (item.size || item.base_color)) {
+        return {
+          available: 0,
+          hasStock: false,
+          message: `Variação não encontrada`,
+        };
+      }
+      // No inventory - product might be infinite stock or not tracked
+      return { available: 0, hasStock: true };
+    }
+
+    const hasStock = inventoryItem.quantity >= item.quantity;
+    return {
+      available: inventoryItem.quantity,
+      hasStock,
+      message: hasStock 
+        ? undefined 
+        : `Disponível: ${inventoryItem.quantity}`,
     };
   };
 
@@ -108,16 +174,17 @@ export function OrderFormItems({ items, onChange }: OrderFormItemsProps) {
       {items.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            Nenhum item adicionado. Clique em "Adicionar Item" para comecar.
+            Nenhum item adicionado. Clique em "Adicionar Item" para começar.
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
           {items.map((item, index) => {
             const variations = getProductVariations(item.product_id);
+            const stockInfo = getStockAvailability(item);
 
             return (
-              <Card key={index}>
+              <Card key={index} className={!stockInfo.hasStock && item.product_id ? 'border-warning' : ''}>
                 <CardContent className="pt-4 space-y-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 grid gap-4 sm:grid-cols-2">
@@ -158,7 +225,6 @@ export function OrderFormItems({ items, onChange }: OrderFormItemsProps) {
                                   {color}
                                 </SelectItem>
                               ))}
-                              <SelectItem value="outro">Outro</SelectItem>
                             </SelectContent>
                           </Select>
                         ) : (
@@ -187,7 +253,6 @@ export function OrderFormItems({ items, onChange }: OrderFormItemsProps) {
                                   {size}
                                 </SelectItem>
                               ))}
-                              <SelectItem value="outro">Outro</SelectItem>
                             </SelectContent>
                           </Select>
                         ) : (
@@ -201,17 +266,44 @@ export function OrderFormItems({ items, onChange }: OrderFormItemsProps) {
 
                       {/* Print Variant */}
                       <div className="space-y-2">
-                        <Label>Estampa/Variacao</Label>
-                        <Input
-                          placeholder="Ex: Champion"
-                          value={item.print_variant}
-                          onChange={(e) => updateItem(index, { print_variant: e.target.value })}
-                        />
+                        <Label>Estampa/Variação</Label>
+                        {variations.prints.length > 0 ? (
+                          <Select
+                            value={item.print_variant}
+                            onValueChange={(value) => updateItem(index, { print_variant: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {variations.prints.map((print) => (
+                                <SelectItem key={print} value={print}>
+                                  {print}
+                                </SelectItem>
+                              ))}
+                              <SelectItem value="">Nenhuma</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            placeholder="Ex: Champion"
+                            value={item.print_variant}
+                            onChange={(e) => updateItem(index, { print_variant: e.target.value })}
+                          />
+                        )}
                       </div>
 
                       {/* Quantity */}
                       <div className="space-y-2">
-                        <Label>Quantidade *</Label>
+                        <Label className="flex items-center gap-2">
+                          Quantidade *
+                          {!stockInfo.hasStock && item.product_id && (
+                            <Badge variant="warning" className="text-xs gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              {stockInfo.message}
+                            </Badge>
+                          )}
+                        </Label>
                         <Input
                           type="number"
                           min={1}
@@ -224,7 +316,7 @@ export function OrderFormItems({ items, onChange }: OrderFormItemsProps) {
 
                       {/* Unit Price */}
                       <div className="space-y-2">
-                        <Label>Preco Unitario</Label>
+                        <Label>Preço Unitário</Label>
                         <Input
                           type="number"
                           step="0.01"
@@ -246,9 +338,9 @@ export function OrderFormItems({ items, onChange }: OrderFormItemsProps) {
 
                       {/* Notes */}
                       <div className="space-y-2 sm:col-span-2">
-                        <Label>Observacao do Item (opcional)</Label>
+                        <Label>Observação do Item (opcional)</Label>
                         <Textarea
-                          placeholder="Anotacoes especificas deste item..."
+                          placeholder="Anotações específicas deste item..."
                           value={item.notes}
                           onChange={(e) => updateItem(index, { notes: e.target.value })}
                           rows={2}

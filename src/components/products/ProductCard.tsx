@@ -1,14 +1,25 @@
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Edit, Copy, Trash2, Calculator, Package, Sparkles, Plus, Minus, History, TrendingUp } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { MoreHorizontal, Edit, Copy, Trash2, Calculator, Package, Sparkles, Plus, Minus, History, TrendingUp, Warehouse, AlertTriangle, Infinity } from "lucide-react";
 import { Product } from "@/types/products";
 import { formatarMoeda, formatarPorcentagem } from "@/lib/formatters";
+
+interface InventorySummary {
+  totalStock: number;
+  variationCount: number;
+  outOfStockCount: number;
+  lowStockCount: number;
+  isInfinite?: boolean;
+}
 
 interface ProductCardProps {
   product: Product;
   stockStatus: { status: string; label: string; color: string };
+  inventorySummary?: InventorySummary;
   onEdit: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
@@ -23,6 +34,7 @@ interface ProductCardProps {
 export function ProductCard({ 
   product, 
   stockStatus,
+  inventorySummary,
   onEdit, 
   onDuplicate, 
   onDelete,
@@ -33,6 +45,8 @@ export function ProductCard({
   onViewHistory,
   onForecast
 }: ProductCardProps) {
+  const navigate = useNavigate();
+
   const getStatusBadgeVariant = () => {
     switch (product.status) {
       case 'ativo': return 'success';
@@ -50,6 +64,14 @@ export function ProductCard({
       default: return 'info';
     }
   };
+
+  const handleGoToInventory = () => {
+    navigate(`/app/inventario?focus=${product.id}`);
+  };
+
+  // Determine if product has inventory issues
+  const hasInventoryIssues = inventorySummary && 
+    (inventorySummary.outOfStockCount > 0 || inventorySummary.lowStockCount > 0);
 
   const margin = product.costPrice > 0 
     ? ((product.salePrice - product.costPrice) / product.salePrice * 100).toFixed(0)
@@ -104,6 +126,10 @@ export function ProductCard({
                   Previsão de demanda
                 </DropdownMenuItem>
               )}
+              <DropdownMenuItem onClick={handleGoToInventory}>
+                <Warehouse className="h-4 w-4 mr-2" />
+                Ver no Inventário
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onCalculatePrice}>
                 <Calculator className="h-4 w-4 mr-2" />
@@ -151,14 +177,57 @@ export function ProductCard({
         </div>
 
         <div className="mt-4 pt-3 border-t flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Badge variant={getStockBadgeVariant() as any} className="text-xs">
-              {stockStatus.label}
-            </Badge>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {inventorySummary?.isInfinite ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="info" className="text-xs gap-1">
+                      <Infinity className="h-3 w-3" />
+                      Sob encomenda
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Estoque infinito (sob encomenda)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <Badge variant={getStockBadgeVariant() as any} className="text-xs">
+                {stockStatus.label}
+              </Badge>
+            )}
+            
+            {hasInventoryIssues && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="warning" className="text-xs gap-1 cursor-pointer" onClick={handleGoToInventory}>
+                      <AlertTriangle className="h-3 w-3" />
+                      {inventorySummary.outOfStockCount > 0 
+                        ? `${inventorySummary.outOfStockCount} sem estoque`
+                        : `${inventorySummary.lowStockCount} baixo`
+                      }
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Clique para gerenciar estoque</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
-          <span className="text-sm font-medium">
-            {product.quantity} {product.unit}
-          </span>
+          
+          <div className="flex items-center gap-2">
+            {inventorySummary && inventorySummary.variationCount > 1 && (
+              <span className="text-xs text-muted-foreground">
+                {inventorySummary.variationCount} var.
+              </span>
+            )}
+            <span className="text-sm font-medium">
+              {inventorySummary ? inventorySummary.totalStock : product.quantity} {product.unit}
+            </span>
+          </div>
         </div>
       </CardContent>
     </Card>
