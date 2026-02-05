@@ -16,6 +16,7 @@ import {
   ProductVariant,
   variantOptionsToLegacy
 } from "@/types/productEditor";
+import { normalizeVariationValue, normalizeVariantOptions } from "@/lib/variationUtils";
 import { useProducts } from "@/hooks/useProducts";
 import { useInventory } from "@/hooks/useInventory";
 import { supabase } from "@/integrations/supabase/client";
@@ -287,8 +288,9 @@ export default function ProductEditor() {
     
     // Upsert variants
     for (const variant of data.variants) {
-      // Extract legacy fields for backward compatibility
-      const legacy = variantOptionsToLegacy(variant.properties);
+      // Normalize and extract legacy fields for backward compatibility
+      const normalizedProps = normalizeVariantOptions(variant.properties);
+      const legacy = variantOptionsToLegacy(normalizedProps);
       
       const itemData = {
         product_id: productId,
@@ -297,7 +299,7 @@ export default function ProductEditor() {
         size: legacy.size,
         color: legacy.color,
         // New JSONB field for N-attribute variations
-        variant_options: variant.properties,
+        variant_options: normalizedProps,
         quantity: variant.quantity,
         min_stock: data.minStock,
         critical_stock: Math.floor(data.minStock / 2),
