@@ -410,7 +410,7 @@ export function useCashFlow(period: PeriodType = 'month') {
     }
 
     return months;
-  }, [transactions]);
+  }, [chartTransactions]);
 
   // Generate insights
   const insights = useMemo((): CashFlowInsight[] => {
