@@ -23,6 +23,15 @@ export function ProtectedRoute({ children, requireOnboarding = true }: Protected
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
+  // Wait for profile to load before checking onboarding
+  if (user && !profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-brand" />
+      </div>
+    );
+  }
+
   // Redirect to onboarding if not completed
   if (requireOnboarding && profile && !profile.onboarding_completed && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
