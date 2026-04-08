@@ -95,29 +95,6 @@ export function useOrders(options: UseOrdersOptions = {}) {
     enabled: !!teamId,
   });
 
-  const orderByIdQuery = (orderId: string) => useQuery({
-    queryKey: ['order', orderId],
-    queryFn: async () => {
-      const { data: order, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', orderId)
-        .single();
-
-      if (error) throw error;
-
-      const { data: items, error: itemsError } = await supabase
-        .from('order_items')
-        .select('*')
-        .eq('order_id', orderId);
-
-      if (itemsError) throw itemsError;
-
-      return { ...order, order_items: items } as Order;
-    },
-    enabled: !!orderId,
-  });
-
   const createOrderMutation = useMutation({
     mutationFn: async (formData: OrderFormData) => {
       if (!teamId || !user) throw new Error('Usuário não autenticado');
@@ -273,7 +250,7 @@ export function useOrders(options: UseOrdersOptions = {}) {
     totalCount: ordersQuery.data?.count || 0,
     isLoading: ordersQuery.isLoading,
     error: ordersQuery.error,
-    getOrderById: orderByIdQuery,
+    
     createOrder: createOrderMutation.mutateAsync,
     updateOrder: updateOrderMutation.mutateAsync,
     deleteOrder: deleteOrderMutation.mutateAsync,
@@ -281,4 +258,29 @@ export function useOrders(options: UseOrdersOptions = {}) {
     isUpdating: updateOrderMutation.isPending,
     isDeleting: deleteOrderMutation.isPending,
   };
+}
+
+export function useOrderById(orderId: string) {
+  return useQuery({
+    queryKey: ['order', orderId],
+    queryFn: async () => {
+      const { data: order, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', orderId)
+        .single();
+
+      if (error) throw error;
+
+      const { data: items, error: itemsError } = await supabase
+        .from('order_items')
+        .select('*')
+        .eq('order_id', orderId);
+
+      if (itemsError) throw itemsError;
+
+      return { ...order, order_items: items } as Order;
+    },
+    enabled: !!orderId,
+  });
 }
