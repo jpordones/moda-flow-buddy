@@ -388,7 +388,7 @@ export function useCashFlow(period: PeriodType = 'month') {
       const monthLabel = format(date, 'MMM');
 
       // Filter transactions for this month (need to fetch all for chart)
-      const monthTransactions = transactions.filter(t => {
+      const monthTransactions = chartTransactions.filter(t => {
         const txDate = parseISO(t.reference_date);
         return txDate >= monthStart && txDate <= monthEnd;
       });
