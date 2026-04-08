@@ -259,3 +259,28 @@ export function useOrders(options: UseOrdersOptions = {}) {
     isDeleting: deleteOrderMutation.isPending,
   };
 }
+
+export function useOrderById(orderId: string) {
+  return useQuery({
+    queryKey: ['order', orderId],
+    queryFn: async () => {
+      const { data: order, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', orderId)
+        .single();
+
+      if (error) throw error;
+
+      const { data: items, error: itemsError } = await supabase
+        .from('order_items')
+        .select('*')
+        .eq('order_id', orderId);
+
+      if (itemsError) throw itemsError;
+
+      return { ...order, order_items: items } as Order;
+    },
+    enabled: !!orderId,
+  });
+}
