@@ -133,6 +133,7 @@ export function useCashFlow(period: PeriodType = 'month') {
   const teamId = profile?.current_team_id;
   
   const [transactions, setTransactions] = useState<CashFlowTransaction[]>([]);
+  const [chartTransactions, setChartTransactions] = useState<CashFlowTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
