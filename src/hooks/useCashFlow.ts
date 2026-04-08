@@ -210,7 +210,7 @@ export function useCashFlow(period: PeriodType = 'month') {
         description: data.description,
         category: data.category,
         payment_method: data.payment_method,
-        status: data.status || 'completed',
+        status: data.status || 'confirmado',
       });
 
     if (insertError) throw insertError;
