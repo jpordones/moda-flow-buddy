@@ -183,9 +183,49 @@ export function useCashFlow(period: PeriodType = 'month') {
     }
   }, [teamId, user, period]);
 
+  const fetchChartData = useCallback(async () => {
+    if (!teamId || !user) return;
+    try {
+      const now = new Date();
+      const chartStart = startOfMonth(subMonths(now, 5));
+      const chartEnd = endOfMonth(now);
+
+      const { data, error: fetchError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('team_id', teamId)
+        .gte('reference_date', format(chartStart, 'yyyy-MM-dd'))
+        .lte('reference_date', format(chartEnd, 'yyyy-MM-dd'))
+        .order('reference_date', { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      const mapped: CashFlowTransaction[] = (data || []).map(t => ({
+        id: t.id,
+        type: t.type as TransactionType,
+        amount: Number(t.amount),
+        reference_date: t.reference_date,
+        description: t.description || '',
+        category: t.category,
+        payment_method: t.payment_method || 'dinheiro',
+        status: (t.status || 'confirmado') as TransactionStatus,
+        product_id: t.product_id,
+        created_at: t.created_at,
+      }));
+
+      setChartTransactions(mapped);
+    } catch (err) {
+      console.error('Error fetching chart data:', err);
+    }
+  }, [teamId, user]);
+
   useEffect(() => {
     fetchTransactions();
   }, [fetchTransactions]);
+
+  useEffect(() => {
+    fetchChartData();
+  }, [fetchChartData]);
 
   // Add transaction
   const addTransaction = useCallback(async (data: {
