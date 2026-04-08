@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -257,10 +258,15 @@ export function useInventory() {
   const addStockEntry = useCallback(async (data: StockEntryData): Promise<boolean> => {
     if (!teamId || !user) return false;
 
+    const normalizedSize = (data.size || 'Único').trim().toLowerCase();
+    const normalizedColor = (data.color || 'Padrão').trim().toLowerCase();
+
     try {
       // Find or create inventory item
       let inventoryItem = inventoryItems.find(
-        i => i.productId === data.productId && i.size === data.size && i.color === data.color
+        i => i.productId === data.productId &&
+          (i.size || 'Único').trim().toLowerCase() === normalizedSize &&
+          (i.color || 'Padrão').trim().toLowerCase() === normalizedColor
       );
 
       const previousStock = inventoryItem?.quantity || 0;
@@ -275,14 +281,14 @@ export function useInventory() {
 
         if (error) throw error;
       } else {
-        // Create new
+        // Create new — save normalized values
         const { data: newItem, error } = await supabase
           .from('inventory_items')
           .insert({
             product_id: data.productId,
             team_id: teamId,
-            size: data.size,
-            color: data.color,
+            size: normalizedSize,
+            color: normalizedColor,
             quantity: data.quantity,
             min_stock: 5,
             critical_stock: 2,
@@ -311,7 +317,6 @@ export function useInventory() {
         });
 
       // Update product quantity (legacy support)
-      // Update product quantity directly
       const totalStock = inventoryItems
         .filter(i => i.productId === data.productId && i.id !== inventoryItem?.id)
         .reduce((sum, i) => sum + i.quantity, 0) + newStock;
@@ -323,9 +328,11 @@ export function useInventory() {
 
       await fetchInventory();
       await fetchMovements();
+      toast.success('Entrada de estoque registrada com sucesso!');
       return true;
     } catch (error) {
       console.error('Error adding stock entry:', error);
+      toast.error('Erro ao atualizar estoque. Tente novamente.');
       return false;
     }
   }, [teamId, user, inventoryItems, fetchInventory, fetchMovements]);
@@ -334,13 +341,18 @@ export function useInventory() {
   const addStockExit = useCallback(async (data: StockExitData): Promise<boolean> => {
     if (!teamId || !user) return false;
 
+    const normalizedSize = (data.size || 'Único').trim().toLowerCase();
+    const normalizedColor = (data.color || 'Padrão').trim().toLowerCase();
+
     try {
       const inventoryItem = inventoryItems.find(
-        i => i.productId === data.productId && i.size === data.size && i.color === data.color
+        i => i.productId === data.productId &&
+          (i.size || 'Único').trim().toLowerCase() === normalizedSize &&
+          (i.color || 'Padrão').trim().toLowerCase() === normalizedColor
       );
 
       if (!inventoryItem) {
-        console.error('Inventory item not found');
+        toast.error('Variante não encontrada no estoque. Verifique tamanho e cor.');
         return false;
       }
 
@@ -348,7 +360,7 @@ export function useInventory() {
       const newStock = previousStock - data.quantity;
 
       if (newStock < 0) {
-        console.error('Insufficient stock');
+        toast.error('Estoque insuficiente para essa saída.');
         return false;
       }
 
@@ -388,9 +400,11 @@ export function useInventory() {
 
       await fetchInventory();
       await fetchMovements();
+      toast.success('Saída de estoque registrada com sucesso!');
       return true;
     } catch (error) {
       console.error('Error adding stock exit:', error);
+      toast.error('Erro ao atualizar estoque. Tente novamente.');
       return false;
     }
   }, [teamId, user, inventoryItems, fetchInventory, fetchMovements]);
