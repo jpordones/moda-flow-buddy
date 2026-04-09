@@ -86,7 +86,7 @@ export function useTeam() {
     const memberIds = rolesData.map(r => r.user_id);
     
     const { data: profilesData, error: profilesError } = await supabase
-      .from('profiles')
+      .from('team_member_profiles' as any)
       .select('id, full_name')
       .in('id', memberIds);
 
