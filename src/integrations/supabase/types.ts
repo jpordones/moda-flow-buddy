@@ -1179,7 +1179,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      team_member_profiles: {
+        Row: {
+          company_name: string | null
+          company_segment: string | null
+          full_name: string | null
+          id: string | null
+          logo_url: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          company_segment?: string | null
+          full_name?: string | null
+          id?: string | null
+          logo_url?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          company_segment?: string | null
+          full_name?: string | null
+          id?: string | null
+          logo_url?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_password_strength: { Args: { password: string }; Returns: boolean }
