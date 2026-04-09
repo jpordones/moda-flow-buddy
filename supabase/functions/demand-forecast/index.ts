@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,16 +12,56 @@ serve(async (req) => {
   }
 
   try {
+    // Authentication check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { productName, historicalData, period } = await req.json();
+
+    // Input validation
+    if (!productName || typeof productName !== 'string' || productName.length > 200) {
+      return new Response(JSON.stringify({ error: 'Invalid product name' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const validatedPeriod = typeof period === 'number' && period >= 1 && period <= 24 ? period : 6;
+
+    if (!Array.isArray(historicalData)) {
+      return new Response(JSON.stringify({ error: 'Invalid historical data' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    console.log('Generating demand forecast for:', productName);
-    console.log('Historical data:', historicalData);
-    console.log('Period:', period);
+    console.log('Generating demand forecast for:', productName, 'by user:', user.id);
 
     const systemPrompt = `Você é um especialista em análise de demanda e previsão de vendas para pequenas e médias empresas. 
     
@@ -36,7 +77,7 @@ Responda SEMPRE em português brasileiro e em formato JSON estruturado.`;
     const userPrompt = `Analise os seguintes dados de vendas e faça uma previsão de demanda:
 
 Produto: ${productName}
-Período de análise: ${period || 'últimos 6 meses'}
+Período de análise: ${validatedPeriod} meses
 Dados históricos de vendas: ${JSON.stringify(historicalData)}
 
 Forneça a resposta no seguinte formato JSON:
@@ -88,8 +129,6 @@ Forneça a resposta no seguinte formato JSON:
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content;
-    
-    console.log('AI response:', content);
 
     // Parse JSON from response
     let forecast;
@@ -120,8 +159,7 @@ Forneça a resposta no seguinte formato JSON:
 
   } catch (error) {
     console.error('Error in demand-forecast:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    return new Response(JSON.stringify({ error: 'Erro interno ao processar previsão' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
