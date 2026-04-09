@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Product, ProductFormData, StockStatus } from '@/types/products';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface DbProduct {
   id: string;
@@ -52,20 +54,13 @@ function mapDbToProduct(db: DbProduct): Product {
 
 export function useProducts() {
   const { profile, user } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
+  const queryClient = useQueryClient();
   const teamId = profile?.current_team_id;
 
-  const fetchProducts = useCallback(async () => {
-    if (!teamId) {
-      setProducts([]);
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
+  const productsQuery = useQuery({
+    queryKey: ['products', teamId],
+    queryFn: async () => {
+      if (!teamId) return [];
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -74,21 +69,14 @@ export function useProducts() {
 
       if (error) {
         console.error('Error fetching products:', error);
-        setProducts([]);
-      } else {
-        setProducts((data as DbProduct[]).map(mapDbToProduct));
+        throw error;
       }
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      setProducts([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [teamId]);
+      return (data as DbProduct[]).map(mapDbToProduct);
+    },
+    enabled: !!teamId,
+  });
 
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+  const products = productsQuery.data ?? [];
 
   const generateSKU = useCallback((category: string) => {
     const prefix = category.substring(0, 3).toUpperCase();
@@ -96,188 +84,233 @@ export function useProducts() {
     return `${prefix}-${timestamp}`;
   }, []);
 
-  const addProduct = useCallback(async (formData: ProductFormData): Promise<Product | null> => {
-    if (!teamId) return null;
+  const addProductMutation = useMutation({
+    mutationFn: async (formData: ProductFormData) => {
+      if (!teamId) throw new Error('No team');
+      const costPrice = parseFloat(formData.costPrice) || 0;
+      const salePrice = parseFloat(formData.salePrice) || 0;
+      const sku = formData.sku || generateSKU(formData.category);
 
-    const costPrice = parseFloat(formData.costPrice) || 0;
-    const salePrice = parseFloat(formData.salePrice) || 0;
-    const sku = formData.sku || generateSKU(formData.category);
+      const { data, error } = await supabase
+        .from('products')
+        .insert({
+          team_id: teamId,
+          name: formData.name,
+          sku,
+          category: formData.category,
+          description: formData.description || null,
+          status: formData.status,
+          cost_price: costPrice,
+          sale_price: salePrice,
+          quantity: parseInt(formData.quantity) || 0,
+          min_stock: parseInt(formData.minStock) || 10,
+          unit: formData.unit || 'un',
+          size: formData.size || null,
+          color: formData.color || null,
+        })
+        .select()
+        .single();
 
-    const { data, error } = await supabase
-      .from('products')
-      .insert({
-        team_id: teamId,
-        name: formData.name,
-        sku,
-        category: formData.category,
-        description: formData.description || null,
-        status: formData.status,
-        cost_price: costPrice,
-        sale_price: salePrice,
-        quantity: parseInt(formData.quantity) || 0,
-        min_stock: parseInt(formData.minStock) || 10,
-        unit: formData.unit || 'un',
-        size: formData.size || null,
-        color: formData.color || null,
-      })
-      .select()
-      .single();
-
-    if (error) {
+      if (error) throw error;
+      return mapDbToProduct(data as DbProduct);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Produto criado com sucesso!');
+    },
+    onError: (error) => {
       console.error('Error adding product:', error);
+      toast.error('Erro ao criar produto. Tente novamente.');
+    },
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: async ({ id, formData }: { id: string; formData: Partial<ProductFormData> }) => {
+      const updates: Record<string, unknown> = {};
+      if (formData.name !== undefined) updates.name = formData.name;
+      if (formData.sku !== undefined) updates.sku = formData.sku;
+      if (formData.category !== undefined) updates.category = formData.category;
+      if (formData.description !== undefined) updates.description = formData.description || null;
+      if (formData.status !== undefined) updates.status = formData.status;
+      if (formData.costPrice !== undefined) updates.cost_price = parseFloat(formData.costPrice) || 0;
+      if (formData.salePrice !== undefined) updates.sale_price = parseFloat(formData.salePrice) || 0;
+      if (formData.quantity !== undefined) updates.quantity = parseInt(formData.quantity) || 0;
+      if (formData.minStock !== undefined) updates.min_stock = parseInt(formData.minStock) || 10;
+      if (formData.unit !== undefined) updates.unit = formData.unit;
+      if (formData.size !== undefined) updates.size = formData.size || null;
+      if (formData.color !== undefined) updates.color = formData.color || null;
+
+      const { data, error } = await supabase
+        .from('products')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return mapDbToProduct(data as DbProduct);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Produto atualizado com sucesso!');
+    },
+    onError: (error) => {
+      console.error('Error updating product:', error);
+      toast.error('Erro ao atualizar produto. Tente novamente.');
+    },
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Produto excluído com sucesso!');
+    },
+    onError: (error) => {
+      console.error('Error deleting product:', error);
+      toast.error('Erro ao excluir produto. Tente novamente.');
+    },
+  });
+
+  const duplicateProductMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const product = products.find(p => p.id === id);
+      if (!product || !teamId) throw new Error('Product not found');
+
+      const { data, error } = await supabase
+        .from('products')
+        .insert({
+          team_id: teamId,
+          name: `${product.name} (Cópia)`,
+          sku: generateSKU(product.category),
+          category: product.category,
+          description: product.description || null,
+          status: product.status,
+          cost_price: product.costPrice,
+          sale_price: product.salePrice,
+          quantity: product.quantity,
+          min_stock: product.minStock,
+          unit: product.unit,
+          size: product.size || null,
+          color: product.color || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return mapDbToProduct(data as DbProduct);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Produto duplicado com sucesso!');
+    },
+    onError: (error) => {
+      console.error('Error duplicating product:', error);
+      toast.error('Erro ao duplicar produto. Tente novamente.');
+    },
+  });
+
+  const updateStockMutation = useMutation({
+    mutationFn: async ({ id, quantity, type, reason }: { id: string; quantity: number; type: 'entrada' | 'saida'; reason: string }) => {
+      const product = products.find(p => p.id === id);
+      if (!product || !teamId || !user) throw new Error('Invalid state');
+
+      const newQuantity = type === 'entrada'
+        ? product.quantity + quantity
+        : product.quantity - quantity;
+
+      if (newQuantity < 0) throw new Error('Estoque insuficiente');
+
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({ quantity: newQuantity })
+        .eq('id', id);
+
+      if (updateError) throw updateError;
+
+      const { error: movementError } = await supabase
+        .from('stock_movements')
+        .insert({
+          product_id: id,
+          team_id: teamId,
+          user_id: user.id,
+          type,
+          quantity,
+          reason,
+        });
+
+      if (movementError) {
+        console.error('Error logging stock movement:', movementError);
+      }
+
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Estoque atualizado com sucesso!');
+    },
+    onError: (error) => {
+      console.error('Error updating stock:', error);
+      toast.error(error.message === 'Estoque insuficiente' ? 'Estoque insuficiente para essa saída.' : 'Erro ao atualizar estoque.');
+    },
+  });
+
+  // Wrapper functions to maintain same signatures
+  const addProduct = useCallback(async (formData: ProductFormData): Promise<Product | null> => {
+    try {
+      return await addProductMutation.mutateAsync(formData);
+    } catch {
       return null;
     }
-
-    const newProduct = mapDbToProduct(data as DbProduct);
-    setProducts(prev => [newProduct, ...prev]);
-    return newProduct;
-  }, [teamId, generateSKU]);
+  }, [addProductMutation]);
 
   const updateProduct = useCallback(async (id: string, formData: Partial<ProductFormData>): Promise<Product | null> => {
-    const updates: Record<string, unknown> = {};
-    
-    if (formData.name !== undefined) updates.name = formData.name;
-    if (formData.sku !== undefined) updates.sku = formData.sku;
-    if (formData.category !== undefined) updates.category = formData.category;
-    if (formData.description !== undefined) updates.description = formData.description || null;
-    if (formData.status !== undefined) updates.status = formData.status;
-    if (formData.costPrice !== undefined) updates.cost_price = parseFloat(formData.costPrice) || 0;
-    if (formData.salePrice !== undefined) updates.sale_price = parseFloat(formData.salePrice) || 0;
-    if (formData.quantity !== undefined) updates.quantity = parseInt(formData.quantity) || 0;
-    if (formData.minStock !== undefined) updates.min_stock = parseInt(formData.minStock) || 10;
-    if (formData.unit !== undefined) updates.unit = formData.unit;
-    if (formData.size !== undefined) updates.size = formData.size || null;
-    if (formData.color !== undefined) updates.color = formData.color || null;
-
-    const { data, error } = await supabase
-      .from('products')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error updating product:', error);
+    try {
+      return await updateProductMutation.mutateAsync({ id, formData });
+    } catch {
       return null;
     }
-
-    const updatedProduct = mapDbToProduct(data as DbProduct);
-    setProducts(prev => prev.map(p => p.id === id ? updatedProduct : p));
-    return updatedProduct;
-  }, []);
+  }, [updateProductMutation]);
 
   const deleteProduct = useCallback(async (id: string): Promise<boolean> => {
-    const { error } = await supabase
-      .from('products')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error deleting product:', error);
+    try {
+      await deleteProductMutation.mutateAsync(id);
+      return true;
+    } catch {
       return false;
     }
-
-    setProducts(prev => prev.filter(p => p.id !== id));
-    return true;
-  }, []);
+  }, [deleteProductMutation]);
 
   const duplicateProduct = useCallback(async (id: string): Promise<Product | null> => {
-    const product = products.find(p => p.id === id);
-    if (!product || !teamId) return null;
-
-    const { data, error } = await supabase
-      .from('products')
-      .insert({
-        team_id: teamId,
-        name: `${product.name} (Cópia)`,
-        sku: generateSKU(product.category),
-        category: product.category,
-        description: product.description || null,
-        status: product.status,
-        cost_price: product.costPrice,
-        sale_price: product.salePrice,
-        quantity: product.quantity,
-        min_stock: product.minStock,
-        unit: product.unit,
-        size: product.size || null,
-        color: product.color || null,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error duplicating product:', error);
+    try {
+      return await duplicateProductMutation.mutateAsync(id);
+    } catch {
       return null;
     }
-
-    const newProduct = mapDbToProduct(data as DbProduct);
-    setProducts(prev => [newProduct, ...prev]);
-    return newProduct;
-  }, [products, teamId, generateSKU]);
+  }, [duplicateProductMutation]);
 
   const updateStock = useCallback(async (id: string, quantity: number, type: 'entrada' | 'saida', reason: string): Promise<boolean> => {
-    const product = products.find(p => p.id === id);
-    if (!product || !teamId || !user) return false;
-
-    const newQuantity = type === 'entrada' 
-      ? product.quantity + quantity 
-      : product.quantity - quantity;
-
-    if (newQuantity < 0) return false;
-
-    // Update product quantity
-    const { error: updateError } = await supabase
-      .from('products')
-      .update({ quantity: newQuantity })
-      .eq('id', id);
-
-    if (updateError) {
-      console.error('Error updating stock:', updateError);
+    try {
+      await updateStockMutation.mutateAsync({ id, quantity, type, reason });
+      return true;
+    } catch {
       return false;
     }
-
-    // Log stock movement
-    const { error: movementError } = await supabase
-      .from('stock_movements')
-      .insert({
-        product_id: id,
-        team_id: teamId,
-        user_id: user.id,
-        type,
-        quantity,
-        reason,
-      });
-
-    if (movementError) {
-      console.error('Error logging stock movement:', movementError);
-    }
-
-    setProducts(prev => prev.map(p => 
-      p.id === id ? { ...p, quantity: newQuantity, updatedAt: new Date().toISOString() } : p
-    ));
-    
-    return true;
-  }, [products, teamId, user]);
+  }, [updateStockMutation]);
 
   const getStockStatus = useCallback((product: Product): { status: StockStatus; label: string; color: string } => {
     const { quantity, minStock, maxStock } = product;
-    
-    if (quantity === 0) {
-      return { status: 'critico', label: 'Sem estoque', color: 'text-danger' };
-    }
-    if (quantity <= minStock * 0.5) {
-      return { status: 'critico', label: 'Crítico', color: 'text-danger' };
-    }
-    if (quantity <= minStock) {
-      return { status: 'baixo', label: 'Estoque baixo', color: 'text-warning' };
-    }
-    if (quantity >= maxStock * 0.8) {
-      return { status: 'alto', label: 'Estoque alto', color: 'text-success' };
-    }
+    if (quantity === 0) return { status: 'critico', label: 'Sem estoque', color: 'text-danger' };
+    if (quantity <= minStock * 0.5) return { status: 'critico', label: 'Crítico', color: 'text-danger' };
+    if (quantity <= minStock) return { status: 'baixo', label: 'Estoque baixo', color: 'text-warning' };
+    if (quantity >= maxStock * 0.8) return { status: 'alto', label: 'Estoque alto', color: 'text-success' };
     return { status: 'medio', label: 'Normal', color: 'text-info' };
   }, []);
 
-  // Statistics
   const stats = useMemo(() => {
     const activeProducts = products.filter(p => p.status === 'ativo');
     const totalStock = products.reduce((sum, p) => sum + p.quantity, 0);
@@ -304,7 +337,7 @@ export function useProducts() {
 
   return {
     products,
-    isLoading,
+    isLoading: productsQuery.isLoading,
     stats,
     addProduct,
     updateProduct,
@@ -313,6 +346,6 @@ export function useProducts() {
     updateStock,
     getStockStatus,
     generateSKU,
-    refetch: fetchProducts,
+    refetch: productsQuery.refetch,
   };
 }
