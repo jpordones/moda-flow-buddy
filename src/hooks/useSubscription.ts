@@ -84,42 +84,16 @@ export function useSubscription() {
     setSubscription(data as UserSubscription | null);
   }, [user]);
 
-  const upgradePlan = useCallback(async (planType: PlanType) => {
+  const upgradePlan = useCallback(async (_planType: PlanType) => {
     if (!user) {
       toast.error('Você precisa estar logado para fazer upgrade');
       return false;
     }
 
-    const targetPlan = plans.find(p => p.type === planType);
-    if (!targetPlan) {
-      toast.error('Plano não encontrado');
-      return false;
-    }
-
-    // For now, just update the subscription (in production, this would integrate with payment)
-    const { error } = await supabase
-      .from('user_subscriptions')
-      .upsert({
-        user_id: user.id,
-        plan_id: targetPlan.id,
-        status: 'active',
-        current_period_start: new Date().toISOString(),
-        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-      }, {
-        onConflict: 'user_id'
-      });
-
-    if (error) {
-      console.error('Error upgrading plan:', error);
-      toast.error('Erro ao atualizar plano');
-      return false;
-    }
-
-    toast.success(`Plano atualizado para ${targetPlan.name}!`);
-    await fetchCurrentPlan();
-    await fetchSubscription();
-    return true;
-  }, [user, plans, fetchCurrentPlan, fetchSubscription]);
+    toast.info('Para fazer upgrade, escolha seu plano e finalize pelo checkout seguro.');
+    window.location.href = '/app/planos';
+    return false;
+  }, [user]);
 
   const canUseFeature = useCallback((feature: keyof UserPlan): boolean => {
     if (!currentPlan) return false;
